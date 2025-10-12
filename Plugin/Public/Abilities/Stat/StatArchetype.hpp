@@ -164,7 +164,10 @@ inline namespace Gameplay
 
             if (mFormula)
             {
-                Result = mFormula->Calculate(Target, mBase.Resolve(Target), Flat, Additive, Multiplier);
+                StatFormula::Computation Computation(mBase.Resolve(Target), Flat, Additive, Multiplier);
+                Computation.Populate(Target, mFormula->GetDependencies());
+
+                Result = mFormula->Calculate(Computation);
             }
             else
             {

@@ -30,9 +30,8 @@ inline namespace Gameplay
         static constexpr UInt32 kMaxDependencies = 8;
 
         /// \brief Structure representing the components of a stat calculation.
-        struct Computation
+        struct Computation final
         {
-
             /// \brief Constructs a `Computation` instance with the given parameters.
             ///
             /// \param Base       The base value of the stat.
@@ -49,14 +48,14 @@ inline namespace Gameplay
 
             /// \brief Populates the snapshots of dependent stat values from the source context.
             ///
-            /// \param Source       The source context providing access to stats.
+            /// \param Target       The context providing access to stats.
             /// \param Dependencies List of stat handles that this formula depends on.
             template<typename Context>
-            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, List<StatHandle> Dependencies)
+            ZYPHRYON_INLINE void Populate(ConstRef<Context> Target, ConstSpan<StatHandle> Dependencies)
             {
                 for (const StatHandle Dependency : Dependencies)
                 {
-                    Values.push_back(Source.GetStat(Dependency));
+                    Values.push_back(Target.GetStat(Dependency));
                 }
             }
 
@@ -86,8 +85,23 @@ inline namespace Gameplay
 
         /// \brief Retrieves a list of stat handles that this formula depends on.
         ///
-        /// \return A list of dependent stat handles.
-        virtual List<StatHandle> GetDependencies() const = 0;
+        /// \return A constant span of dependent stat handles.
+        ZYPHRYON_INLINE ConstSpan<StatHandle> GetDependencies() const
+        {
+            return mDependencies;
+        }
+
+    protected:
+
+        /// \brief Adds a dependency stat handle to this formula.
+        ///
+        /// \param Dependency The stat handle that this formula depends on.
+        ZYPHRYON_INLINE void AddDependency(StatHandle Dependency)
+        {
+            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies for formula.");
+
+            mDependencies.push_back(Dependency);
+        }
 
     public:
 
@@ -102,5 +116,12 @@ inline namespace Gameplay
         {
             return (Base + Flat) * (1.0f + Additive) * Multiplier;
         }
+
+    private:
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        Vector<StatHandle, kMaxDependencies> mDependencies;
     };
 }
