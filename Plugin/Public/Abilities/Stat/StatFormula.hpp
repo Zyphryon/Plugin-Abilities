@@ -75,13 +75,27 @@ inline namespace Gameplay
             Vector<Real32, kMaxDependencies> Values;
         };
 
+        /// \brief Type alias for a function that computes a stat value from a `Computation`.
+        using Calculator = Delegate<Real32(ConstRef<Computation>)>;
+
     public:
+
+        /// \brief Constructs a formula with the specified calculation function.
+        ///
+        /// \param Calculator The function used to calculate the stat value.
+        ZYPHRYON_INLINE StatFormula(AnyRef<Calculator> Calculator)
+            : mCalculator { Move(Calculator) }
+        {
+        }
 
         /// \brief Calculates the final value of a stat based on its components and context.
         ///
         /// \param Computation The components required for the calculation.
         /// \return The calculated final value of the stat.
-        virtual Real32 Calculate(ConstRef<Computation> Computation) const = 0;
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Computation> Computation) const
+        {
+            return mCalculator(Computation);
+        }
 
         /// \brief Retrieves a list of stat handles that this formula depends on.
         ///
@@ -122,6 +136,22 @@ inline namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+        Calculator                           mCalculator;
         Vector<StatHandle, kMaxDependencies> mDependencies;
+    };
+
+    /// \brief Helper class to simplify creating custom stat formulas by inheriting and implementing the `Compute` method.
+    ///
+    /// \tparam Impl The derived class implementing the `Compute` method.
+    template<typename Impl>
+    class AbstractStatFormula : public StatFormula
+    {
+    public:
+
+        /// \brief Default constructor that sets up the calculator to use the derived class's `Compute` method.
+        ZYPHRYON_INLINE AbstractStatFormula()
+            : StatFormula(Calculator::Create<&Impl::Compute>(static_cast<Ptr<Impl>>(this)))
+        {
+        }
     };
 }
