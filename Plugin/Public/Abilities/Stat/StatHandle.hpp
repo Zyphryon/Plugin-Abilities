@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include <Zyphryon.Base/Base.hpp>
+#include <Zyphryon.Base/Primitive.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -71,7 +71,7 @@ inline namespace Gameplay
         /// \brief Generate a hash value for the stat handle.
         ///
         /// \return A hash value uniquely representing the stat handle.
-        ZYPHRYON_INLINE constexpr UInt Hash() const
+        ZYPHRYON_INLINE constexpr UInt64 Hash() const
         {
             return mID;
         }
