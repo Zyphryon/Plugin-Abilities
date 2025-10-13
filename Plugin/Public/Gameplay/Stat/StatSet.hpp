@@ -6,7 +6,6 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
 #pragma once
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -100,11 +99,11 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat to retrieve.
         /// \return A pointer to the stat instance if found, or `nullptr` if not found.
-        ZYPHRYON_INLINE Ptr<Stat> TryGet(StatHandle Handle)
+        ZYPHRYON_INLINE ConstPtr<Stat> TryGet(StatHandle Handle) const
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
             {
-                return const_cast<Ptr<Stat>>(&* Iterator);
+                return &* Iterator;
             }
             return nullptr;
         }

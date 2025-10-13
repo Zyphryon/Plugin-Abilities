@@ -14,6 +14,7 @@
 
 #include "StatHandle.hpp"
 #include <Zyphryon.Base/Collection.hpp>
+#include <Zyphryon.Base/Delegate.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -76,7 +77,7 @@ namespace Gameplay
         };
 
         /// \brief Type alias for a function that computes a stat value from a `Computation`.
-        using Calculator = Delegate<Real32(ConstRef<Computation>)>;
+        using Calculator = Delegate<Real32(ConstRef<Computation>), DelegateInlineSize::Smallest>;
 
     public:
 
