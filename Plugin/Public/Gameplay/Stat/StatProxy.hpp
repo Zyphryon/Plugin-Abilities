@@ -87,7 +87,7 @@ namespace Gameplay
         /// \brief Constructs a proxy holding a direct stat value.
         ///
         /// \param Value The direct stat value.
-        ZYPHRYON_INLINE explicit StatProxy(Real32 Value)
+        ZYPHRYON_INLINE StatProxy(Real32 Value)
             : mContainer { Value }
         {
         }
@@ -98,7 +98,7 @@ namespace Gameplay
         /// \param Origin      The origin context of the referenced stat.
         /// \param Resolution  How the stat should be resolved.
         /// \param Coefficient The coefficient to apply when referencing the stat.
-        ZYPHRYON_INLINE explicit StatProxy(StatHandle Handle, StatOrigin Origin, Resolution Resolution, Real32 Coefficient)
+        ZYPHRYON_INLINE StatProxy(StatHandle Handle, StatOrigin Origin, Resolution Resolution, Real32 Coefficient)
             : mContainer { Reference { Handle, Origin, Resolution, Coefficient } }
         {
         }
@@ -107,7 +107,7 @@ namespace Gameplay
         ///
         /// \param Formula The formula used to compute the stat value.
         template<typename Type>
-        ZYPHRYON_INLINE explicit StatProxy(ConstTracker<Type> Formula)
+        ZYPHRYON_INLINE StatProxy(ConstTracker<Type> Formula)
         {
             mContainer.Emplace<Tracker<StatEvaluator>>(Formula);
         }

@@ -155,20 +155,20 @@ namespace Gameplay
             return mStack;
         }
 
-        /// \brief Adds a stat modifier to this effect archetype.
+        /// \brief Sets the stat modifiers associated with this effect archetype.
         ///
-        /// \param Modifier The stat modifier to add.
-        ZYPHRYON_INLINE void AddModifier(AnyRef<StatModifier> Modifier)
+        /// \param Modifiers A list of stat modifiers to assign.
+        ZYPHRYON_INLINE void SetBonuses(ConstSpan<StatModifier> Modifiers)
         {
-            mModifiers.push_back(Move(Modifier));
+            mBonuses.assign(Modifiers.begin(), Modifiers.end());
         }
 
-        /// \brief Retrieves the list of stat modifiers associated with this effect archetype.
+        /// \brief Retrieves the stat modifiers associated with this effect archetype.
         ///
         /// \return A list of stat modifiers.
-        ZYPHRYON_INLINE ConstSpan<StatModifier> GetModifiers() const
+        ZYPHRYON_INLINE ConstSpan<StatModifier> GetBonuses() const
         {
-            return mModifiers;
+            return mBonuses;
         }
 
         /// \brief Iterates over all dependencies referenced by this archetype.
@@ -182,7 +182,7 @@ namespace Gameplay
             mPeriod.Traverse(Action, Origin);
             mLimit.Traverse(Action, Origin);
 
-            for (ConstRef<StatModifier> Modifier : mModifiers)
+            for (ConstRef<StatModifier> Modifier : mBonuses)
             {
                 Modifier.Traverse(Action, Origin);
             }
@@ -221,7 +221,7 @@ namespace Gameplay
         EffectRefresh        mRefresh;
         EffectResolution     mResolution;
         EffectStack          mStack;
-        Vector<StatModifier> mModifiers;
+        Vector<StatModifier> mBonuses;
 
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags)
         // TODO: Categories (Tags?)

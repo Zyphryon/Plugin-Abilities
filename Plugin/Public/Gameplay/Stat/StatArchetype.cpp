@@ -29,6 +29,7 @@ namespace Gameplay
         mBase.Load(Section.GetArray("Base"));
         mMinimum.Load(Section.GetArray("Minimum"));
         mMaximum.Load(Section.GetArray("Maximum"));
+        // TODO Loading formulas is not supported yet.
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -42,5 +43,6 @@ namespace Gameplay
         mBase.Save(Section.SetArray("Base"));
         mMinimum.Save(Section.SetArray("Minimum"));
         mMaximum.Save(Section.SetArray("Maximum"));
+        // TODO Saving formulas is not supported yet.
     }
 }

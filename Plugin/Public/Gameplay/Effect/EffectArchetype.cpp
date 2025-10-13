@@ -34,13 +34,13 @@ namespace Gameplay
         mResolution = Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive);
         mStack      = Enum::Cast(Section.GetString("Stack"), EffectStack::Linear);
 
-        if (const TOMLArray Modifiers = Section.GetArray("Modifiers"); !Modifiers.IsEmpty())
+        if (const TOMLArray Bonuses = Section.GetArray("Bonuses"); !Bonuses.IsEmpty())
         {
-            mModifiers.resize(Modifiers.GetSize());
+            mBonuses.resize(Bonuses.GetSize());
 
-            for (UInt32 Element = 0; Element < mModifiers.size(); ++Element)
+            for (UInt32 Element = 0; Element < mBonuses.size(); ++Element)
             {
-                mModifiers[Element].Load(Modifiers.GetArray(Element));
+                mBonuses[Element].Load(Bonuses.GetArray(Element));
             }
         }
     }
@@ -61,9 +61,9 @@ namespace Gameplay
         Section.SetString("Resolution", Enum::GetName(mResolution));
         Section.SetString("Stack", Enum::GetName(mStack));
 
-        for (TOMLArray Modifiers = Section.SetArray("Modifiers"); ConstRef<StatModifier> Modifier: mModifiers)
+        for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<StatModifier> Modifier: mBonuses)
         {
-            Modifier.Save(Modifiers.AddArray());
+            Modifier.Save(Bonuses.AddArray());
         }
     }
 }
