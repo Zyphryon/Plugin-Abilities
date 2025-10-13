@@ -89,6 +89,24 @@ namespace Gameplay
         {
         }
 
+
+        /// \brief Calculates the final value of a stat based on the provided source and target contexts.
+        ///
+        /// \param Source     The source context containing source stat snapshots.
+        /// \param Base       The base value of the stat.
+        /// \param Flat       The flat modifier to be added to the base.
+        /// \param Additive   The additive percentage modifier (e.g., 0.2 for +20%).
+        /// \param Multiplier The multiplicative factor to apply (e.g., 1.5 for +50%).
+        /// \return The calculated final value of the stat.
+        template<typename Context>
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Source, Real32 Base, Real32 Flat, Real32 Additive, Real32 Multiplier) const
+        {
+            Computation Computation(Base, Flat, Additive, Multiplier);
+            Computation.Populate(Source, GetDependencies());
+
+            return mCalculator(Computation);
+        }
+
         /// \brief Calculates the final value of a stat based on its components and context.
         ///
         /// \param Computation The components required for the calculation.
@@ -141,7 +159,7 @@ namespace Gameplay
         Vector<StatHandle, kMaxDependencies> mDependencies;
     };
 
-    /// \brief Helper class to simplify creating custom stat formulas by inheriting and implementing the `Compute` method.
+    /// \brief A base class for creating custom stat formulas by implementing the `Compute` method.
     ///
     /// \tparam Impl The derived class implementing the `Compute` method.
     template<typename Impl>
@@ -149,7 +167,10 @@ namespace Gameplay
     {
     public:
 
-        /// \brief Default constructor that sets up the calculator to use the derived class's `Compute` method.
+        /// \brief Default constructor that sets up the formula using the derived class's `Compute` method.
+        ///
+        /// \note The derived class must implement a method with the signature:
+        ///       `Real32 Compute(ConstRef<Computation>) const;`
         ZYPHRYON_INLINE AbstractStatFormula()
             : StatFormula(Calculator::Create<&Impl::Compute>(static_cast<Ptr<Impl>>(this)))
         {

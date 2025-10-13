@@ -164,10 +164,7 @@ namespace Gameplay
 
             if (mFormula)
             {
-                StatFormula::Computation Computation(mBase.Resolve(Target), Flat, Additive, Multiplier);
-                Computation.Populate(Target, mFormula->GetDependencies());
-
-                Result = mFormula->Calculate(Computation);
+                Result = mFormula->Calculate(Target, mBase.Resolve(Target), Flat, Additive, Multiplier);
             }
             else
             {
@@ -184,18 +181,9 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            if (const StatHandle Dependency = mBase.GetDependency(); Dependency.IsValid())
-            {
-                Action(Dependency);
-            }
-            if (const StatHandle Dependency = mMinimum.GetDependency(); Dependency.IsValid())
-            {
-                Action(Dependency);
-            }
-            if (const StatHandle Dependency = mMaximum.GetDependency(); Dependency.IsValid())
-            {
-                Action(Dependency);
-            }
+            mBase.Traverse(Action, StatProxy::Origin::Both);
+            mMinimum.Traverse(Action, StatProxy::Origin::Both);
+            mMaximum.Traverse(Action, StatProxy::Origin::Both);
 
             if (mFormula)
             {

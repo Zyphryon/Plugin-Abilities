@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatHandle.hpp"
+#include "StatEvaluator.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -20,7 +20,7 @@
 
 namespace Gameplay
 {
-    /// \brief Represents either a direct stat value or a reference to another stat.
+    /// \brief A proxy representing a direct value, a reference to another stat, or a formula.
     class StatProxy final
     {
     public:
@@ -28,8 +28,9 @@ namespace Gameplay
         /// \brief Enumeration defining the type of data held by the proxy.
         enum class Kind : UInt8
         {
-            Ref,    ///< Reference to another stat.
-            Float,  ///< Direct stat value.
+            Float,   ///< Direct stat value.
+            Ref,     ///< Reference to another stat.
+            Formula, ///< A formula to compute the stat value.
         };
 
         /// \brief Enumeration defining the origin context of the stat.
@@ -37,12 +38,13 @@ namespace Gameplay
         {
             Source, ///< The stat originates from the source context.
             Target, ///< The stat originates from the target context.
+            Both,   ///< The stat can originate from either context.
         };
 
         /// \brief Enumeration defining how the stat value should be resolved.
         enum class Resolution : UInt8
         {
-            Live,     ///< Resolve thAe stat value live from the context.
+            Live,     ///< Resolve the stat value live from the context.
             Snapshot, ///< Resolve the stat value from a snapshot of the context.
         };
 
@@ -108,6 +110,15 @@ namespace Gameplay
         {
         }
 
+        /// \brief Constructs a proxy holding a formula to compute the stat value.
+        ///
+        /// \param Formula The formula used to compute the stat value.
+        template<typename Type>
+        ZYPHRYON_INLINE explicit StatProxy(ConstTracker<Type> Formula)
+        {
+            mContainer.Emplace<Tracker<StatEvaluator>>(Formula);
+        }
+
         /// \brief Retrieves the kind of data held by the proxy.
         ///
         /// \return The kind of data.
@@ -127,23 +138,15 @@ namespace Gameplay
 
         /// \brief Retrieves the origin of the referenced stat if the proxy holds a reference.
         ///
-        /// \return The origin of the referenced stat, or `Target` if the proxy holds a direct value.
+        /// \return The origin of the referenced stat (if holds a reference), or `Both` otherwise.
         ZYPHRYON_INLINE Origin GetOrigin() const
         {
-            return (GetKind() == Kind::Ref ? GetData<Reference>().Origin : Origin::Target);
-        }
-
-        /// \brief Retrieves the handle of the referenced stat if the proxy holds a reference.
-        ///
-        /// \return The handle of the referenced stat, or an invalid handle if the proxy holds a direct value.
-        ZYPHRYON_INLINE StatHandle GetDependency() const
-        {
-            return (GetKind() == Kind::Ref ? GetData<Reference>().Handle : StatHandle());
+            return (GetKind() == Kind::Ref ? GetData<Reference>().Origin : Origin::Both);
         }
 
         /// \brief Retrieves the resolution mode of the referenced stat if the proxy holds a reference.
         ///
-        /// \return The resolution mode of the referenced stat, or `Snapshot` if the proxy holds a direct value.
+        /// \return The resolution mode (if holds a reference), or `Snapshot` otherwise.
         ZYPHRYON_INLINE Resolution GetResolution() const
         {
             return (GetKind() == Kind::Ref ? GetData<Reference>().Resolution : Resolution::Snapshot);
@@ -181,10 +184,61 @@ namespace Gameplay
                     return Source.GetStat(Data.Handle) * Data.Coefficient;
                 case Origin::Target:
                     return Target.GetStat(Data.Handle) * Data.Coefficient;
+                case Origin::Both:
+                    break;
                 }
+            }
+            case Kind::Formula:
+            {
+                return GetData<Tracker<StatEvaluator>>()->Calculate(Source, Target);
             }
             }
             return 0.0f;
+        }
+
+        /// \brief Iterates over all dependencies referenced by this proxy.
+        ///
+        /// \param Action The action to apply to each dependency.
+        /// \param Origin The origin context of dependencies to consider.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, Origin Origin) const
+        {
+            switch (GetKind())
+            {
+                case Kind::Ref:
+                {
+                    ConstRef<Reference> Data = GetData<Reference>();
+
+                    if (Origin == Origin::Both || Data.Origin == Origin)
+                    {
+                        Action(Data.Handle);
+                    }
+                    break;
+                }
+                case Kind::Formula:
+                {
+                    ConstTracker<StatEvaluator> Data = GetData<Tracker<StatEvaluator>>();
+
+                    if (Origin == Origin::Both || Origin == Origin::Source)
+                    {
+                        for (const StatHandle Dependency : Data->GetSourceDependencies())
+                        {
+                            Action(Dependency);
+                        }
+                    }
+
+                    if (Origin == Origin::Both || Origin == Origin::Target)
+                    {
+                        for (const StatHandle Dependency : Data->GetTargetDependencies())
+                        {
+                            Action(Dependency);
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
         }
 
         /// \brief Loads the proxy data from a TOML array.
@@ -201,6 +255,10 @@ namespace Gameplay
             else if (Type == "Ref")
             {
                 mContainer.Emplace<Reference>().Load(Array);
+            }
+            else if (Type == "Formula")
+            {
+                LOG_ASSERT(false, "Loading formulas is not supported yet.");
             }
         }
 
@@ -219,6 +277,8 @@ namespace Gameplay
                 Array.AddString("Ref");
                 GetData<Reference>().Save(Array);
                 break;
+            case Kind::Formula:
+                LOG_ASSERT(false, "Saving formulas is not supported yet.");
             }
         }
 
@@ -227,6 +287,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Variant<Reference, Real32> mContainer;
+        Variant<Real32, Reference, Tracker<StatEvaluator>> mContainer;
     };
 }
