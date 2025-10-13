@@ -104,6 +104,16 @@ namespace Gameplay
             Modify<false>(Target, Stat, Intensity);
         }
 
+        /// \brief Iterates over all dependencies referenced by this modifier.
+        ///
+        /// \param Action The action to apply to each dependency.
+        /// \param Origin The origin context of dependencies to consider.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        {
+            mMagnitude.Traverse(Action, Origin);
+        }
+
         /// \brief Loads the modifier data from a TOML array.
         ///
         /// \param Array The TOML array to load from.

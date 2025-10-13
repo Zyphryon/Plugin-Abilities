@@ -12,7 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatCategory.hpp"
 #include "StatFormula.hpp"
 #include "StatProxy.hpp"
 
@@ -181,9 +180,9 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            mBase.Traverse(Action, StatProxy::Origin::Both);
-            mMinimum.Traverse(Action, StatProxy::Origin::Both);
-            mMaximum.Traverse(Action, StatProxy::Origin::Both);
+            mBase.Traverse(Action, StatOrigin::Source);
+            mMinimum.Traverse(Action, StatOrigin::Source);
+            mMaximum.Traverse(Action, StatOrigin::Source);
 
             if (mFormula)
             {

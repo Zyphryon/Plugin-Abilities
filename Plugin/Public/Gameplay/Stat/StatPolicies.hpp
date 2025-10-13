@@ -26,4 +26,12 @@ namespace Gameplay
         Formula,    ///< A stat that is calculated using a formula.
         Resource,   ///< A resource stat that can be consumed or regenerated (e.g., health, mana).
     };
+
+    /// \brief Enumeration defining the origin context of a stat.
+    enum class StatOrigin : UInt8
+    {
+        Source, ///< The stat originates from the source context.
+        Target, ///< The stat originates from the target context.
+        Both,   ///< The stat can originate from either context.
+    };
 }

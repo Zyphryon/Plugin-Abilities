@@ -13,6 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "StatEvaluator.hpp"
+#include "StatPolicies.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -33,14 +34,6 @@ namespace Gameplay
             Formula, ///< A formula to compute the stat value.
         };
 
-        /// \brief Enumeration defining the origin context of the stat.
-        enum class Origin : UInt8
-        {
-            Source, ///< The stat originates from the source context.
-            Target, ///< The stat originates from the target context.
-            Both,   ///< The stat can originate from either context.
-        };
-
         /// \brief Enumeration defining how the stat value should be resolved.
         enum class Resolution : UInt8
         {
@@ -55,7 +48,7 @@ namespace Gameplay
             StatHandle Handle;
 
             /// \brief Context of the referenced stat.
-            Origin     Origin      = Origin::Target;
+            StatOrigin Origin      = StatOrigin::Target;
 
             /// \brief How the stat should be resolved (live or snapshot).
             Resolution Resolution  = Resolution::Snapshot;
@@ -71,7 +64,7 @@ namespace Gameplay
                 Handle      = Array.GetInteger(1);
                 Coefficient = Array.GetReal(2);
                 Resolution  = Enum::Cast(Array.GetString(3), Resolution::Snapshot);
-                Origin      = Enum::Cast(Array.GetString(4), Origin::Target);
+                Origin      = Enum::Cast(Array.GetString(4), StatOrigin::Target);
             }
 
             /// \brief Saves the reference data to a TOML array.
@@ -105,7 +98,7 @@ namespace Gameplay
         /// \param Origin      The origin context of the referenced stat.
         /// \param Resolution  How the stat should be resolved.
         /// \param Coefficient The coefficient to apply when referencing the stat.
-        ZYPHRYON_INLINE explicit StatProxy(StatHandle Handle, Origin Origin, Resolution Resolution, Real32 Coefficient)
+        ZYPHRYON_INLINE explicit StatProxy(StatHandle Handle, StatOrigin Origin, Resolution Resolution, Real32 Coefficient)
             : mContainer { Reference { Handle, Origin, Resolution, Coefficient } }
         {
         }
@@ -139,9 +132,9 @@ namespace Gameplay
         /// \brief Retrieves the origin of the referenced stat if the proxy holds a reference.
         ///
         /// \return The origin of the referenced stat (if holds a reference), or `Both` otherwise.
-        ZYPHRYON_INLINE Origin GetOrigin() const
+        ZYPHRYON_INLINE StatOrigin GetOrigin() const
         {
-            return (GetKind() == Kind::Ref ? GetData<Reference>().Origin : Origin::Both);
+            return (GetKind() == Kind::Ref ? GetData<Reference>().Origin : StatOrigin::Both);
         }
 
         /// \brief Retrieves the resolution mode of the referenced stat if the proxy holds a reference.
@@ -180,11 +173,11 @@ namespace Gameplay
 
                 switch (Data.Origin)
                 {
-                case Origin::Source:
+                case StatOrigin::Source:
                     return Source.GetStat(Data.Handle) * Data.Coefficient;
-                case Origin::Target:
+                case StatOrigin::Target:
                     return Target.GetStat(Data.Handle) * Data.Coefficient;
-                case Origin::Both:
+                case StatOrigin::Both:
                     break;
                 }
             }
@@ -201,7 +194,7 @@ namespace Gameplay
         /// \param Action The action to apply to each dependency.
         /// \param Origin The origin context of dependencies to consider.
         template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, Origin Origin) const
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
         {
             switch (GetKind())
             {
@@ -209,7 +202,7 @@ namespace Gameplay
                 {
                     ConstRef<Reference> Data = GetData<Reference>();
 
-                    if (Origin == Origin::Both || Data.Origin == Origin)
+                    if (Origin == StatOrigin::Both || Data.Origin == Origin)
                     {
                         Action(Data.Handle);
                     }
@@ -219,7 +212,7 @@ namespace Gameplay
                 {
                     ConstTracker<StatEvaluator> Data = GetData<Tracker<StatEvaluator>>();
 
-                    if (Origin == Origin::Both || Origin == Origin::Source)
+                    if (Origin == StatOrigin::Both || Origin == StatOrigin::Source)
                     {
                         for (const StatHandle Dependency : Data->GetSourceDependencies())
                         {
@@ -227,7 +220,7 @@ namespace Gameplay
                         }
                     }
 
-                    if (Origin == Origin::Both || Origin == Origin::Target)
+                    if (Origin == StatOrigin::Both || Origin == StatOrigin::Target)
                     {
                         for (const StatHandle Dependency : Data->GetTargetDependencies())
                         {

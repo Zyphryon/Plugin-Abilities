@@ -20,8 +20,8 @@
 
 namespace Gameplay
 {
-    /// \brief Enumeration defining the duration type of an effect.
-    enum class EffectDuration : UInt8
+    /// \brief Enumeration defining the category of an effect.
+    enum class EffectCategory : UInt8
     {
         Instant,     ///< The effect is applied instantly and does not persist.
         Temporary,   ///< The effect lasts for a specified duration before expiring.
