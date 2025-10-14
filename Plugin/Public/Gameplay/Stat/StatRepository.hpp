@@ -26,7 +26,7 @@ namespace Gameplay
     public:
 
         /// \brief Maximum number of stat archetypes that can be registered.
-        static constexpr UInt32 kMaxArchetypes = 512;   // TODO: Investigate if this is a good limit.
+        static constexpr UInt32 kMaxArchetypes = 512;   // TODO: Macro Configurable
 
     public:
 
@@ -84,6 +84,17 @@ namespace Gameplay
         ///
         /// \param Parser The TOML resource to save stat archetype definitions into.
         void Save(Ref<TOMLParser> Parser) const;
+
+    public:
+
+        /// \brief Retrieves the singleton instance of the repository.
+        ///
+        /// \return A reference to the singleton repository instance.
+        static Ref<StatRepository> Instance()
+        {
+            static StatRepository Singleton;
+            return Singleton;
+        }
 
     private:
 

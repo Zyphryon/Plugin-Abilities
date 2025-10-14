@@ -29,7 +29,7 @@ namespace Gameplay
         /// \brief Constructs an effect instance with default values.
         ZYPHRYON_INLINE Effect()
             : mArchetype  { nullptr },
-              mID         { 0 },
+              mHandle     { 0 },
               mStack      { 0 },
               mDuration   { 0 },
               mPeriod     { 0 },
@@ -44,7 +44,7 @@ namespace Gameplay
         /// \param Archetype The archetype defining the effect's properties.
         ZYPHRYON_INLINE explicit Effect(ConstRef<EffectArchetype> Archetype)
             : mArchetype  { & Archetype },
-              mID         { 0 },
+              mHandle     { 0 },
               mStack      { 1 },
               mDuration   { 0 },
               mPeriod     { 0 },
@@ -57,7 +57,15 @@ namespace Gameplay
         /// \brief Destruct an effect instance.
         ZYPHRYON_INLINE ~Effect()
         {
-            mID = 0;
+            mHandle.Reset();
+        }
+
+        /// \brief Checks if the effect instance has a valid handle.
+        ///
+        /// \return `true` if the effect instance is valid, `false` otherwise.
+        ZYPHRYON_INLINE Bool IsValid() const
+        {
+            return mHandle.IsValid();
         }
 
         /// \brief Retrieves the archetype associated with this effect instance.
@@ -70,18 +78,18 @@ namespace Gameplay
 
         /// \brief Sets the unique identifier for this effect instance.
         ///
-        /// \param ID The unique identifier to assign.
-        ZYPHRYON_INLINE void SetID(UInt32 ID)
+        /// \param Handle The unique identifier to assign.
+        ZYPHRYON_INLINE void SetHandle(EffectHandle Handle)
         {
-            mID = ID;
+            mHandle = Handle;
         }
 
         /// \brief Retrieves the unique identifier of this effect instance.
         ///
-        /// \return The unique effect ID.
-        ZYPHRYON_INLINE UInt32 GetID() const
+        /// \return The effect handle.
+        ZYPHRYON_INLINE EffectHandle GetHandle() const
         {
-            return mID;
+            return mHandle;
         }
 
         /// \brief Sets the current stack count of the effect.
@@ -210,7 +218,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         ConstPtr<EffectArchetype> mArchetype;
-        UInt16                    mID;
+        EffectHandle              mHandle;
         UInt16                    mStack;
         Real32                    mDuration;
         Real32                    mPeriod;
