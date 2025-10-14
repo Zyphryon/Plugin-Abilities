@@ -37,6 +37,28 @@ namespace Gameplay
         {
         }
 
+        /// \brief Constructs a stat archetype by loading data from a TOML section.
+        ///
+        /// \param Section The TOML section to load from.
+        ZYPHRYON_INLINE StatArchetype(TOMLSection Section)
+        {
+            Load(Section);
+        }
+
+        /// \brief Destruct a stat archetype.
+        ZYPHRYON_INLINE ~StatArchetype()
+        {
+            mHandle.Reset();
+        }
+
+        /// \brief Checks if the stat archetype has a valid handle.
+        ///
+        /// \return `true` if the stat archetype is valid, `false` otherwise.
+        ZYPHRYON_INLINE Bool IsValid() const
+        {
+            return mHandle.IsValid();
+        }
+
         /// \brief Sets the unique handle for this stat archetype.
         ///
         /// \param Handle The unique stat handle to assign.
@@ -88,7 +110,7 @@ namespace Gameplay
         /// \brief Sets the base value for this stat archetype.
         ///
         /// \param Base The base value to assign.
-        ZYPHRYON_INLINE void SetBase(StatProxy Base)
+        ZYPHRYON_INLINE void SetBase(ConstRef<StatProxy> Base)
         {
             mBase = Base;
         }
@@ -104,7 +126,7 @@ namespace Gameplay
         /// \brief Sets the minimum value for this stat archetype.
         ///
         /// \param Minimum The minimum value to assign.
-        ZYPHRYON_INLINE void SetMinimum(StatProxy Minimum)
+        ZYPHRYON_INLINE void SetMinimum(ConstRef<StatProxy> Minimum)
         {
             mMinimum = Minimum;
         }
@@ -120,7 +142,7 @@ namespace Gameplay
         /// \brief Sets the maximum value for this stat archetype.
         ///
         /// \param Maximum The maximum value to assign.
-        ZYPHRYON_INLINE void SetMaximum(StatProxy Maximum)
+        ZYPHRYON_INLINE void SetMaximum(ConstRef<StatProxy> Maximum)
         {
             mMaximum = Maximum;
         }

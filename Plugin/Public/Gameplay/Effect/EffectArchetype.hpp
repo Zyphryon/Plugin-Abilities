@@ -42,6 +42,28 @@ namespace Gameplay
         {
         }
 
+        /// \brief Constructs an effect archetype by loading data from a TOML section.
+        ///
+        /// \param Section The TOML section to load from.
+        ZYPHRYON_INLINE EffectArchetype(TOMLSection Section)
+        {
+            Load(Section);
+        }
+
+        /// \brief Destruct an effect archetype.
+        ZYPHRYON_INLINE ~EffectArchetype()
+        {
+            mHandle.Reset();
+        }
+
+        /// \brief Checks if the effect archetype has a valid handle.
+        ///
+        /// \return `true` if the effect archetype is valid, `false` otherwise.
+        ZYPHRYON_INLINE Bool IsValid() const
+        {
+            return mHandle.IsValid();
+        }
+
         /// \brief Sets the unique handle for this effect archetype.
         ///
         /// \param Handle The unique effect handle to assign.
@@ -74,6 +96,53 @@ namespace Gameplay
             return mName;
         }
 
+        /// \brief Sets the total duration of the effect.
+        ///
+        /// \param Duration The duration to assign.
+        ZYPHRYON_INLINE void SetDuration(ConstRef<StatProxy> Duration)
+        {
+            mDuration = Duration;
+        }
+
+        /// \brief Retrieves the total duration of the effect.
+        ///
+        /// \return The effect duration.
+        ZYPHRYON_INLINE StatProxy GetDuration() const
+        {
+            return mDuration;
+        }
+
+        /// \brief Sets the period between effect applications.
+        ///
+        /// \param Period The period to assign.
+        ZYPHRYON_INLINE void SetPeriod(ConstRef<StatProxy> Period)
+        {
+            mPeriod = Period;
+        }
+
+        /// \brief Retrieves the period between effect applications.
+        ///
+        /// \return The effect period.
+        ZYPHRYON_INLINE StatProxy GetPeriod() const
+        {
+            return mPeriod;
+        }
+
+        /// \brief Sets the maximum number of stacks for the effect.
+        ///
+        /// \param Limit The stack limit to assign.
+        ZYPHRYON_INLINE void SetLimit(ConstRef<StatProxy> Limit)
+        {
+            mLimit = Limit;
+        }
+
+        /// \brief Retrieves the maximum number of stacks for the effect.
+        ///
+        /// \return The effect stack limit.
+        ZYPHRYON_INLINE StatProxy GetLimit() const
+        {
+            return mLimit;
+        }
 
         /// \brief Sets the category of the effect archetype.
         ///
@@ -94,7 +163,7 @@ namespace Gameplay
         /// \brief Sets the expiration policy for this effect.
         ///
         /// \param Policy The expiration policy to assign.
-        ZYPHRYON_INLINE void SetExpirationPolicy(EffectExpiration Policy)
+        ZYPHRYON_INLINE void SetExpiration(EffectExpiration Policy)
         {
             mExpiration = Policy;
         }
@@ -102,7 +171,7 @@ namespace Gameplay
         /// \brief Retrieves the expiration policy of this effect.
         ///
         /// \return The effect expiration policy.
-        ZYPHRYON_INLINE EffectExpiration GetExpirationPolicy() const
+        ZYPHRYON_INLINE EffectExpiration GetExpiration() const
         {
             return mExpiration;
         }
@@ -110,7 +179,7 @@ namespace Gameplay
         /// \brief Sets the refresh policy for this effect.
         ///
         /// \param Policy The refresh policy to assign.
-        ZYPHRYON_INLINE void SetRefreshPolicy(EffectRefresh Policy)
+        ZYPHRYON_INLINE void SetRefresh(EffectRefresh Policy)
         {
             mRefresh = Policy;
         }
@@ -118,7 +187,7 @@ namespace Gameplay
         /// \brief Retrieves the refresh policy of this effect.
         ///
         /// \return The effect refresh policy.
-        ZYPHRYON_INLINE EffectRefresh GetRefreshPolicy() const
+        ZYPHRYON_INLINE EffectRefresh GetRefresh() const
         {
             return mRefresh;
         }
@@ -126,7 +195,7 @@ namespace Gameplay
         /// \brief Sets the resolution policy for this effect.
         ///
         /// \param Policy The resolution policy to assign.
-        ZYPHRYON_INLINE void SetResolutionPolicy(EffectResolution Policy)
+        ZYPHRYON_INLINE void SetResolution(EffectResolution Policy)
         {
             mResolution = Policy;
         }
@@ -134,7 +203,7 @@ namespace Gameplay
         /// \brief Retrieves the resolution policy of this effect.
         ///
         /// \return The effect resolution policy.
-        ZYPHRYON_INLINE EffectResolution GetResolutionPolicy() const
+        ZYPHRYON_INLINE EffectResolution GetResolution() const
         {
             return mResolution;
         }
@@ -142,7 +211,7 @@ namespace Gameplay
         /// \brief Sets the scaling policy for this effect.
         ///
         /// \param Policy The scaling policy to assign.
-        ZYPHRYON_INLINE void SetStackPolicy(EffectStack Policy)
+        ZYPHRYON_INLINE void SetStack(EffectStack Policy)
         {
             mStack = Policy;
         }
@@ -150,7 +219,7 @@ namespace Gameplay
         /// \brief Retrieves the scaling policy of this effect.
         ///
         /// \return The effect scaling policy.
-        ZYPHRYON_INLINE EffectStack GetStackPolicy() const
+        ZYPHRYON_INLINE EffectStack GetStack() const
         {
             return mStack;
         }

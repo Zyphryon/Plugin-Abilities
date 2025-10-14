@@ -25,6 +25,12 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Default constructor, initializes the effect handle with ID 0.
+        ZYPHRYON_INLINE constexpr EffectHandle()
+            : mID { 0 }
+        {
+        }
+
         /// \brief Construct a effect handle with given ID.
         ///
         /// \param ID The unique identifier for the effect.
@@ -34,12 +40,26 @@ namespace Gameplay
         {
         }
 
+        /// \brief Check if the effect handle is valid (non-zero ID).
+        ///
+        /// \return `true` if the effect handle is valid, `false` otherwise.
+        ZYPHRYON_INLINE constexpr Bool IsValid() const
+        {
+            return mID != 0;
+        }
+
         /// \brief Retrieve the unique identifier of the effect handle.
         ///
         /// \return The unique effect ID.
         ZYPHRYON_INLINE constexpr UInt16 GetID() const
         {
             return mID;
+        }
+
+        /// \brief Reset the effect handle to an invalid state.
+        ZYPHRYON_INLINE constexpr void Reset()
+        {
+            mID = 0;
         }
 
         /// \brief Check equality between two effect handles.

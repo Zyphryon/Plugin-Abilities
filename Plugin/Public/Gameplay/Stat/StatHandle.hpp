@@ -56,6 +56,12 @@ namespace Gameplay
             return mID;
         }
 
+        /// \brief Reset the stat handle to an invalid state.
+        ZYPHRYON_INLINE constexpr void Reset()
+        {
+            mID = 0;
+        }
+
         /// \brief Check equality between two stat handles.
         ZYPHRYON_INLINE constexpr Bool operator==(StatHandle Other) const
         {
