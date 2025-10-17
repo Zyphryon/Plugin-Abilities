@@ -25,7 +25,7 @@ namespace Gameplay
     {
         mHandle   = Section.GetInteger("ID");
         mName     = Section.GetString("Name");
-        mCategory = Enum::Cast(Section.GetString("Category"), StatCategory::Formula);
+        mCategory = Enum::Cast(Section.GetString("Category"), StatCategory::Attribute);
         mBase.Load(Section.GetArray("Base"));
         mMinimum.Load(Section.GetArray("Minimum"));
         mMaximum.Load(Section.GetArray("Maximum"));

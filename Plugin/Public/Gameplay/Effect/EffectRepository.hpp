@@ -52,25 +52,25 @@ namespace Gameplay
             mArchetypes.Free(Archetype.GetHandle().GetID());
         }
 
-        /// \brief Fetches a effect archetype by its handle.
-        ///
-        /// \param Handle The handle of the effect archetype to fetch.
-        /// \return The effect archetype associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<EffectArchetype> Fetch(EffectHandle Handle) const
-        {
-            return mArchetypes[Handle.GetID()];
-        }
-
         /// \brief Clears all effect archetypes from the repository.
         ZYPHRYON_INLINE void Clear()
         {
             mArchetypes.Clear();
         }
 
+        /// \brief Fetches a effect archetype by its handle.
+        ///
+        /// \param Handle The handle of the effect archetype to fetch.
+        /// \return The effect archetype associated with the given handle.
+        ZYPHRYON_INLINE ConstRef<EffectArchetype> Get(EffectHandle Handle) const
+        {
+            return mArchetypes[Handle.GetID()];
+        }
+
         /// \brief Retrieves all registered effect archetypes.
         ///
         /// \return A span containing all effect archetypes.
-        ZYPHRYON_INLINE ConstSpan<EffectArchetype> GetArchetypes() const
+        ZYPHRYON_INLINE ConstSpan<EffectArchetype> GetAll() const
         {
             return mArchetypes.GetSpan();
         }

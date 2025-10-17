@@ -26,7 +26,7 @@ namespace Gameplay
     public:
 
         /// \brief Maximum number of stat archetypes that can be registered.
-        static constexpr UInt32 kMaxArchetypes = 512;   // TODO: Macro Configurable
+        static constexpr UInt32 kMaxArchetypes = 256;   // TODO: Macro Configurable
 
     public:
 
@@ -52,25 +52,25 @@ namespace Gameplay
             mArchetypes.Free(Archetype.GetHandle().GetID());
         }
 
-        /// \brief Fetches a stat archetype by its handle.
-        ///
-        /// \param Handle The handle of the stat archetype to fetch.
-        /// \return The stat archetype associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<StatArchetype> Fetch(StatHandle Handle) const
-        {
-            return mArchetypes[Handle.GetID()];
-        }
-
         /// \brief Clears all stat archetypes from the repository.
         ZYPHRYON_INLINE void Clear()
         {
             mArchetypes.Clear();
         }
 
+        /// \brief Fetches a stat archetype by its handle.
+        ///
+        /// \param Handle The handle of the stat archetype to fetch.
+        /// \return The stat archetype associated with the given handle.
+        ZYPHRYON_INLINE ConstRef<StatArchetype> Get(StatHandle Handle) const
+        {
+            return mArchetypes[Handle.GetID()];
+        }
+
         /// \brief Retrieves all registered stat archetypes.
         ///
         /// \return A span containing all stat archetypes.
-        ZYPHRYON_INLINE ConstSpan<StatArchetype> GetArchetypes() const
+        ZYPHRYON_INLINE ConstSpan<StatArchetype> GetAll() const
         {
             return mArchetypes.GetSpan();
         }

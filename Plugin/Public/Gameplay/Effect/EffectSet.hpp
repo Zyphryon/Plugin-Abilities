@@ -29,7 +29,7 @@ namespace Gameplay
         static constexpr UInt32 kMaxInstances = 256;    // TODO: Macro Configurable
 
         /// \brief Events that can occur within the effect set.
-        enum class Event
+        enum class Event : UInt8
         {
             Insert,     ///< A new effect instance has been inserted.
             Update,     ///< An existing effect instance has been updated.
@@ -106,6 +106,14 @@ namespace Gameplay
         ZYPHRYON_INLINE ConstRef<Effect> Fetch(EffectHandle Handle) const
         {
             return mRegistry[Handle.GetID()];
+        }
+
+        /// \brief Activates a timed effect instance in the set.
+        ///
+        /// \param Instance The effect instance to activate.
+        ZYPHRYON_INLINE void Activate(Ref<Effect> Instance)
+        {
+            mActives.insert(FindBestPosition(Instance), Instance.GetHandle());
         }
 
         /// \brief Activates or updates a timed effect instance in the set.

@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Stat.hpp"
+#include "StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -20,91 +20,99 @@
 
 namespace Gameplay
 {
-    /// \brief Represents a modifier that can be applied to a stat, altering its value based on defined rules.
+    /// \brief Represents a modifier that can be applied to a stat.
     class StatModifier final
     {
     public:
 
-        /// \brief Enumeration defining the type of action the modifier performs on the stat.
-        enum class Action : UInt8
-        {
-            Flat,           ///< Directly adds or subtracts a flat value to/from the stat.
-            Additive,       ///< Adds or subtracts a percentage to/from the stat (e.g., +0.2 for +20%).
-            Multiplicative, ///< Multiplies the stat by a factor (e.g., x1.5 for 50% increase).
-            Divide,         ///< Divides the stat by a factor (e.g., /1.5 for 33% decrease).
-            Override,       ///< Overrides the stat value entirely.
-        };
-
-    public:
-
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE StatModifier()
-            : mTarget    { 0 },
-              mAction    { Action::Flat },
-              mMagnitude { 0.0f }
+            : mTarget     { 0 },
+              mEvaluation { StatEvaluation::Snapshot },
+              mOperator   { StatOperator::Flat },
+              mMagnitude  { 0.0f }
         {
         }
 
-        /// \brief Constructs a stat modifier with specified target, action, and magnitude.
+        /// \brief Constructs a stat modifier with specified parameters.
         ///
-        /// \param Target    The stat handle that this modifier targets.
-        /// \param Effect    The action type of the modifier (Flat, Additive, Multiplicative).
-        /// \param Magnitude The magnitude of the modifier's effect.
-        ZYPHRYON_INLINE StatModifier(StatHandle Target, Action Effect, AnyRef<StatProxy> Magnitude)
-            : mTarget    { Target },
-              mAction    { Effect },
-              mMagnitude { Move(Magnitude) }
+        /// \param Target     The target stat handle.
+        /// \param Evaluation The evaluation method for the modifier.
+        /// \param Operator   The operator type for the modifier.
+        /// \param Magnitude  The magnitude of the modifier.
+        ZYPHRYON_INLINE StatModifier(StatHandle Target, StatEvaluation Evaluation, StatOperator Operator, StatInput Magnitude)
+            : mTarget     { Target },
+              mEvaluation { Evaluation },
+              mOperator   { Operator },
+              mMagnitude  { Move(Magnitude) }
         {
-            LOG_ASSERT(Target.IsValid(), "Target stat handle must be valid.");
         }
 
-        /// \brief Retrieves the target stat handle that this modifier affects.
+        /// \brief Sets the target stat handle for this modifier.
         ///
-        /// \return The target stat handle.
+        /// \param Handle The stat handle to set as the target.
+        ZYPHRYON_INLINE void SetTarget(StatHandle Handle)
+        {
+            mTarget = Handle;
+        }
+
+        /// \brief Retrieves the target stat handle for this modifier.
+        ///
+        /// \return The stat handle that is the target of this modifier.
         ZYPHRYON_INLINE StatHandle GetTarget() const
         {
             return mTarget;
         }
 
-        /// \brief Retrieves the action type of this modifier.
+        /// \brief Sets the evaluation method for this modifier.
         ///
-        /// \return The action type (Flat, Additive, Multiplicative).
-        ZYPHRYON_INLINE Action GetAction() const
+        /// \param Evaluation The evaluation method to assign.
+        ZYPHRYON_INLINE void SetEvaluation(StatEvaluation Evaluation)
         {
-            return mAction;
+            mEvaluation = Evaluation;
         }
 
-        /// \brief Retrieves the magnitude of this modifier's effect.
+        /// \brief Retrieves the evaluation method for this modifier.
         ///
-        /// \return The magnitude value.
-        ZYPHRYON_INLINE ConstRef<StatProxy> GetMagnitude() const
+        /// \return The evaluation method of this modifier.
+        ZYPHRYON_INLINE StatEvaluation GetEvaluation() const
+        {
+            return mEvaluation;
+        }
+
+        /// \brief Sets the operator type for this modifier.
+        ///
+        /// \param Operator The operator type to assign.
+        ZYPHRYON_INLINE void SetOperator(StatOperator Operator)
+        {
+            mOperator = Operator;
+        }
+
+        /// \brief Retrieves the operator type for this modifier.
+        ///
+        /// \return The operator type of this modifier.
+        ZYPHRYON_INLINE StatOperator GetOperator() const
+        {
+            return mOperator;
+        }
+
+        /// \brief Sets the magnitude of the modifier.
+        ///
+        /// \param Magnitude The magnitude value to assign.
+        ZYPHRYON_INLINE void SetMagnitude(StatInput Magnitude)
+        {
+            mMagnitude = Move(Magnitude);
+        }
+
+        /// \brief Retrieves the magnitude of the modifier.
+        ///
+        /// \return The magnitude value of the modifier.
+        ZYPHRYON_INLINE ConstRef<StatInput> GetMagnitude() const
         {
             return mMagnitude;
         }
 
-        /// \brief Applies the modifier to the specified stat based on the target context and intensity.
-        ///
-        /// \param Target    The context providing access to stats.
-        /// \param Stat      The stat to modify.
-        /// \param Intensity A multiplier to scale the effect of the modifier.
-        template<typename Context>
-        ZYPHRYON_INLINE void Apply(ConstRef<Context> Target, Ref<Stat> Stat, Real32 Intensity) const
-        {
-            Modify<true>(Target, Stat, Intensity);
-        }
-
-        /// \brief Reverts the modifier's effect on the specified stat based on the target context and intensity.
-        ///
-        /// \param Target    The context providing access to stats.
-        /// \param Stat      The stat to revert.
-        /// \param Intensity A multiplier to scale the effect of the modifier.
-        template<typename Context>
-        ZYPHRYON_INLINE void Revert(ConstRef<Context> Target, Ref<Stat> Stat, Real32 Intensity) const
-        {
-            Modify<false>(Target, Stat, Intensity);
-        }
-
-        /// \brief Iterates over all dependencies referenced by this modifier.
+        /// \brief Iterates over all dependencies referenced by the modifier.
         ///
         /// \param Action The action to apply to each dependency.
         /// \param Origin The origin context of dependencies to consider.
@@ -114,77 +122,26 @@ namespace Gameplay
             mMagnitude.Traverse(Action, Origin);
         }
 
-        /// \brief Loads the modifier data from a TOML array.
+        /// \brief Loads the stat modifier data from a TOML array.
         ///
         /// \param Array The TOML array to load from.
-        void Load(TOMLArray Array);
+        ZYPHRYON_INLINE void Load(TOMLArray Array)
+        {
+            mTarget     = Array.GetInteger(0);
+            mEvaluation = Enum::Cast(Array.GetString(1), StatEvaluation::Snapshot);
+            mOperator   = Enum::Cast(Array.GetString(2), StatOperator::Flat);
+            mMagnitude.Load(Array.GetArray(3));
+        }
 
-        /// \brief Saves the modifier data to a TOML array.
+        /// \brief Saves the stat modifier data to a TOML array.
         ///
         /// \param Array The TOML array to save to.
-        void Save(TOMLArray Array) const;
-
-    private:
-
-        /// \brief Modifies the stat based on the action type and whether to apply or revert the effect.
-        ///
-        /// \param Target    The context providing access to stats.
-        /// \param Stat      The stat to modify.
-        /// \param Intensity A multiplier to scale the effect of the modifier.
-        template<Bool Apply, typename Context>
-        ZYPHRYON_INLINE void Modify(ConstRef<Context> Target, Ref<Stat> Stat, Real32 Intensity) const
+        ZYPHRYON_INLINE void Save(TOMLArray Array) const
         {
-            const Real32 Amount = mMagnitude.Resolve(Target) * Intensity;
-
-            switch (Stat.GetArchetype()->GetCategory())
-            {
-            case StatCategory::Resource:
-                switch (mAction)
-                {
-                case Action::Flat:
-                    Stat.SetEffective(Target, Stat.GetEffective() + (Apply ? Amount : -Amount));
-                    break;
-                case Action::Additive:
-                    Stat.SetEffective(Target, Stat.GetEffective() * (Apply ? 1.0f + Amount : 1.0f / (1.0f + Amount)));
-                    break;
-                case Action::Multiplicative:
-                    Stat.SetEffective(Target, Stat.GetEffective() * (Apply ? Amount : 1.0f / Amount));
-                    break;
-                case Action::Divide:
-                    Stat.SetEffective(Target, Stat.GetEffective() * (Apply ? 1.0f / Amount : Amount));
-                    break;
-                case Action::Override:
-                    if constexpr (Apply)
-                    {
-                        Stat.SetEffective(Target, Amount);
-                    }
-                    break;
-                }
-                break;
-            case StatCategory::Formula:
-                switch (mAction)
-                {
-                case Action::Flat:
-                    Stat.SetFlat(Stat.GetFlat() + (Apply ? Amount : -Amount));
-                    break;
-                case Action::Additive:
-                    Stat.SetAdditive(Stat.GetAdditive() + (Apply ? Amount : -Amount));
-                    break;
-                case Action::Multiplicative:
-                    Stat.SetMultiplier(Stat.GetMultiplier() * (Apply ? Amount : 1.0f / Amount));
-                    break;
-                case Action::Divide:
-                    Stat.SetMultiplier(Stat.GetMultiplier() * (Apply ? 1.0f / Amount : Amount));
-                    break;
-                case Action::Override:
-                    if constexpr (Apply)
-                    {
-                        Stat.SetEffective(Target, Amount);
-                    }
-                    break;
-                }
-                break;
-            }
+            Array.AddInteger(mTarget.GetID());
+            Array.AddString(Enum::GetName(mEvaluation));
+            Array.AddString(Enum::GetName(mOperator));
+            mMagnitude.Save(Array);
         }
 
     private:
@@ -192,8 +149,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        StatHandle mTarget;
-        Action     mAction;
-        StatProxy  mMagnitude;
+        StatHandle     mTarget;
+        StatEvaluation mEvaluation;
+        StatOperator   mOperator;
+        StatInput      mMagnitude;
     };
 }

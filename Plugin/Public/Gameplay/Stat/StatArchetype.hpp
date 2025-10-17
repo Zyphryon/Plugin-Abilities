@@ -13,7 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "StatFormula.hpp"
-#include "StatProxy.hpp"
+#include "StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,7 +29,7 @@ namespace Gameplay
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE StatArchetype()
             : mHandle   { 0 },
-              mCategory { StatCategory::Formula },
+              mCategory { StatCategory::Attribute },
               mBase     { 0.0f },
               mMinimum  { 0.0f },
               mMaximum  { 0.0f },
@@ -110,15 +110,15 @@ namespace Gameplay
         /// \brief Sets the base value for this stat archetype.
         ///
         /// \param Base The base value to assign.
-        ZYPHRYON_INLINE void SetBase(ConstRef<StatProxy> Base)
+        ZYPHRYON_INLINE void SetBase(StatInput Base)
         {
-            mBase = Base;
+            mBase = Move(Base);
         }
 
         /// \brief Retrieves the base value of this stat archetype.
         ///
         /// \return The base value.
-        ZYPHRYON_INLINE StatProxy GetBase() const
+        ZYPHRYON_INLINE ConstRef<StatInput> GetBase() const
         {
             return mBase;
         }
@@ -126,15 +126,15 @@ namespace Gameplay
         /// \brief Sets the minimum value for this stat archetype.
         ///
         /// \param Minimum The minimum value to assign.
-        ZYPHRYON_INLINE void SetMinimum(ConstRef<StatProxy> Minimum)
+        ZYPHRYON_INLINE void SetMinimum(StatInput Minimum)
         {
-            mMinimum = Minimum;
+            mMinimum = Move(Minimum);
         }
 
         /// \brief Gets the minimum value of this stat archetype.
         ///
         /// \return The minimum value.
-        ZYPHRYON_INLINE StatProxy GetMinimum() const
+        ZYPHRYON_INLINE ConstRef<StatInput> GetMinimum() const
         {
             return mMinimum;
         }
@@ -142,15 +142,15 @@ namespace Gameplay
         /// \brief Sets the maximum value for this stat archetype.
         ///
         /// \param Maximum The maximum value to assign.
-        ZYPHRYON_INLINE void SetMaximum(ConstRef<StatProxy> Maximum)
+        ZYPHRYON_INLINE void SetMaximum(StatInput Maximum)
         {
-            mMaximum = Maximum;
+            mMaximum = Move(Maximum);
         }
 
         /// \brief Gets the maximum value of this stat archetype.
         ///
         /// \return The maximum value.
-        ZYPHRYON_INLINE StatProxy GetMaximum() const
+        ZYPHRYON_INLINE ConstRef<StatInput> GetMaximum() const
         {
             return mMaximum;
         }
@@ -202,9 +202,9 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            mBase.Traverse(Action, StatOrigin::Source);
-            mMinimum.Traverse(Action, StatOrigin::Source);
-            mMaximum.Traverse(Action, StatOrigin::Source);
+            mBase.Traverse(Action, StatOrigin::Target);
+            mMinimum.Traverse(Action, StatOrigin::Target);
+            mMaximum.Traverse(Action, StatOrigin::Target);
 
             if (mFormula)
             {
@@ -241,9 +241,9 @@ namespace Gameplay
         StatHandle           mHandle;
         Str8                 mName;
         StatCategory         mCategory;
-        StatProxy            mBase;
-        StatProxy            mMinimum;
-        StatProxy            mMaximum;
+        StatInput            mBase;
+        StatInput            mMinimum;
+        StatInput            mMaximum;
         Tracker<StatFormula> mFormula;
     };
 }

@@ -25,6 +25,48 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Type alias for the delegate used to notify observers of stat changes.
+        using OnChangeDelegate  = Delegate<void(StatHandle), DelegateInlineSize::Small>;
+
+        /// \brief Type alias for the signal used to notify observers of stat changes.
+        using OnChangeDelegates = MulticastDelegate<void(StatHandle), DelegateInlineSize::Small>;
+
+    public:
+
+        /// \brief Polls the set for any stat changes and notifies observers.
+        ZYPHRYON_INLINE void Poll()
+        {
+            for (const StatHandle Handle : mNotifications)
+            {
+                if (const auto Iterator = mObservers.find(Handle); Iterator != mObservers.end())
+                {
+                    (Iterator->second).Broadcast(Handle);
+                }
+            }
+            mNotifications.clear();
+        }
+
+        /// \brief Inserts an observer for a specific stat.
+        ///
+        /// \param Handle   The handle of the stat to observe.
+        /// \param Observer The delegate to be notified on stat changes.
+        ZYPHRYON_INLINE void InsertObserver(StatHandle Handle, ConstRef<OnChangeDelegate> Observer)
+        {
+            mObservers[Handle].Add(Observer);
+        }
+
+        /// \brief Removes an observer for a specific stat.
+        ///
+        /// \param Handle   The handle of the stat being observed.
+        /// \param Observer The delegate to be removed from notifications.
+        ZYPHRYON_INLINE void RemoveObserver(StatHandle Handle, ConstRef<OnChangeDelegate> Observer)
+        {
+            if (const auto Iterator = mObservers.find(Handle); Iterator != mObservers.end())
+            {
+                Iterator->second.Remove(Observer);
+            }
+        }
+
         /// \brief Inserts a dependency relationship between two stats.
         ///
         /// \param Source     The stat that other stats depend on.
@@ -93,6 +135,17 @@ namespace Gameplay
                     }
                 }
             }
+
+            // If there are delegates for the source stat, notify them as well.
+            if (const auto Iterator = mObservers.find(Source); Iterator != mObservers.end())
+            {
+                Ref<OnChangeDelegates> MulticastDelegate = (Iterator->second);
+
+                if (!MulticastDelegate.IsEmpty())
+                {
+                    mNotifications.emplace(Source);
+                }
+            }
         }
 
         /// \brief Attempts to retrieve a stat instance by its handle.
@@ -129,6 +182,9 @@ namespace Gameplay
             // Clear all stats.
             mRegistry.clear();
 
+            // Clear all observers.
+            mObservers.clear();
+
             // Clear all dependencies.
             mDependencies.clear();
         }
@@ -150,7 +206,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<Stat>                          mRegistry;
-        Table<StatHandle, Set<StatHandle>> mDependencies;
+        Set<Stat>                            mRegistry;
+        Table<StatHandle, Set<StatHandle>>   mDependencies;
+        Table<StatHandle, OnChangeDelegates> mObservers;
+        Set<StatHandle>                      mNotifications;
     };
 }

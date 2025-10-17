@@ -23,12 +23,12 @@
 namespace Gameplay
 {
     /// \brief Defines a formula for calculating the final value of a stat.
-    class StatFormula : public Trackable
+    class StatFormula : public Trackable<StatFormula>
     {
     public:
 
         /// \brief Maximum number of dependencies a formula can have.
-        static constexpr UInt32 kMaxDependencies = 8;
+        static constexpr UInt32 kMaxDependencies = 10;  // TODO: Macro Configurable
 
         /// \brief Structure representing the components of a stat calculation.
         struct Computation final
@@ -43,37 +43,38 @@ namespace Gameplay
                 : Base       { Base },
                   Flat       { Flat },
                   Additive   { Additive },
-                  Multiplier { Multiplier }
+                  Multiplier { Multiplier },
+                  Snapshot   { 0.0f }
             {
             }
 
             /// \brief Populates the snapshots of dependent stat values from the source context.
             ///
             /// \param Target       The context providing access to stats.
-            /// \param Dependencies List of stat handles that this formula depends on.
+            /// \param Dependencies The list of stat handles that this formula depends on.
             template<typename Context>
             ZYPHRYON_INLINE void Populate(ConstRef<Context> Target, ConstSpan<StatHandle> Dependencies)
             {
-                for (const StatHandle Dependency : Dependencies)
+                for (UInt32 Index = 0; Index < Dependencies.size(); ++Index)
                 {
-                    Values.push_back(Target.GetStat(Dependency));
+                    Snapshot[Index] = Target.GetStat(Dependencies[Index]);
                 }
             }
 
             /// \brief The base value of the stat.
-            Real32                           Base;
+            Real32                          Base;
 
             /// \brief The flat modifier to be added to the base.
-            Real32                           Flat;
+            Real32                          Flat;
 
             /// \brief The additive percentage modifier (e.g., 0.2 for +20%).
-            Real32                           Additive;
+            Real32                          Additive;
 
             /// \brief The multiplicative factor to apply (e.g., 1.5 for +50%).
-            Real32                           Multiplier;
+            Real32                          Multiplier;
 
             /// \brief Snapshots of dependent stat values at the time of computation.
-            Vector<Real32, kMaxDependencies> Values;
+            Array<Real32, kMaxDependencies> Snapshot;
         };
 
         /// \brief Type alias for a function that computes a stat value from a `Computation`.
@@ -89,6 +90,8 @@ namespace Gameplay
         {
         }
 
+        /// \brief Destructor for proper cleanup in derived classes.
+        virtual ~StatFormula() = default;
 
         /// \brief Calculates the final value of a stat based on the provided source and target contexts.
         ///

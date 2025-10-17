@@ -23,12 +23,12 @@
 namespace Gameplay
 {
     /// \brief Represents a formula used to calculate the effective value of a stat based on dependencies.
-    class StatEvaluator : public Trackable
+    class StatEvaluator : public Trackable<StatEvaluator>
     {
     public:
 
         /// \brief Maximum number of dependencies a formula can have for source and target each.
-        static constexpr UInt32 kMaxDependencies = 4;
+        static constexpr UInt32 kMaxDependencies = 5;   // TODO: Macro Configurable
 
         /// \brief Structure representing the components of a stat calculation.
         struct Computation final
@@ -36,29 +36,30 @@ namespace Gameplay
             /// \brief Populates the snapshots of dependent stat values from the source and target context.
             ///
             /// \param Source             The context providing access to source stats.
-            /// \param SourceDependencies List of stat handles that this formula depends on from the source.
+            /// \param SourceDependencies The list of stat handles that this formula depends on from the source.
             /// \param Target             The context providing access to target stats.
-            /// \param TargetDependencies List of stat handles that this formula depends on from the target.
+            /// \param TargetDependencies The list of stat handles that this formula depends on from the target.
             template<typename Context>
             ZYPHRYON_INLINE void Populate(
                 ConstRef<Context> Source, ConstSpan<StatHandle> SourceDependencies,
                 ConstRef<Context> Target, ConstSpan<StatHandle> TargetDependencies)
             {
-                for (const StatHandle Dependency : SourceDependencies)
+                for (UInt32 Index = 0; Index < SourceDependencies.size(); ++Index)
                 {
-                    SourceSnapshot.push_back(Source.GetStat(Dependency));
+                    SourceSnapshot[Index] = Source.GetStat(SourceDependencies[Index]);
                 }
-                for (const StatHandle Dependency : TargetDependencies)
+
+                for (UInt32 Index = 0; Index < TargetDependencies.size(); ++Index)
                 {
-                    TargetSnapshot.push_back(Target.GetStat(Dependency));
+                    TargetSnapshot[Index] = Target.GetStat(TargetDependencies[Index]);
                 }
             }
 
             /// \brief Snapshots of source stat values at the time of computation.
-            Vector<Real32, kMaxDependencies> SourceSnapshot;
+            Array<Real32, kMaxDependencies> SourceSnapshot;
 
             /// \brief Snapshots of target stat values at the time of computation.
-            Vector<Real32, kMaxDependencies> TargetSnapshot;
+            Array<Real32, kMaxDependencies> TargetSnapshot;
         };
 
         /// \brief Type alias for a function that computes a stat value from a `Computation`.
@@ -73,6 +74,9 @@ namespace Gameplay
             : mCalculator { Move(Calculator) }
         {
         }
+
+        /// \brief Destructor for proper cleanup in derived classes.
+        virtual ~StatEvaluator() = default;
 
         /// \brief Calculates the final value of a stat based on the provided source and target contexts.
         ///

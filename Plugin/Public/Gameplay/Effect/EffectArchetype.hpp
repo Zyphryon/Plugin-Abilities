@@ -27,6 +27,11 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Maximum number of stat modifiers an effect can have.
+        static constexpr UInt32 kMaxBonuses = 8;    // TODO: Macro Configurable
+
+    public:
+
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE EffectArchetype()
             : mHandle       { 0 },
@@ -99,7 +104,7 @@ namespace Gameplay
         /// \brief Sets the total duration of the effect.
         ///
         /// \param Duration The duration to assign.
-        ZYPHRYON_INLINE void SetDuration(ConstRef<StatProxy> Duration)
+        ZYPHRYON_INLINE void SetDuration(ConstRef<StatInput> Duration)
         {
             mDuration = Duration;
         }
@@ -107,7 +112,7 @@ namespace Gameplay
         /// \brief Retrieves the total duration of the effect.
         ///
         /// \return The effect duration.
-        ZYPHRYON_INLINE StatProxy GetDuration() const
+        ZYPHRYON_INLINE StatInput GetDuration() const
         {
             return mDuration;
         }
@@ -115,7 +120,7 @@ namespace Gameplay
         /// \brief Sets the period between effect applications.
         ///
         /// \param Period The period to assign.
-        ZYPHRYON_INLINE void SetPeriod(ConstRef<StatProxy> Period)
+        ZYPHRYON_INLINE void SetPeriod(ConstRef<StatInput> Period)
         {
             mPeriod = Period;
         }
@@ -123,7 +128,7 @@ namespace Gameplay
         /// \brief Retrieves the period between effect applications.
         ///
         /// \return The effect period.
-        ZYPHRYON_INLINE StatProxy GetPeriod() const
+        ZYPHRYON_INLINE StatInput GetPeriod() const
         {
             return mPeriod;
         }
@@ -131,7 +136,7 @@ namespace Gameplay
         /// \brief Sets the maximum number of stacks for the effect.
         ///
         /// \param Limit The stack limit to assign.
-        ZYPHRYON_INLINE void SetLimit(ConstRef<StatProxy> Limit)
+        ZYPHRYON_INLINE void SetLimit(ConstRef<StatInput> Limit)
         {
             mLimit = Limit;
         }
@@ -139,7 +144,7 @@ namespace Gameplay
         /// \brief Retrieves the maximum number of stacks for the effect.
         ///
         /// \return The effect stack limit.
-        ZYPHRYON_INLINE StatProxy GetLimit() const
+        ZYPHRYON_INLINE StatInput GetLimit() const
         {
             return mLimit;
         }
@@ -280,17 +285,17 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle         mHandle;
-        Str8                 mName;
-        StatProxy            mDuration;
-        StatProxy            mPeriod;
-        StatProxy            mLimit;
-        EffectCategory       mCategory;
-        EffectExpiration     mExpiration;
-        EffectRefresh        mRefresh;
-        EffectResolution     mResolution;
-        EffectStack          mStack;
-        Vector<StatModifier> mBonuses;
+        EffectHandle                      mHandle;
+        Str8                              mName;
+        StatInput                         mDuration;
+        StatInput                         mPeriod;
+        StatInput                         mLimit;
+        EffectCategory                    mCategory;            // TODO: Merge Policy
+        EffectExpiration                  mExpiration;          // TODO: Merge Policy
+        EffectRefresh                     mRefresh;             // TODO: Merge Policy
+        EffectResolution                  mResolution;          // TODO: Merge Policy
+        EffectStack                       mStack;               // TODO: Merge Policy
+        Vector<StatModifier, kMaxBonuses> mBonuses;
 
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags)
         // TODO: Categories (Tags?)

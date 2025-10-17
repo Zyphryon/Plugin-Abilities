@@ -26,6 +26,11 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Defines max number of snapshots an effect can have.
+        static constexpr UInt32 kMaxSnapshots = EffectArchetype::kMaxBonuses;
+
+    public:
+
         /// \brief Constructs an effect instance with default values.
         ZYPHRYON_INLINE Effect()
             : mArchetype  { nullptr },
@@ -35,7 +40,8 @@ namespace Gameplay
               mPeriod     { 0 },
               mIntensity  { 0 },
               mExpiration { 0 },
-              mInterval   { 0 }
+              mInterval   { 0 },
+              mSnapshot   { }
         {
         }
 
@@ -50,7 +56,8 @@ namespace Gameplay
               mPeriod     { 0 },
               mIntensity  { 1.0f },
               mExpiration { 0 },
-              mInterval   { 0 }
+              mInterval   { 0 },
+              mSnapshot   { }
         {
         }
 
@@ -204,6 +211,24 @@ namespace Gameplay
             return mInstigator;
         }
 
+        /// \brief Sets a snapshot value for the effect.
+        ///
+        /// \param Index The index of the snapshot to set.
+        /// \param Value The value to assign to the snapshot.
+        ZYPHRYON_INLINE void SetSnapshot(UInt16 Index, Real32 Value)
+        {
+            mSnapshot[Index] = Value;
+        }
+
+        /// \brief Retrieves a snapshot value for the effect.
+        ///
+        /// \param Index The index of the snapshot to retrieve.
+        /// \return The value of the specified snapshot.
+        ZYPHRYON_INLINE Real32 GetSnapshot(UInt16 Index) const
+        {
+            return mSnapshot[Index];
+        }
+
         /// \brief Generates a hash value for the effect instance based on its archetype.
         ///
         /// \return A hash value uniquely representing the effect effect.
@@ -217,15 +242,15 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        ConstPtr<EffectArchetype> mArchetype;
-        EffectHandle              mHandle;
-        UInt16                    mStack;
-        Real32                    mDuration;
-        Real32                    mPeriod;
-        Real32                    mIntensity;
-        Real64                    mExpiration;
-        Real64                    mInterval;
-        Scene::Entity             mInstigator;
+        ConstPtr<EffectArchetype>    mArchetype;
+        EffectHandle                 mHandle;
+        UInt16                       mStack;
+        Real32                       mDuration;
+        Real32                       mPeriod;
+        Real32                       mIntensity;
+        Real64                       mExpiration;
+        Real64                       mInterval;
+        Scene::Entity                mInstigator;
+        Array<Real32, kMaxSnapshots> mSnapshot;
     };
-
 }

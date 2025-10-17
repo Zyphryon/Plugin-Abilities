@@ -65,7 +65,6 @@ namespace Gameplay
             return mEffective == kUndefined;
         }
 
-
         /// \brief Retrieves the archetype associated with this stat instance.
         ///
         /// \return The stat archetype.
@@ -149,8 +148,6 @@ namespace Gameplay
 
         /// \brief Calculates and retrieves the effective value of this stat based on its modifiers and context.
         ///
-        /// If the stat is marked as dirty, it will recalculate the effective value.
-        ///
         /// \param Target The context providing access to other stats if needed.
         /// \return The calculated effective stat value.
         template<typename Context>
@@ -162,6 +159,28 @@ namespace Gameplay
                 mEffective = mArchetype->Calculate(Target, mFlat, mAdditive, mMultiplier);
             }
             return mEffective;
+        }
+
+        /// \brief Applies a modification to the stat based on the specified operator and amount.
+        ///
+        /// \param Target   The context providing access to other stats if needed.
+        /// \param Operator The type of modification to apply.
+        /// \param Amount   The amount to modify the stat by.
+        template<typename Context>
+        ZYPHRYON_INLINE void Apply(ConstRef<Context> Target, StatOperator Operator, Real32 Amount)
+        {
+            Modify<true>(Target, Operator, Amount);
+        }
+
+        /// \brief Reverts a previously applied modification to the stat based on the specified operator and amount.
+        ///
+        /// \param Target   The context providing access to other stats if needed.
+        /// \param Operator The type of modification to revert.
+        /// \param Amount   The amount to revert the stat by.
+        template<typename Context>
+        ZYPHRYON_INLINE void Revert(ConstRef<Context> Target, StatOperator Operator, Real32 Amount)
+        {
+            Modify<false>(Target, Operator, Amount);
         }
 
         /// \brief Checks if this stat instance corresponds to the given stat handle.
@@ -182,6 +201,67 @@ namespace Gameplay
         ZYPHRYON_INLINE constexpr UInt64 Hash() const
         {
             return mArchetype->Hash();
+        }
+
+    private:
+
+        /// \brief Modifies the stat based on the specified operator and amount, applying or reverting the change.
+        ///
+        /// \param Target   The context providing access to other stats if needed.
+        /// \param Operator The type of modification to apply.
+        /// \param Amount   The amount to modify the stat by.
+        template<Bool Apply, typename Context>
+        void Modify(ConstRef<Context> Target, StatOperator Operator, Real32 Amount)
+        {
+            switch (mArchetype->GetCategory())
+            {
+            case StatCategory::Attribute:
+                switch (Operator)
+                {
+                case StatOperator::Flat:
+                    mFlat += (Apply ? Amount : -Amount);
+                    break;
+                case StatOperator::Additive:
+                    mAdditive += (Apply ? Amount : -Amount);
+                    break;
+                case StatOperator::Multiplicative:
+                    mMultiplier *= (Apply ? Amount : 1.0f / Amount);
+                    break;
+                case StatOperator::Divisive:
+                    mMultiplier *= (Apply ? 1.0f / Amount : Amount);
+                    break;
+                case StatOperator::Replace:
+                    if constexpr (Apply)
+                    {
+                        SetEffective(Target, Amount);
+                    }
+                    break;
+                }
+                break;
+            case StatCategory::Resource:
+                if constexpr (Apply)
+                {
+                    switch (Operator)
+                    {
+                    case StatOperator::Flat:
+                        SetEffective(Target, mEffective + Amount);
+                        break;
+                    case StatOperator::Additive:
+                        SetEffective(Target, mEffective * (1.0f + Amount));
+                        break;
+                    case StatOperator::Multiplicative:
+                        SetEffective(Target, mEffective * Amount);
+                        break;
+                    case StatOperator::Divisive:
+                        SetEffective(Target, mEffective * (1.0f / Amount));
+                        break;
+                    case StatOperator::Replace:
+                        SetEffective(Target, Amount);
+                        break;
+                    }
+                }
+                break;
+            }
         }
 
     private:
