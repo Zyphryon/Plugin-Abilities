@@ -27,24 +27,9 @@ namespace Gameplay
 
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE StatModifier()
-            : mTarget     { 0 },
-              mEvaluation { StatEvaluation::Snapshot },
+            : mEvaluation { StatEvaluation::Snapshot },
               mOperator   { StatOperator::Flat },
               mMagnitude  { 0.0f }
-        {
-        }
-
-        /// \brief Constructs a stat modifier with specified parameters.
-        ///
-        /// \param Target     The target stat handle.
-        /// \param Evaluation The evaluation method for the modifier.
-        /// \param Operator   The operator type for the modifier.
-        /// \param Magnitude  The magnitude of the modifier.
-        ZYPHRYON_INLINE StatModifier(StatHandle Target, StatEvaluation Evaluation, StatOperator Operator, StatInput Magnitude)
-            : mTarget     { Target },
-              mEvaluation { Evaluation },
-              mOperator   { Operator },
-              mMagnitude  { Move(Magnitude) }
         {
         }
 

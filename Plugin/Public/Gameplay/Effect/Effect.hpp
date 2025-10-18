@@ -67,6 +67,11 @@ namespace Gameplay
             mHandle.Reset();
         }
 
+        /// \brief Merges another effect instance into this one, combining their properties.
+        ///
+        /// \param Other  The other effect instance to merge.
+        void Merge(ConstRef<Effect> Other);
+
         /// \brief Checks if the effect instance has a valid handle.
         ///
         /// \return `true` if the effect instance is valid, `false` otherwise.
@@ -131,6 +136,14 @@ namespace Gameplay
             return mDuration;
         }
 
+        /// \brief Checks if the effect is set to expire.
+        ///
+        /// \return `true` if the effect has a positive expiration time, `false` otherwise.
+        ZYPHRYON_INLINE Bool CanExpire() const
+        {
+            return mExpiration > 0.0;
+        }
+
         /// \brief Sets the period between effect applications (snapshot) in seconds.
         ///
         /// \param Period The period in seconds.
@@ -147,6 +160,14 @@ namespace Gameplay
             return mPeriod;
         }
 
+        /// \brief Checks if the effect is set to tick periodically.
+        ///
+        /// \return `true` if the effect has a positive period, `false` otherwise.
+        ZYPHRYON_INLINE Bool CanTick() const
+        {
+            return mPeriod > 0.0f;
+        }
+
         /// \brief Sets the intensity of the effect, influencing its strength.
         ///
         /// \param Intensity The intensity value.
@@ -161,6 +182,24 @@ namespace Gameplay
         ZYPHRYON_INLINE Real32 GetIntensity() const
         {
             return mIntensity;
+        }
+
+        /// \brief Calculates the effective intensity of the effect based on its stacking behavior.
+        ///
+        /// \return The effective intensity value.
+        ZYPHRYON_INLINE Real32 GetEffectiveIntensity() const
+        {
+            switch (mArchetype->GetStack())
+            {
+            case EffectStack::Linear:
+                return mIntensity * static_cast<Real32>(mStack);
+            case EffectStack::Diminish:
+                return 1.0f - Pow(0.5f, static_cast<Real32>(mStack));
+            case EffectStack::Exponential:
+                return Pow(mIntensity, static_cast<Real32>(mStack));
+            default:
+                return mIntensity;
+            }
         }
 
         /// \brief Sets the expiration time of the effect in seconds.

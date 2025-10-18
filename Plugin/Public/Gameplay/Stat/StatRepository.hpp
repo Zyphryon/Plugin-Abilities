@@ -58,9 +58,9 @@ namespace Gameplay
             mArchetypes.Clear();
         }
 
-        /// \brief Fetches a stat archetype by its handle.
+        /// \brief Retrieves a stat archetype by its handle.
         ///
-        /// \param Handle The handle of the stat archetype to fetch.
+        /// \param Handle The handle of the stat archetype to retrieve.
         /// \return The stat archetype associated with the given handle.
         ZYPHRYON_INLINE ConstRef<StatArchetype> Get(StatHandle Handle) const
         {

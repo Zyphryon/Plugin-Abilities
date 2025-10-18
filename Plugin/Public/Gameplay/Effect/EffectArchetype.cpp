@@ -27,8 +27,8 @@ namespace Gameplay
         mName   = Section.GetString("Name");
         mDuration.Load(Section.GetArray("Duration"));
         mPeriod.Load(Section.GetArray("Period"));
-        mLimit.Load(Section.GetArray("Limit"));
-        mCategory   = Enum::Cast(Section.GetString("Type"), EffectCategory::Temporary);
+        mLimit      = Section.GetInteger("Limit");
+        mCategory   = Enum::Cast(Section.GetString("Category"), EffectCategory::Temporary);
         mExpiration = Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single);
         mRefresh    = Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace);
         mResolution = Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive);
@@ -54,7 +54,7 @@ namespace Gameplay
         Section.SetString("Name", mName);
         mDuration.Save(Section.SetArray("Length"));
         mPeriod.Save(Section.SetArray("Period"));
-        mLimit.Save(Section.SetArray("Limit"));
+        Section.SetInteger("Limit", mLimit);
         Section.SetString("Category", Enum::GetName(mCategory));
         Section.SetString("Expiration", Enum::GetName(mExpiration));
         Section.SetString("Refresh", Enum::GetName(mRefresh));

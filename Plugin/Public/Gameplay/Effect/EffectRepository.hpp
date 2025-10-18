@@ -58,9 +58,9 @@ namespace Gameplay
             mArchetypes.Clear();
         }
 
-        /// \brief Fetches a effect archetype by its handle.
+        /// \brief Retrieves an effect archetype by its handle.
         ///
-        /// \param Handle The handle of the effect archetype to fetch.
+        /// \param Handle The handle of the effect archetype to retrieve.
         /// \return The effect archetype associated with the given handle.
         ZYPHRYON_INLINE ConstRef<EffectArchetype> Get(EffectHandle Handle) const
         {
@@ -69,7 +69,7 @@ namespace Gameplay
 
         /// \brief Retrieves all registered effect archetypes.
         ///
-        /// \return A span containing all effect archetypes.
+        /// \return A span containing all stat archetypes.
         ZYPHRYON_INLINE ConstSpan<EffectArchetype> GetAll() const
         {
             return mArchetypes.GetSpan();

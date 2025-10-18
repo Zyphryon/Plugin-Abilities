@@ -104,15 +104,15 @@ namespace Gameplay
         /// \brief Sets the total duration of the effect.
         ///
         /// \param Duration The duration to assign.
-        ZYPHRYON_INLINE void SetDuration(ConstRef<StatInput> Duration)
+        ZYPHRYON_INLINE void SetDuration(StatInput Duration)
         {
-            mDuration = Duration;
+            mDuration = Move(Duration);
         }
 
         /// \brief Retrieves the total duration of the effect.
         ///
         /// \return The effect duration.
-        ZYPHRYON_INLINE StatInput GetDuration() const
+        ZYPHRYON_INLINE ConstRef<StatInput> GetDuration() const
         {
             return mDuration;
         }
@@ -120,15 +120,15 @@ namespace Gameplay
         /// \brief Sets the period between effect applications.
         ///
         /// \param Period The period to assign.
-        ZYPHRYON_INLINE void SetPeriod(ConstRef<StatInput> Period)
+        ZYPHRYON_INLINE void SetPeriod(StatInput Period)
         {
-            mPeriod = Period;
+            mPeriod = Move(Period);
         }
 
         /// \brief Retrieves the period between effect applications.
         ///
         /// \return The effect period.
-        ZYPHRYON_INLINE StatInput GetPeriod() const
+        ZYPHRYON_INLINE ConstRef<StatInput> GetPeriod() const
         {
             return mPeriod;
         }
@@ -136,7 +136,7 @@ namespace Gameplay
         /// \brief Sets the maximum number of stacks for the effect.
         ///
         /// \param Limit The stack limit to assign.
-        ZYPHRYON_INLINE void SetLimit(ConstRef<StatInput> Limit)
+        ZYPHRYON_INLINE void SetLimit(UInt32 Limit)
         {
             mLimit = Limit;
         }
@@ -144,7 +144,7 @@ namespace Gameplay
         /// \brief Retrieves the maximum number of stacks for the effect.
         ///
         /// \return The effect stack limit.
-        ZYPHRYON_INLINE StatInput GetLimit() const
+        ZYPHRYON_INLINE UInt32 GetLimit() const
         {
             return mLimit;
         }
@@ -289,7 +289,7 @@ namespace Gameplay
         Str8                              mName;
         StatInput                         mDuration;
         StatInput                         mPeriod;
-        StatInput                         mLimit;
+        UInt32                            mLimit;
         EffectCategory                    mCategory;            // TODO: Merge Policy
         EffectExpiration                  mExpiration;          // TODO: Merge Policy
         EffectRefresh                     mRefresh;             // TODO: Merge Policy
