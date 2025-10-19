@@ -136,7 +136,7 @@ namespace Gameplay
         /// \brief Sets the maximum number of stacks for the effect.
         ///
         /// \param Limit The stack limit to assign.
-        ZYPHRYON_INLINE void SetLimit(UInt32 Limit)
+        ZYPHRYON_INLINE void SetLimit(UInt16 Limit)
         {
             mLimit = Limit;
         }
@@ -144,7 +144,7 @@ namespace Gameplay
         /// \brief Retrieves the maximum number of stacks for the effect.
         ///
         /// \return The effect stack limit.
-        ZYPHRYON_INLINE UInt32 GetLimit() const
+        ZYPHRYON_INLINE UInt16 GetLimit() const
         {
             return mLimit;
         }
@@ -254,7 +254,6 @@ namespace Gameplay
         {
             mDuration.Traverse(Action, Origin);
             mPeriod.Traverse(Action, Origin);
-            mLimit.Traverse(Action, Origin);
 
             for (ConstRef<StatModifier> Modifier : mBonuses)
             {
@@ -289,7 +288,7 @@ namespace Gameplay
         Str8                              mName;
         StatInput                         mDuration;
         StatInput                         mPeriod;
-        UInt32                            mLimit;
+        UInt16                            mLimit;
         EffectCategory                    mCategory;            // TODO: Merge Policy
         EffectExpiration                  mExpiration;          // TODO: Merge Policy
         EffectRefresh                     mRefresh;             // TODO: Merge Policy
