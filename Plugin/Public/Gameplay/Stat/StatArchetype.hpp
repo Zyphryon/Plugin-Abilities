@@ -110,7 +110,7 @@ namespace Gameplay
         /// \brief Sets the base value for this stat archetype.
         ///
         /// \param Base The base value to assign.
-        ZYPHRYON_INLINE void SetBase(StatInput Base)
+        ZYPHRYON_INLINE void SetBase(AnyRef<StatInput> Base)
         {
             mBase = Move(Base);
         }
@@ -126,7 +126,7 @@ namespace Gameplay
         /// \brief Sets the minimum value for this stat archetype.
         ///
         /// \param Minimum The minimum value to assign.
-        ZYPHRYON_INLINE void SetMinimum(StatInput Minimum)
+        ZYPHRYON_INLINE void SetMinimum(AnyRef<StatInput> Minimum)
         {
             mMinimum = Move(Minimum);
         }
@@ -142,7 +142,7 @@ namespace Gameplay
         /// \brief Sets the maximum value for this stat archetype.
         ///
         /// \param Maximum The maximum value to assign.
-        ZYPHRYON_INLINE void SetMaximum(StatInput Maximum)
+        ZYPHRYON_INLINE void SetMaximum(AnyRef<StatInput> Maximum)
         {
             mMaximum = Move(Maximum);
         }

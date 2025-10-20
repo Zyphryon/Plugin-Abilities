@@ -40,7 +40,7 @@ namespace Gameplay
               mDuration     { 0.0f },
               mPeriod       { 0.0f },
               mLimit        { 0 },
-              mCategory     { EffectCategory::Temporary },
+              mApplication  { EffectApplication::Temporary },
               mExpiration   { EffectExpiration::Single },
               mRefresh      { EffectRefresh::Replace },
               mResolution   { EffectResolution::Additive },
@@ -121,7 +121,7 @@ namespace Gameplay
         /// \brief Sets the total duration of the effect.
         ///
         /// \param Duration The duration to assign.
-        ZYPHRYON_INLINE void SetDuration(StatInput Duration)
+        ZYPHRYON_INLINE void SetDuration(AnyRef<StatInput> Duration)
         {
             mDuration = Move(Duration);
         }
@@ -137,7 +137,7 @@ namespace Gameplay
         /// \brief Sets the period between effect applications.
         ///
         /// \param Period The period to assign.
-        ZYPHRYON_INLINE void SetPeriod(StatInput Period)
+        ZYPHRYON_INLINE void SetPeriod(AnyRef<StatInput> Period)
         {
             mPeriod = Move(Period);
         }

@@ -32,6 +32,18 @@ namespace Gameplay
         {
         }
 
+        /// \brief Constructs an effect modifier with specified parameters.
+        ///
+        /// \param Handle     The target stat handle.
+        /// \param Evaluation The evaluation method for the modifier.
+        /// \param Operator   The operator type for the modifier.
+        ZYPHRYON_INLINE EffectModifier(StatHandle Handle, StatEvaluation Evaluation, StatOperator Operator)
+            : mTarget     { Handle },
+              mEvaluation { Evaluation },
+              mOperator   { Operator }
+        {
+        }
+
         /// \brief Sets the target stat handle for this modifier.
         ///
         /// \param Handle The stat handle to set as the target.
@@ -83,7 +95,7 @@ namespace Gameplay
         /// \brief Sets the magnitude of the modifier.
         ///
         /// \param Magnitude The magnitude value to assign.
-        ZYPHRYON_INLINE void SetMagnitude(StatInput Magnitude)
+        ZYPHRYON_INLINE void SetMagnitude(AnyRef<StatInput> Magnitude)
         {
             mMagnitude = Move(Magnitude);
         }
@@ -126,6 +138,36 @@ namespace Gameplay
             Array.AddString(Enum::GetName(mEvaluation));
             Array.AddString(Enum::GetName(mOperator));
             mMagnitude.Save(Array);
+        }
+
+    public:
+
+        /// \brief Creates a live effect modifier.
+        ///
+        /// \param Target    The target stat handle.
+        /// \param Operator  The operator type to apply.
+        /// \param Magnitude The magnitude value for the modifier.
+        /// \return A new effect modifier instance configured as live.
+        static EffectModifier CreateLive(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
+        {
+            EffectModifier Modifier(Target, StatEvaluation::Live, Operator);
+            Modifier.SetMagnitude(Move(Magnitude));
+
+            return Modifier;
+        }
+
+        /// \brief Creates a snapshot effect modifier.
+        ///
+        /// \param Target    The target stat handle.
+        /// \param Operator  The operator type to apply.
+        /// \param Magnitude The magnitude value for the modifier.
+        /// \return A new effect modifier instance configured as a snapshot.
+        static EffectModifier CreateSnapshot(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
+        {
+            EffectModifier Modifier(Target, StatEvaluation::Snapshot, Operator);
+            Modifier.SetMagnitude(Move(Magnitude));
+
+            return Modifier;
         }
 
     private:
