@@ -61,7 +61,7 @@ namespace Gameplay
         Section.SetString("Resolution", Enum::GetName(mResolution));
         Section.SetString("Stack", Enum::GetName(mStack));
 
-        for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<StatModifier> Modifier: mBonuses)
+        for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<EffectModifier> Modifier: mBonuses)
         {
             Modifier.Save(Bonuses.AddArray());
         }

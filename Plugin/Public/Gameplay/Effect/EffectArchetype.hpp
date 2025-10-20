@@ -13,8 +13,8 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "EffectHandle.hpp"
+#include "EffectModifier.hpp"
 #include "EffectPolicies.hpp"
-#include "Gameplay/Stat/StatModifier.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -232,7 +232,7 @@ namespace Gameplay
         /// \brief Sets the stat modifiers associated with this effect archetype.
         ///
         /// \param Modifiers A list of stat modifiers to assign.
-        ZYPHRYON_INLINE void SetBonuses(ConstSpan<StatModifier> Modifiers)
+        ZYPHRYON_INLINE void SetBonuses(ConstSpan<EffectModifier> Modifiers)
         {
             mBonuses.assign(Modifiers.begin(), Modifiers.end());
         }
@@ -240,7 +240,7 @@ namespace Gameplay
         /// \brief Retrieves the stat modifiers associated with this effect archetype.
         ///
         /// \return A list of stat modifiers.
-        ZYPHRYON_INLINE ConstSpan<StatModifier> GetBonuses() const
+        ZYPHRYON_INLINE ConstSpan<EffectModifier> GetBonuses() const
         {
             return mBonuses;
         }
@@ -255,7 +255,7 @@ namespace Gameplay
             mDuration.Traverse(Action, Origin);
             mPeriod.Traverse(Action, Origin);
 
-            for (ConstRef<StatModifier> Modifier : mBonuses)
+            for (ConstRef<EffectModifier> Modifier : mBonuses)
             {
                 Modifier.Traverse(Action, Origin);
             }
@@ -281,20 +281,25 @@ namespace Gameplay
 
     private:
 
+        /// \brief Type alias for a vector of effect modifiers.
+        using Modifiers = Vector<EffectModifier, kMaxBonuses>;
+
+    private:
+
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle                      mHandle;
-        Str8                              mName;
-        StatInput                         mDuration;
-        StatInput                         mPeriod;
-        UInt16                            mLimit;
-        EffectCategory                    mCategory;            // TODO: Merge Policy
-        EffectExpiration                  mExpiration;          // TODO: Merge Policy
-        EffectRefresh                     mRefresh;             // TODO: Merge Policy
-        EffectResolution                  mResolution;          // TODO: Merge Policy
-        EffectStack                       mStack;               // TODO: Merge Policy
-        Vector<StatModifier, kMaxBonuses> mBonuses;
+        EffectHandle     mHandle;
+        Str8             mName;
+        StatInput        mDuration;
+        StatInput        mPeriod;
+        UInt16           mLimit;
+        EffectCategory   mCategory;            // TODO: Merge Policy
+        EffectExpiration mExpiration;          // TODO: Merge Policy
+        EffectRefresh    mRefresh;             // TODO: Merge Policy
+        EffectResolution mResolution;          // TODO: Merge Policy
+        EffectStack      mStack;               // TODO: Merge Policy
+        Modifiers        mBonuses;
 
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags)
         // TODO: Categories (Tags?)

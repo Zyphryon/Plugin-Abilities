@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatInput.hpp"
+#include "Gameplay/Stat/StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -21,15 +21,14 @@
 namespace Gameplay
 {
     /// \brief Represents a modifier that can be applied to a stat.
-    class StatModifier final
+    class EffectModifier final
     {
     public:
 
         /// \brief Default constructor, initializes members to default values.
-        ZYPHRYON_INLINE StatModifier()
+        ZYPHRYON_INLINE EffectModifier()
             : mEvaluation { StatEvaluation::Snapshot },
-              mOperator   { StatOperator::Flat },
-              mMagnitude  { 0.0f }
+              mOperator   { StatOperator::Flat }
         {
         }
 

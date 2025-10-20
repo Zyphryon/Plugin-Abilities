@@ -135,8 +135,13 @@ namespace Gameplay
                     }
                 }
             }
+        }
 
-            // If there are delegates for the source stat, notify them as well.
+        /// \brief Notifies observers of a stat change for the given source stat.
+        ///
+        /// \param Source The stat that has changed.
+        ZYPHRYON_INLINE void NotifyObservers(StatHandle Source)
+        {
             if (const auto Iterator = mObservers.find(Source); Iterator != mObservers.end())
             {
                 Ref<OnChangeDelegates> MulticastDelegate = (Iterator->second);
