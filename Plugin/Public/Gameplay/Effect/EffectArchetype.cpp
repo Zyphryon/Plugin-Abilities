@@ -23,16 +23,17 @@ namespace Gameplay
 
     void EffectArchetype::Load(TOMLSection Section)
     {
-        mHandle = EffectHandle(Section.GetInteger("ID"));
-        mName   = Section.GetString("Name");
+        mHandle      = EffectHandle(Section.GetInteger("ID"));
+        mName        = Section.GetString("Name");
+        mCategory    = Section.GetInteger("Category");
         mDuration.Load(Section.GetArray("Duration"));
         mPeriod.Load(Section.GetArray("Period"));
-        mLimit      = Section.GetInteger("Limit");
-        mCategory   = Enum::Cast(Section.GetString("Category"), EffectCategory::Temporary);
-        mExpiration = Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single);
-        mRefresh    = Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace);
-        mResolution = Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive);
-        mStack      = Enum::Cast(Section.GetString("Stack"), EffectStack::Linear);
+        mLimit       = Section.GetInteger("Limit");
+        mApplication = Enum::Cast(Section.GetString("Application"), EffectApplication::Temporary);
+        mExpiration  = Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single);
+        mRefresh     = Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace);
+        mResolution  = Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive);
+        mStack       = Enum::Cast(Section.GetString("Stack"), EffectStack::Linear);
 
         if (const TOMLArray Bonuses = Section.GetArray("Bonuses"); !Bonuses.IsEmpty())
         {
@@ -52,10 +53,11 @@ namespace Gameplay
     {
         Section.SetInteger("ID", mHandle.GetID());
         Section.SetString("Name", mName);
+        Section.SetInteger("Category", mCategory.GetID());
         mDuration.Save(Section.SetArray("Length"));
         mPeriod.Save(Section.SetArray("Period"));
         Section.SetInteger("Limit", mLimit);
-        Section.SetString("Category", Enum::GetName(mCategory));
+        Section.SetString("Application", Enum::GetName(mApplication));
         Section.SetString("Expiration", Enum::GetName(mExpiration));
         Section.SetString("Refresh", Enum::GetName(mRefresh));
         Section.SetString("Resolution", Enum::GetName(mResolution));

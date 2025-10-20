@@ -15,6 +15,7 @@
 #include "EffectHandle.hpp"
 #include "EffectModifier.hpp"
 #include "EffectPolicies.hpp"
+#include "Gameplay/Marker/Marker.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -101,6 +102,22 @@ namespace Gameplay
             return mName;
         }
 
+        /// \brief Sets the category of the effect archetype.
+        ///
+        /// \param Category The category to assign.
+        ZYPHRYON_INLINE void SetCategory(Marker Category)
+        {
+            mCategory = Category;
+        }
+
+        /// \brief Retrieves the category of the effect archetype.
+        ///
+        /// \return The effect category.
+        ZYPHRYON_INLINE Marker GetCategory() const
+        {
+            return mCategory;
+        }
+
         /// \brief Sets the total duration of the effect.
         ///
         /// \param Duration The duration to assign.
@@ -149,20 +166,20 @@ namespace Gameplay
             return mLimit;
         }
 
-        /// \brief Sets the category of the effect archetype.
+        /// \brief Sets the application of the effect archetype.
         ///
-        /// \param Category The category to assign.
-        ZYPHRYON_INLINE void SetCategory(EffectCategory Category)
+        /// \param Application The application to assign.
+        ZYPHRYON_INLINE void SetApplication(EffectApplication Application)
         {
-            mCategory = Category;
+            mApplication = Application;
         }
 
-        /// \brief Retrieves the category of the effect archetype.
+        /// \brief Retrieves the application of the effect archetype.
         ///
-        /// \return The effect category.
-        ZYPHRYON_INLINE EffectCategory GetCategory() const
+        /// \return The effect application.
+        ZYPHRYON_INLINE EffectApplication GetApplication() const
         {
-            return mCategory;
+            return mApplication;
         }
 
         /// \brief Sets the expiration policy for this effect.
@@ -289,19 +306,20 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle     mHandle;
-        Str8             mName;
-        StatInput        mDuration;
-        StatInput        mPeriod;
-        UInt16           mLimit;
-        EffectCategory   mCategory;            // TODO: Merge Policy
-        EffectExpiration mExpiration;          // TODO: Merge Policy
-        EffectRefresh    mRefresh;             // TODO: Merge Policy
-        EffectResolution mResolution;          // TODO: Merge Policy
-        EffectStack      mStack;               // TODO: Merge Policy
-        Modifiers        mBonuses;
+        EffectHandle      mHandle;
+        Str8              mName;
+        Marker            mCategory;            // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)
+        StatInput         mDuration;
+        StatInput         mPeriod;
+        UInt16            mLimit;
+        EffectApplication mApplication;         // TODO: Merge Policy
+        EffectExpiration  mExpiration;          // TODO: Merge Policy
+        EffectRefresh     mRefresh;             // TODO: Merge Policy
+        EffectResolution  mResolution;          // TODO: Merge Policy
+        EffectStack       mStack;               // TODO: Merge Policy
+        Modifiers         mBonuses;
 
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags)
-        // TODO: Categories (Tags?)
+        //     : BlockedMarkers, AllowedMarkers, RequiredMarkers
     };
 }
