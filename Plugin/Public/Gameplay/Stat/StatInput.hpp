@@ -107,15 +107,6 @@ namespace Gameplay
             return static_cast<Kind>(mContainer.GetIndex());
         }
 
-        /// \brief Sets the data held by the proxy.
-        ///
-        /// \tparam Type The type of data to set.
-        template<typename Type>
-        ZYPHRYON_INLINE void SetData(AnyRef<Type> Data)
-        {
-            mContainer.Emplace<Type>(Forward<Type>(Data));
-        }
-
         /// \brief Retrieves the data held by the proxy, cast to the specified type.
         ///
         /// \tparam Type The type to cast the data to.
