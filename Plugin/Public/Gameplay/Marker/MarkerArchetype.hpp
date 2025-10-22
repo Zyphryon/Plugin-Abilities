@@ -81,12 +81,7 @@ namespace Gameplay
         ZYPHRYON_INLINE ConstStr8 GetName() const
         {
             const UInt Offset = mPath.find_last_of('.');
-
-            if (Offset == Str8::npos)
-            {
-                return mPath;
-            }
-            return GetPath().substr(Offset + 1);
+            return (Offset != Str8::npos ? GetPath().substr(Offset + 1) : mPath);
         }
 
         /// \brief Sets the arity of the marker.

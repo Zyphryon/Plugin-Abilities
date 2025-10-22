@@ -66,7 +66,7 @@ namespace Gameplay
                     if (mActives.size() > 1)
                     {
                         // Reposition the effect in the active list if its remaining time has changed.
-                        if (const auto Position = FindBestPosition(Effect); Position != mActives.end() - 1)
+                        if (const auto Position = FindBestPosition(Effect); Position != mActives.end())
                         {
                             std::rotate(Position, mActives.end() - 1, mActives.end());
                         }
@@ -245,7 +245,7 @@ namespace Gameplay
             {
                 ConstRef<Effect> FirstEffect  = mRegistry[First.GetID()];
                 ConstRef<Effect> SecondEffect = mRegistry[Second.GetID()];
-                return FirstEffect.GetInterval() > SecondEffect.GetInterval();
+                return FirstEffect.GetInterval() >= SecondEffect.GetInterval();
             };
             return std::ranges::upper_bound(mActives, Instance.GetHandle(), Filter);
         }

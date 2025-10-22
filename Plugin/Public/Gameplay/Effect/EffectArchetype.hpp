@@ -166,6 +166,14 @@ namespace Gameplay
             return mLimit;
         }
 
+        /// \brief Checks if the effect can stack.
+        ///
+        /// \return `true` if the effect can stack, `false` otherwise.
+        ZYPHRYON_INLINE Bool CanStack() const
+        {
+            return mLimit > 0;
+        }
+
         /// \brief Sets the application of the effect archetype.
         ///
         /// \param Application The application to assign.

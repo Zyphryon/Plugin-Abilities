@@ -19,6 +19,7 @@ namespace Gameplay
     {
         Instant,     ///< The effect is applied instantly and does not persist.
         Temporary,   ///< The effect lasts for a specified duration before expiring.
+        Permanent,   ///< The effect lasts indefinitely until explicitly removed.
     };
 
     /// \brief Enumeration defining how an effect stack expires.
