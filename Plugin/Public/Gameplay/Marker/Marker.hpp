@@ -14,7 +14,7 @@
 
 namespace Gameplay
 {
-    /// \brief Represents a hierarchical marker used for markerging and categorizing gameplay elements.
+    /// \brief Represents a hierarchical marker used for categorization and identification.
     class Marker final
     {
     public:

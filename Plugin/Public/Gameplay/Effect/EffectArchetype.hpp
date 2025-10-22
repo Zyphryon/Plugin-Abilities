@@ -35,16 +35,16 @@ namespace Gameplay
 
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE EffectArchetype()
-            : mHandle       { 0 },
-              mName         { "" },
-              mDuration     { 0.0f },
-              mPeriod       { 0.0f },
-              mLimit        { 0 },
-              mApplication  { EffectApplication::Temporary },
-              mExpiration   { EffectExpiration::Single },
-              mRefresh      { EffectRefresh::Replace },
-              mResolution   { EffectResolution::Additive },
-              mStack        { EffectStack::Linear }
+            : mHandle      { 0 },
+              mName        { "" },
+              mDuration    { 0.0f },
+              mPeriod      { 0.0f },
+              mLimit       { 0 },
+              mApplication { EffectApplication::Temporary },
+              mExpiration  { EffectExpiration::Single },
+              mRefresh     { EffectRefresh::Replace },
+              mResolution  { EffectResolution::Additive },
+              mStack       { EffectStack::Linear }
         {
         }
 

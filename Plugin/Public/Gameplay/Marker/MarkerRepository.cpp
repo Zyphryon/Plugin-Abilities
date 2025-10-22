@@ -21,6 +21,50 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    void MarkerRepository::Insert(ConstStr8 Name, Marker Parent)
+    {
+        for (UInt Start = 0, End = 0; End != ConstStr8::npos; Start = End + 1)
+        {
+            // Extract the next segment from the hierarchical name.
+            End = Name.find_first_of('.', Start);
+
+            // Check if the segment already exists under the parent.
+            if (const Marker Token = GetTokenByName(Name.substr(0, End)); Token.IsEmpty())
+            {
+                MarkerArchetype Archetype = GetMutable(Parent).Extend(Name.substr(Start, End - Start));
+                Parent                    = Archetype.GetHandle();
+                Insert(Move(Archetype));
+            }
+            else
+            {
+                Parent = Token;
+            }
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void MarkerRepository::Delete(Marker Token)
+    {
+        Ref<MarkerArchetype> Archetype = GetMutable(Token);
+
+        // Remove the token from the lookup table.
+        mTokens.erase(Archetype.GetName());
+
+        // Clear the path.
+        Archetype.SetPath("");
+
+        // Delete all children recursively.
+        for (UInt8 Children = 1; Children <= Archetype.GetArity(); ++Children)
+        {
+            Delete(Archetype.GetHandle().With(Children));
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
     void MarkerRepository::Load(Ref<TOMLParser> Parser)
     {
         const TOMLArray Collection = Parser.GetRoot().GetArray("Tokens");

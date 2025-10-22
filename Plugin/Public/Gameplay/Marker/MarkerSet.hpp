@@ -75,15 +75,6 @@ namespace Gameplay
             return Iterator != mRegistry.end() ? Iterator->second : 0;
         }
 
-        /// \brief Checks if the set contains a specific marker token.
-        ///
-        /// \param Token The marker token to check for.
-        /// \return `true` if the marker token is present in the set, `false` otherwise.
-        ZYPHRYON_INLINE Bool Contains(Marker Token) const
-        {
-            return Count(Token) > 0;
-        }
-
         /// \brief Traverses all marker tokens in the set, invoking the provided action for each.
         ///
         /// \param Action The action to invoke for each marker token and its count.

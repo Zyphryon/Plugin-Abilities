@@ -37,30 +37,12 @@ namespace Gameplay
         ///
         /// \param Name   The name of the marker archetype to insert.
         /// \param Parent The parent marker archetype token.
-        ZYPHRYON_INLINE void Insert(ConstStr8 Name, Marker Parent = Marker::kEmpty)
-        {
-            Ref<MarkerArchetype> Archetype = GetMutable(Parent);
-            Insert(Archetype.Extend(Name));
-        }
+        void Insert(ConstStr8 Name, Marker Parent = Marker::kEmpty);
 
         /// \brief Deletes a marker archetype from the repository by its token.
         ///
         /// \param Token The token of the marker archetype to delete.
-        ZYPHRYON_INLINE void Delete(Marker Token)
-        {
-            // Clear the name to unregister the token.
-            Ref<MarkerArchetype> Archetype = GetMutable(Token);
-            Archetype.SetPath("");
-
-            // Remove the token from the lookup table.
-            mTokens.erase(Archetype.GetName());
-
-            // Delete all children recursively.
-            for (UInt8 Children = 1; Children <= Archetype.GetArity(); ++Children)
-            {
-                Delete(Archetype.GetHandle().With(Children));
-            }
-        }
+        void Delete(Marker Token);
 
         /// \brief Clears all marker archetypes from the repository.
         ZYPHRYON_INLINE void Clear()
@@ -119,7 +101,7 @@ namespace Gameplay
         ///
         /// \param Token The token of the marker archetype to retrieve.
         /// \return A reference to the requested marker archetype.
-        ZYPHRYON_INLINE Ref<MarkerArchetype> GetMutable(Marker Token)
+        ZYPHRYON_INLINE Ref<MarkerArchetype> GetMutable(Marker Token) const
         {
             return const_cast<Ref<MarkerArchetype>>(Get(Token));
         }
@@ -129,8 +111,8 @@ namespace Gameplay
         /// \param Archetype The marker archetype to insert.
         ZYPHRYON_INLINE void Insert(AnyRef<MarkerArchetype> Archetype)
         {
+            mTokens.emplace(Archetype.GetPath(), Archetype.GetHandle());
             mArchetypes.insert(Move(Archetype));
-            mTokens.emplace(Archetype.GetName(), Archetype.GetHandle());
         }
 
         /// \brief Recursively loads marker archetypes from a TOML array.
