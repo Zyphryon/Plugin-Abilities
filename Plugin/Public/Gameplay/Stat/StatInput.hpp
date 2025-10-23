@@ -240,7 +240,8 @@ namespace Gameplay
                 GetData<Reference>().Save(Array);
                 break;
             case Kind::Formula:
-                LOG_ASSERT(false, "Saving formulas is not supported yet.");
+                LOG_WARNING("Saving formulas is not supported yet.");
+                break;
             }
         }
 

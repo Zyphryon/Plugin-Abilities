@@ -25,11 +25,6 @@ namespace Gameplay
     {
     public:
 
-        /// \brief A constant representing an undefined effective value.
-        static constexpr Real32 kUndefined = INFINITY;
-
-    public:
-
         /// \brief Constructs a stat instance based on the provided archetype.
         ///
         /// \param Archetype The archetype defining the stat's properties.
@@ -38,7 +33,7 @@ namespace Gameplay
               mFlat       { 0.0f },
               mAdditive   { 0.0f },
               mMultiplier { 1.0f },
-              mEffective  { kUndefined },
+              mEffective  { kInfinity<Real32> },
               mDirty      { true }
         {
         }
@@ -62,7 +57,7 @@ namespace Gameplay
         /// \return `true` if the effective value is undefined, `false` otherwise.
         ZYPHRYON_INLINE Bool IsUndefined() const
         {
-            return mEffective == kUndefined;
+            return mEffective == kInfinity<Real32>;
         }
 
         /// \brief Retrieves the archetype associated with this stat instance.

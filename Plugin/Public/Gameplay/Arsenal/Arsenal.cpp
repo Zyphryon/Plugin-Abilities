@@ -105,7 +105,7 @@ namespace Gameplay
             }
             else
             {
-                Instance.SetExpiration(INFINITY);
+                Instance.SetExpiration(kInfinity<Real32>);
             }
 
             Instance.SetPeriod(Instance.GetArchetype()->GetPeriod().Resolve(Source, * this));
@@ -131,6 +131,9 @@ namespace Gameplay
                     case EffectSet::Event::Insert:
                         // Merge the new effect instance into the existing one.
                         ApplyEffectModifiers(Inplace);
+
+                        // Insert live observation for the effect.
+                        InsertLiveObservation(Instance);
                         break;
                     case EffectSet::Event::Update:
                         // Revert the previous effect modifiers.
@@ -161,6 +164,9 @@ namespace Gameplay
 
                 // Apply the effect modifiers.
                 ApplyEffectModifiers(Instance);
+
+                // Insert live observation for the effect.
+                InsertLiveObservation(Instance);
             }
             return Result;
         }
@@ -184,6 +190,9 @@ namespace Gameplay
 
         // Revert the effect modifiers.
         RevertEffectModifiers(Effect);
+
+        // Remove live observation for the effect.
+        RemoveLiveObservation(Effect);
 
         // Remove the effect from the arsenal.
         mEffects.Delete(Effect);
@@ -209,6 +218,25 @@ namespace Gameplay
             // Apply the modifier to the arsenal.
             ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Value);
         }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Arsenal::ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot)
+    {
+        ConstRef<Arsenal> Instigator = GetSource(Effect.GetInstigator());
+
+        // Revert the previous modifier value.
+        ConstRef<EffectModifier> Modifier = Effect.GetArchetype()->GetBonus(Slot);
+        RevertModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effect.GetSnapshot(Slot));
+
+        // Calculate the new modifier value.
+        const Real32 Value = Modifier.GetMagnitude().Resolve(Instigator, * this) * Effect.GetEffectiveIntensity();
+        Effect.SetSnapshot(Slot, Value);
+
+        // Apply the updated modifier value.
+        ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Value);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -267,6 +295,8 @@ namespace Gameplay
             }
             else
             {
+                // Remove live observation for the effect.
+                RemoveLiveObservation(Effect);
                 return true;
             }
         }
@@ -285,5 +315,71 @@ namespace Gameplay
             }
         }
         return false;
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Arsenal::InsertLiveObservation(ConstRef<Effect> Effect)
+    {
+        for (const auto [Index, Modifier] : std::views::enumerate(Effect.GetArchetype()->GetBonuses()))
+        {
+            if (Modifier.GetEvaluation() == StatEvaluation::Live)
+            {
+                const StatHandle Target = Modifier.GetTarget();
+
+                Ref<Set<EffectLiveObservation>> Observers = mObservations[Target];
+
+                if (Observers.empty())
+                {
+                    mStats.InsertObserver(
+                        Target, StatSet::OnChangeDelegate::Create<& Arsenal::UpdateLiveObservation>(this));
+                }
+                Observers.emplace(Effect.GetHandle(), static_cast<UInt16>(Index));
+            }
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Arsenal::RemoveLiveObservation(ConstRef<Effect> Effect)
+    {
+        for (const auto [Index, Modifier] : std::views::enumerate(Effect.GetArchetype()->GetBonuses()))
+        {
+            if (Modifier.GetEvaluation() == StatEvaluation::Live)
+            {
+                const StatHandle Target = Modifier.GetTarget();
+
+                Ref<Set<EffectLiveObservation>> Observers = mObservations[Target];
+
+                const auto Iterator = Observers.find(EffectLiveObservation(Effect.GetHandle(), Index));
+                if (Iterator != Observers.end())
+                {
+                    Observers.erase(Iterator);
+
+                    if (Observers.empty())
+                    {
+                        mStats.RemoveObserver(
+                            Target, StatSet::OnChangeDelegate::Create<& Arsenal::UpdateLiveObservation>(this));
+                    }
+                }
+            }
+        }
+    }
+
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    void Arsenal::UpdateLiveObservation(StatHandle Handle)
+    {
+        if (const auto Iterator = mObservations.find(Handle); Iterator != mObservations.end())
+        {
+            for (const auto [ID, Slot] : Iterator->second)
+            {
+                Ref<Effect> Instance = const_cast<Ref<Effect>>(mEffects.Fetch(ID));
+                ReloadEffectModifier(Instance, Slot);
+            }
+        }
     }
 }

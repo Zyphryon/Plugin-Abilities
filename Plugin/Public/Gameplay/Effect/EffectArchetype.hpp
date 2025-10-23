@@ -270,6 +270,15 @@ namespace Gameplay
             return mBonuses;
         }
 
+        /// \brief Retrieves a specific stat modifier by its slot index.
+        ///
+        /// \param Slot The slot index of the modifier to retrieve.
+        /// \return The effect modifier at the specified slot.
+        ZYPHRYON_INLINE ConstRef<EffectModifier> GetBonus(UInt8 Slot) const
+        {
+            return mBonuses[Slot];
+        }
+
         /// \brief Iterates over all dependencies referenced by this archetype.
         ///
         /// \param Action The action to apply to each dependency.

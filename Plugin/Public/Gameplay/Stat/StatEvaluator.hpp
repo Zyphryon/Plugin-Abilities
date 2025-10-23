@@ -113,7 +113,7 @@ namespace Gameplay
         /// \param Dependency The stat handle that this formula depends on from the source.
         ZYPHRYON_INLINE void AddSourceDependency(StatHandle Dependency)
         {
-            LOG_ASSERT(mSourceDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies for formula.");
+            LOG_ASSERT(mSourceDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
 
             mSourceDependencies.push_back(Dependency);
         }
@@ -123,7 +123,7 @@ namespace Gameplay
         /// \param Dependency The stat handle that this formula depends on from the target.
         ZYPHRYON_INLINE void AddTargetDependency(StatHandle Dependency)
         {
-            LOG_ASSERT(mTargetDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies for formula.");
+            LOG_ASSERT(mTargetDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
 
             mTargetDependencies.push_back(Dependency);
         }

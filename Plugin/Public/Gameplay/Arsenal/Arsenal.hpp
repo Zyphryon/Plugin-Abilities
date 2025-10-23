@@ -26,6 +26,8 @@ namespace Gameplay
     /// \brief Encapsulates a collection of markers, stats, effects, and abilities for an entity.
     class Arsenal final
     {
+        // TODO: Concurrency and Live Modifiers (From Others).
+
     public:
 
         /// \brief Advances the state of the arsenal by the given time interval.
@@ -217,6 +219,12 @@ namespace Gameplay
         /// \param Effect The effect whose modifiers are to be applied.
         void ApplyEffectModifiers(Ref<Effect> Effect);
 
+        /// \brief Reloads effect modifiers in the arsenal.
+        ///
+        /// \param Effect The effect whose modifiers are to be reloaded.
+        /// \param Slot   The slot index of the modifier to reload.
+        void ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot);
+
         /// \brief Reverts effect modifiers from the arsenal.
         ///
         /// \param Effect The effect whose modifiers are to be reverted.
@@ -229,13 +237,61 @@ namespace Gameplay
         /// \return `true` if the effect should stop ticking, `false` otherwise.
         Bool OnTickEffect(ConstRef<Time> Time, Ref<Effect> Effect);
 
+        /// \brief Represents an observation of a live effect modifier.
+        struct EffectLiveObservation final
+        {
+            /// \brief The handle of the effect being observed.
+            EffectHandle    ID;
+
+            /// \brief The slot index for the live modifier.
+            UInt16          Slot;
+
+            /// \brief Constructs an effect live observation.
+            ZYPHRYON_INLINE EffectLiveObservation(EffectHandle ID, UInt16 Slot)
+                : ID   { ID },
+                  Slot { Slot }
+            {
+            }
+
+            /// \brief Checks equality between two effect live observations.
+            ZYPHRYON_INLINE Bool operator==(ConstRef<EffectLiveObservation> Other) const
+            {
+                return ID == Other.ID && Slot == Other.Slot;
+            }
+
+            /// \brief Generates a hash value for the effect live observation.
+            ZYPHRYON_INLINE UInt Hash() const
+            {
+                return HashCombine(ID, Slot);
+            }
+        };
+
+        /// \brief Represents a live observer for a stat.
+        using Observations = Table<StatHandle, Set<EffectLiveObservation>>;
+
+        /// \brief Inserts a live observation for an effect.
+        ///
+        /// \param Effect The effect to observe.
+        void InsertLiveObservation(ConstRef<Effect> Effect);
+
+        /// \brief Removes a live observation for an effect.
+        ///
+        /// \param Effect The effect to stop observing.
+        void RemoveLiveObservation(ConstRef<Effect> Effect);
+
+        /// \brief Updates live observations for a specific stat.
+        ///
+        /// \param Handle The stat handle to update observations for.
+        void UpdateLiveObservation(StatHandle Handle);
+
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        MarkerSet mMarkers;
-        StatSet   mStats;
-        EffectSet mEffects;
+        MarkerSet    mMarkers;
+        StatSet      mStats;
+        EffectSet    mEffects;
+        Observations mObservations;
     };
 }
