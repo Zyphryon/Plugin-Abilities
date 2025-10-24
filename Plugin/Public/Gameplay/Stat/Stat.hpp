@@ -222,8 +222,13 @@ namespace Gameplay
                     {
                         SetEffective(Target, Amount);
                     }
+                    else
+                    {
+                        return;
+                    }
                     break;
                 }
+                SetDirty();
                 break;
             case StatCategory::Resource:
                 if constexpr (Apply)
