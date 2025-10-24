@@ -173,7 +173,7 @@ namespace Gameplay
         /// \note The derived class must implement a method with the signature:
         ///       `Real32 Compute(ConstRef<Computation>) const;`
         ZYPHRYON_INLINE AbstractStatFormula()
-            : StatFormula(Calculator::Create<&Impl::Compute>(static_cast<Ptr<Impl>>(this)))
+            : StatFormula(Calculator::Create<& Impl::Compute>(static_cast<Ptr<Impl>>(this)))
         {
         }
     };

@@ -13,6 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "MarkerArchetype.hpp"
+#include <Zyphryon.Content/Service.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -32,6 +33,18 @@ namespace Gameplay
         {
             Clear();
         }
+
+        /// \brief Loads marker archetypes from the content service.
+        ///
+        /// \param Content  The content service to load from.
+        /// \param Filename The filename of the resource to load.
+        void Load(Ref<Content::Service> Content, ConstStr8 Filename);
+
+        /// \brief Saves marker archetypes to the content service.
+        ///
+        /// \param Content  The content service to save to.
+        /// \param Filename The filename of the resource to save.
+        void Save(Ref<Content::Service> Content, ConstStr8 Filename) const;
 
         /// \brief Inserts a new marker archetype into the repository by name and optional parent.
         ///
@@ -85,6 +98,8 @@ namespace Gameplay
             return mArchetypes;
         }
 
+    private:
+
         /// \brief Loads marker archetypes from a TOML resource.
         ///
         /// \param Parser The TOML resource containing marker archetype definitions.
@@ -94,8 +109,6 @@ namespace Gameplay
         ///
         /// \param Parser The TOML resource to save marker archetype definitions into.
         void Save(Ref<TOMLParser> Parser) const;
-
-    private:
 
         /// \brief Retrieves a mutable reference to a marker archetype by its token.
         ///
@@ -133,7 +146,7 @@ namespace Gameplay
         /// \brief Retrieves the singleton instance of the repository.
         ///
         /// \return A reference to the singleton repository instance.
-        static Ref<MarkerRepository> Instance()
+        ZYPHRYON_INLINE static Ref<MarkerRepository> Instance()
         {
             static MarkerRepository Singleton;
             return Singleton;

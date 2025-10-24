@@ -20,143 +20,32 @@
 
 namespace Gameplay
 {
-    /// \brief Manages a collection of stat instances and their dependencies.
+    /// \brief Manages a collection of stats.
     class StatSet final
     {
     public:
 
-        /// \brief Type alias for the delegate used to notify observers of stat changes.
-        using OnChangeDelegate  = Delegate<void(StatHandle), DelegateInlineSize::Small>;
-
-        /// \brief Type alias for the signal used to notify observers of stat changes.
-        using OnChangeDelegates = MulticastDelegate<void(StatHandle), DelegateInlineSize::Small>;
-
-    public:
-
-        /// \brief Polls the set for any stat changes and notifies observers.
-        ZYPHRYON_INLINE void Poll()
+        /// \brief Polls all recorded stat change events and invokes the provided action for each event.
+        ///
+        /// \param Source The context used to evaluate stat outcomes.
+        /// \param Action The action to invoke for each stat change event.
+        template<typename Context, typename Function>
+        ZYPHRYON_INLINE void Poll(ConstRef<Context> Source, AnyRef<Function> Action)
         {
-            for (const StatHandle Handle : mNotifications)
+            for (auto [Handle, Value] : mEvents)
             {
-                if (const auto Iterator = mObservers.find(Handle); Iterator != mObservers.end())
+                if (const Real32 Current = Source.GetStat(Handle); Current != Value)
                 {
-                    (Iterator->second).Broadcast(Handle);
+                    Action(Handle, Value, Current);
                 }
             }
-            mNotifications.clear();
+            mEvents.clear();
         }
 
-        /// \brief Inserts an observer for a specific stat.
-        ///
-        /// \param Handle   The handle of the stat to observe.
-        /// \param Observer The delegate to be notified on stat changes.
-        ZYPHRYON_INLINE void InsertObserver(StatHandle Handle, ConstRef<OnChangeDelegate> Observer)
-        {
-            mObservers[Handle].Add(Observer);
-        }
-
-        /// \brief Removes an observer for a specific stat.
-        ///
-        /// \param Handle   The handle of the stat being observed.
-        /// \param Observer The delegate to be removed from notifications.
-        ZYPHRYON_INLINE void RemoveObserver(StatHandle Handle, ConstRef<OnChangeDelegate> Observer)
-        {
-            if (const auto Iterator = mObservers.find(Handle); Iterator != mObservers.end())
-            {
-                Iterator->second.Remove(Observer);
-            }
-        }
-
-        /// \brief Inserts a dependency relationship between two stats.
-        ///
-        /// \param Source     The stat that other stats depend on.
-        /// \param Dependency The stat that depends on the source stat.
-        ZYPHRYON_INLINE void InsertDependency(StatHandle Source, StatHandle Dependency)
-        {
-            mDependencies[Source].insert(Dependency);
-        }
-
-        /// \brief Inserts dependencies for all stats defined in the given archetype.
-        ///
-        /// \param Archetype The archetype whose dependencies to insert.
-        ZYPHRYON_INLINE void InsertDependencies(ConstRef<StatArchetype> Archetype)
-        {
-            Archetype.Traverse([this, Handle = Archetype.GetHandle()](StatHandle Dependency)
-            {
-                InsertDependency(Dependency, Handle);
-            });
-        }
-
-        /// \brief Removes a dependency relationship between two stats.
-        ///
-        /// \param Source     The stat that other stats depend on.
-        /// \param Dependency The stat that depends on the source stat.
-        ZYPHRYON_INLINE void RemoveDependency(StatHandle Source, StatHandle Dependency)
-        {
-            if (const auto Iterator = mDependencies.find(Source); Iterator != mDependencies.end())
-            {
-                Iterator->second.erase(Dependency);
-
-                if (Iterator->second.empty())
-                {
-                    mDependencies.erase(Iterator);
-                }
-            }
-        }
-
-        /// \brief Removes dependencies for all stats defined in the given archetype.
-        ///
-        /// \param Archetype The archetype whose dependencies to remove.
-        ZYPHRYON_INLINE void RemoveDependencies(ConstRef<StatArchetype> Archetype)
-        {
-            Archetype.Traverse([this, Handle = Archetype.GetHandle()](StatHandle Dependency)
-            {
-                RemoveDependency(Dependency, Handle);
-            });
-        }
-
-        /// \brief Notifies all stats that depend on the given source stat, marking them as dirty.
-        ///
-        /// \param Source The stat that has changed and whose dependents need to be notified.
-        ZYPHRYON_INLINE void NotifyDependencies(StatHandle Source)
-        {
-            if (const auto Iterator = mDependencies.find(Source); Iterator != mDependencies.end())
-            {
-                for (const StatHandle Dependent : Iterator->second)
-                {
-                    if (const auto Child = mRegistry.find(Dependent); Child != mRegistry.end())
-                    {
-                        if (!Child->IsDirty())
-                        {
-                            Child->SetDirty();
-
-                            NotifyDependencies(Dependent);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// \brief Notifies observers of a stat change for the given source stat.
-        ///
-        /// \param Source The stat that has changed.
-        ZYPHRYON_INLINE void NotifyObservers(StatHandle Source)
-        {
-            if (const auto Iterator = mObservers.find(Source); Iterator != mObservers.end())
-            {
-                Ref<OnChangeDelegates> MulticastDelegate = (Iterator->second);
-
-                if (!MulticastDelegate.IsEmpty())
-                {
-                    mNotifications.emplace(Source);
-                }
-            }
-        }
-
-        /// \brief Attempts to retrieve a stat instance by its handle.
+        /// \brief Attempts to retrieve a stat by its handle.
         ///
         /// \param Handle The handle of the stat to retrieve.
-        /// \return A pointer to the stat instance if found, or `nullptr` if not found.
+        /// \return A constant pointer to the stat if found, otherwise nullptr.
         ZYPHRYON_INLINE ConstPtr<Stat> TryGet(StatHandle Handle) const
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
@@ -166,54 +55,68 @@ namespace Gameplay
             return nullptr;
         }
 
-        /// \brief Retrieves an existing stat instance by its archetype or inserts a new one if it doesn't exist.
+        /// \brief Retrieves an existing stat or inserts a new one based on the provided archetype.
         ///
+        /// \param Source    The context source used for calculation.
         /// \param Archetype The archetype defining the stat to retrieve or insert.
-        /// \return A reference to the existing or newly inserted stat instance.
-        ZYPHRYON_INLINE Ref<Stat> GetOrInsert(ConstRef<StatArchetype> Archetype)
+        /// \return A reference to the retrieved or newly inserted stat.
+        template<typename Context>
+        ZYPHRYON_INLINE Ref<Stat> GetOrInsert(ConstRef<Context> Source, ConstRef<StatArchetype> Archetype)
         {
-            const auto [Iterator, Insertion] = mRegistry.emplace(Archetype);
+            const auto [Iterator, Inserted] = mRegistry.emplace(Archetype);
 
-            if (Insertion)
+            if (Inserted)
             {
-                InsertDependencies(Archetype);
+                Iterator->Calculate(Source);
             }
             return const_cast<Ref<Stat>>(* Iterator);
         }
 
-        /// \brief Clears all stat instances and their dependencies from the set.
+        /// \brief Clears all stats from the registry.
         ZYPHRYON_INLINE void Clear()
         {
-            // Clear all stats.
             mRegistry.clear();
-
-            // Clear all observers.
-            mObservers.clear();
-
-            // Clear all dependencies.
-            mDependencies.clear();
         }
 
-        /// \brief Iterates over all stat instances in the set.
+        /// \brief Publishes a stat change event for the specified stat handle and previous value.
         ///
-        /// \param Action The action to apply to each stat instance.
-        template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+        /// \param Handle The handle of the stat that changed.
+        /// \param Value  The previous value of the stat before the change.
+        ZYPHRYON_INLINE void Publish(StatHandle Handle, Real32 Value)
         {
-            for (ConstRef<Stat> Instance : mRegistry)
-            {
-                Action(Instance);
-            }
+            mEvents.emplace(Handle, Value);
         }
+
+    private:
+
+        /// \brief Represents a stat change event.
+        struct Event
+        {
+            /// \brief The handle of the stat that changed.
+            StatHandle Handle;
+
+            /// \brief The previous value of the stat before the change.
+            Real32     Value;
+
+            /// \brief Comparison operator to check equality between two events based on their stat handles.
+            ZYPHRYON_INLINE Bool operator==(ConstRef<Event> Other) const
+            {
+                return Handle == Other.Handle;
+            }
+
+            /// \brief Generates a hash value for the event based on its stat handle.
+            ZYPHRYON_INLINE UInt64 Hash() const
+            {
+                return Handle.Hash();
+            }
+        };
 
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<Stat>                            mRegistry;
-        Table<StatHandle, Set<StatHandle>>   mDependencies;
-        Table<StatHandle, OnChangeDelegates> mObservers;
-        Set<StatHandle>                      mNotifications;
+        Set<Stat>  mRegistry;
+        Set<Event> mEvents;
     };
 }

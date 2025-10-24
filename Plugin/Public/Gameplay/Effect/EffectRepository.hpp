@@ -13,6 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "EffectArchetype.hpp"
+#include <Zyphryon.Content/Service.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,6 +30,18 @@ namespace Gameplay
         static constexpr UInt32 kMaxArchetypes = 2'048;  // TODO: Macro Configurable
 
     public:
+
+        /// \brief Loads effect archetypes from the content service.
+        ///
+        /// \param Content  The content service to load from.
+        /// \param Filename The filename of the resource to load.
+        void Load(Ref<Content::Service> Content, ConstStr8 Filename);
+
+        /// \brief Saves effect archetypes to the content service.
+        ///
+        /// \param Content  The content service to save to.
+        /// \param Filename The filename of the resource to save.
+        void Save(Ref<Content::Service> Content, ConstStr8 Filename) const;
 
         /// \brief Allocates a new effect archetype in the repository.
         ///
@@ -75,6 +88,19 @@ namespace Gameplay
             return mArchetypes.GetSpan();
         }
 
+    public:
+
+        /// \brief Retrieves the singleton instance of the repository.
+        ///
+        /// \return A reference to the singleton repository instance.
+        ZYPHRYON_INLINE static Ref<EffectRepository> Instance()
+        {
+            static EffectRepository Singleton;
+            return Singleton;
+        }
+
+    private:
+
         /// \brief Loads effect archetypes from a TOML resource.
         ///
         /// \param Parser The TOML resource containing effect archetype definitions.
@@ -84,17 +110,6 @@ namespace Gameplay
         ///
         /// \param Parser The TOML resource to save effect archetype definitions into.
         void Save(Ref<TOMLParser> Parser) const;
-
-    public:
-
-        /// \brief Retrieves the singleton instance of the repository.
-        ///
-        /// \return A reference to the singleton repository instance.
-        static Ref<EffectRepository> Instance()
-        {
-            static EffectRepository Singleton;
-            return Singleton;
-        }
 
     private:
 

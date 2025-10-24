@@ -239,8 +239,8 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         StatHandle           mHandle;
-        Str8                 mName;
         StatCategory         mCategory;
+        Str8                 mName;
         StatInput            mBase;
         StatInput            mMinimum;
         StatInput            mMaximum;

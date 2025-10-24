@@ -11,6 +11,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Arsenal.hpp"
+#include "Coordinator.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,8 +30,17 @@ namespace Gameplay
             return OnTickEffect(Time, Effect);
         });
 
+        // Poll markers for changes.
+        mMarkers.Poll([this](Marker Token, UInt32 Previous, UInt32 Current)
+        {
+            Coordinator::Instance().Publish(Token, 0 /* TODO */, Previous, Current);
+        });
+
         // Poll stats for changes.
-        mStats.Poll();
+        mStats.Poll(* this, [this](StatHandle Handle, Real32 Previous, Real32 Current)
+        {
+            Coordinator::Instance().Publish(Handle, 0 /* TODO */, Previous, Current);
+        });
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -39,19 +49,36 @@ namespace Gameplay
     void Arsenal::ApplyModifier(StatHandle Archetype, StatOperator Operator, Real32 Magnitude)
     {
         // Ensure the stat is valid.
-        Ref<Stat> Stat = mStats.GetOrInsert(StatRepository::Instance().Get(Archetype));
+        Ref<Stat> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
 
-        // Ensure the stat has an effective value.
-        if (Stat.IsUndefined())
+        // Notify listeners of the impending stat change.
+        StatRepository::Instance().NotifyDependency(Archetype, [this](StatHandle Dependency)
         {
-            Stat.SetEffective(* this, Stat.GetOutcome(* this));
-        }
+            const ConstPtr<Gameplay::Stat> Child = mStats.TryGet(Dependency);
+
+            Real32 Value;
+
+            if (Child)
+            {
+                Child->SetDirty();
+
+                Value = Child->Calculate(* this);
+            }
+            else
+            {
+                ConstRef<StatArchetype> Archetype = StatRepository::Instance().Get(Dependency);
+
+                Value = Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
+            }
+
+            mStats.Publish(Dependency, Value);
+        });
+
+        // Notify listeners of the impending stat change.
+        mStats.Publish(Archetype, Stat.GetEffective());
 
         // Apply the modifier to the stat.
         Stat.Apply(* this, Operator, Magnitude);
-
-        // Notify dependencies of the stat change.
-        mStats.NotifyDependencies(Archetype);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -60,13 +87,36 @@ namespace Gameplay
     void Arsenal::RevertModifier(StatHandle Archetype, StatOperator Operator, Real32 Magnitude)
     {
         // Ensure the stat is valid.
-        Ref<Stat> Stat = mStats.GetOrInsert(StatRepository::Instance().Get(Archetype));
+        Ref<Stat> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
+
+        // Notify listeners of the impending stat change.
+        StatRepository::Instance().NotifyDependency(Archetype, [this](StatHandle Dependency)
+        {
+            const ConstPtr<Gameplay::Stat> Child = mStats.TryGet(Dependency);
+
+            Real32 Value;
+
+            if (Child)
+            {
+                Child->SetDirty();
+
+                Value = Child->Calculate(* this);
+            }
+            else
+            {
+                ConstRef<StatArchetype> Archetype = StatRepository::Instance().Get(Dependency);
+
+                Value = Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
+            }
+
+            mStats.Publish(Dependency, Value);
+        });
+
+        // Notify listeners of the impending stat change.
+        mStats.Publish(Archetype, Stat.GetEffective());
 
         // Revert the modifier from the stat.
         Stat.Revert(* this, Operator, Magnitude);
-
-        // Notify dependencies of the stat change.
-        mStats.NotifyDependencies(Archetype);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -96,7 +146,7 @@ namespace Gameplay
             Ref<Gameplay::Effect> Instance = mEffects.Create(Effect);
             Instance.SetStack(Stack);
             Instance.SetIntensity(Intensity);
-            Instance.SetInstigator(Instigator);
+            Instance.SetInstigator(Instigator.GetID());
 
             if (Effect.GetApplication() == EffectApplication::Temporary)
             {
@@ -133,7 +183,10 @@ namespace Gameplay
                         ApplyEffectModifiers(Inplace);
 
                         // Insert live observation for the effect.
-                        InsertLiveObservation(Instance);
+                        if (!Instance.CanTick())
+                        {
+                            //InsertLiveObservation(Instance);
+                        }
                         break;
                     case EffectSet::Event::Update:
                         // Revert the previous effect modifiers.
@@ -166,7 +219,10 @@ namespace Gameplay
                 ApplyEffectModifiers(Instance);
 
                 // Insert live observation for the effect.
-                InsertLiveObservation(Instance);
+                if (!Instance.CanTick())
+                {
+                    //InsertLiveObservation(Instance);
+                }
             }
             return Result;
         }
@@ -180,7 +236,7 @@ namespace Gameplay
 
     void Arsenal::RevertEffect(EffectHandle Handle)
     {
-        ConstRef<Effect> Effect = mEffects.Fetch(Handle);
+        ConstRef<Effect> Effect = mEffects.GetInstance(Handle);
 
         // Stop the effect from ticking if it can expire.
         if (Effect.CanExpire())
@@ -192,7 +248,10 @@ namespace Gameplay
         RevertEffectModifiers(Effect);
 
         // Remove live observation for the effect.
-        RemoveLiveObservation(Effect);
+        if (!Effect.CanTick())
+        {
+            //RemoveLiveObservation(Effect);
+        }
 
         // Remove the effect from the arsenal.
         mEffects.Delete(Effect);
@@ -223,20 +282,18 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot)
+    void Arsenal::ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot, Real32 Value)
     {
-        ConstRef<Arsenal> Instigator = GetSource(Effect.GetInstigator());
-
         // Revert the previous modifier value.
         ConstRef<EffectModifier> Modifier = Effect.GetArchetype()->GetBonus(Slot);
         RevertModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effect.GetSnapshot(Slot));
 
         // Calculate the new modifier value.
-        const Real32 Value = Modifier.GetMagnitude().Resolve(Instigator, * this) * Effect.GetEffectiveIntensity();
-        Effect.SetSnapshot(Slot, Value);
+        const Real32 Effective = Value * Effect.GetEffectiveIntensity();
+        Effect.SetSnapshot(Slot, Effective);
 
         // Apply the updated modifier value.
-        ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Value);
+        ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effective);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -296,7 +353,10 @@ namespace Gameplay
             else
             {
                 // Remove live observation for the effect.
-                RemoveLiveObservation(Effect);
+                if (!Effect.CanTick())
+                {
+                    //RemoveLiveObservation(Effect);
+                }
                 return true;
             }
         }
@@ -317,69 +377,4 @@ namespace Gameplay
         return false;
     }
 
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Arsenal::InsertLiveObservation(ConstRef<Effect> Effect)
-    {
-        for (const auto [Index, Modifier] : std::views::enumerate(Effect.GetArchetype()->GetBonuses()))
-        {
-            if (Modifier.GetEvaluation() == StatEvaluation::Live)
-            {
-                const StatHandle Target = Modifier.GetTarget();
-
-                Ref<Set<EffectLiveObservation>> Observers = mObservations[Target];
-
-                if (Observers.empty())
-                {
-                    mStats.InsertObserver(
-                        Target, StatSet::OnChangeDelegate::Create<& Arsenal::UpdateLiveObservation>(this));
-                }
-                Observers.emplace(Effect.GetHandle(), static_cast<UInt16>(Index));
-            }
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Arsenal::RemoveLiveObservation(ConstRef<Effect> Effect)
-    {
-        for (const auto [Index, Modifier] : std::views::enumerate(Effect.GetArchetype()->GetBonuses()))
-        {
-            if (Modifier.GetEvaluation() == StatEvaluation::Live)
-            {
-                const StatHandle Target = Modifier.GetTarget();
-
-                Ref<Set<EffectLiveObservation>> Observers = mObservations[Target];
-
-                const auto Iterator = Observers.find(EffectLiveObservation(Effect.GetHandle(), Index));
-                if (Iterator != Observers.end())
-                {
-                    Observers.erase(Iterator);
-
-                    if (Observers.empty())
-                    {
-                        mStats.RemoveObserver(
-                            Target, StatSet::OnChangeDelegate::Create<& Arsenal::UpdateLiveObservation>(this));
-                    }
-                }
-            }
-        }
-    }
-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-    void Arsenal::UpdateLiveObservation(StatHandle Handle)
-    {
-        if (const auto Iterator = mObservations.find(Handle); Iterator != mObservations.end())
-        {
-            for (const auto [ID, Slot] : Iterator->second)
-            {
-                Ref<Effect> Instance = const_cast<Ref<Effect>>(mEffects.Fetch(ID));
-                ReloadEffectModifier(Instance, Slot);
-            }
-        }
-    }
 }

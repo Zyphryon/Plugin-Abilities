@@ -9,6 +9,12 @@
 #pragma once
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// [  HEADER  ]
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+#include <Zyphryon.Base/Base.hpp>
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -19,14 +25,14 @@ namespace Gameplay
     {
     public:
 
-        /// \brief Maximum value for a single node in the marker hierarchy.
-        static constexpr UInt32 kMaxNode  = (1 << 8) - 1;
+        /// \brief Represents an invalid marker key.
+        static constexpr UInt64 kEmpty = 0;
 
         /// \brief Maximum depth of the marker hierarchy.
-        static constexpr UInt32 kMaxDepth = 8;
+        static constexpr UInt32 kDepth = 8;
 
-        /// \brief Represents an invalid marker key.
-        static constexpr UInt64 kEmpty    = 0;
+        /// \brief Maximum value for a single node in the marker hierarchy.
+        static constexpr UInt32 kLimit = (1 << kDepth) - 1;
 
     public:
 
@@ -65,7 +71,7 @@ namespace Gameplay
         /// \return `true` if the marker is a root marker, `false` otherwise.
         ZYPHRYON_INLINE constexpr Bool IsRoot() const
         {
-            return mKey <= kMaxNode;
+            return mKey <= kLimit;
         }
 
         /// \brief Iterates over each hierarchical level of the marker, invoking the provided action.
@@ -76,7 +82,7 @@ namespace Gameplay
         {
             UInt64 Key = kEmpty;
 
-            for (UInt32 Index = 0; Index < kMaxDepth; ++Index)
+            for (UInt32 Index = 0; Index < kDepth; ++Index)
             {
                 if (const UInt8 Byte = mKey >> (Index * 8) & 0xFF; Byte != 0)
                 {
@@ -134,7 +140,7 @@ namespace Gameplay
         template<typename... Values>
         ZYPHRYON_INLINE static constexpr Marker From(Values... Tokens)
         {
-            static_assert(sizeof...(Tokens) <= kMaxDepth, "Exceeded maximum marker hierarchy depth.");
+            static_assert(sizeof...(Tokens) <= kDepth, "Exceeded maximum marker hierarchy depth.");
             return Marker(Encode(std::index_sequence_for<Values...>{ }, static_cast<UInt8>(Tokens)...));
         }
 

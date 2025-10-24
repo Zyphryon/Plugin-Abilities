@@ -220,7 +220,7 @@ namespace Gameplay
             }
             else if (Type == "Formula")
             {
-                LOG_ASSERT(false, "Loading formulas is not supported yet.");
+                LOG_WARNING("Loading formulas is not supported yet.");
             }
         }
 

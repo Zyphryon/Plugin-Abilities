@@ -26,7 +26,7 @@ namespace Gameplay
     /// \brief Encapsulates a collection of markers, stats, effects, and abilities for an entity.
     class Arsenal final
     {
-        // TODO: Concurrency and Live Modifiers (From Others).
+        // TODO: Concurrency and Live Modifiers.
 
     public:
 
@@ -132,7 +132,7 @@ namespace Gameplay
 
             if (const ConstPtr<Stat> Stat = mStats.TryGet(Handle); Stat)
             {
-                return Stat->GetOutcome(* this);
+                return Stat->Calculate(* this);
             }
             return Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
         }
@@ -185,15 +185,6 @@ namespace Gameplay
             mMarkers.Traverse(Action);
         }
 
-        /// \brief Traverses each stat in the stat set and applies the given action.
-        ///
-        /// \param Action The action to apply to each stat.
-        template<typename Function>
-        ZYPHRYON_INLINE void ForEachStat(AnyRef<Function> Action)
-        {
-            mStats.Traverse(Action);
-        }
-
         /// \brief Traverses each effect in the effect set and applies the given action.
         ///
         /// \param Action The action to apply to each effect.
@@ -223,7 +214,7 @@ namespace Gameplay
         ///
         /// \param Effect The effect whose modifiers are to be reloaded.
         /// \param Slot   The slot index of the modifier to reload.
-        void ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot);
+        void ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot, Real32 Value);
 
         /// \brief Reverts effect modifiers from the arsenal.
         ///
@@ -237,61 +228,13 @@ namespace Gameplay
         /// \return `true` if the effect should stop ticking, `false` otherwise.
         Bool OnTickEffect(ConstRef<Time> Time, Ref<Effect> Effect);
 
-        /// \brief Represents an observation of a live effect modifier.
-        struct EffectLiveObservation final
-        {
-            /// \brief The handle of the effect being observed.
-            EffectHandle    ID;
-
-            /// \brief The slot index for the live modifier.
-            UInt16          Slot;
-
-            /// \brief Constructs an effect live observation.
-            ZYPHRYON_INLINE EffectLiveObservation(EffectHandle ID, UInt16 Slot)
-                : ID   { ID },
-                  Slot { Slot }
-            {
-            }
-
-            /// \brief Checks equality between two effect live observations.
-            ZYPHRYON_INLINE Bool operator==(ConstRef<EffectLiveObservation> Other) const
-            {
-                return ID == Other.ID && Slot == Other.Slot;
-            }
-
-            /// \brief Generates a hash value for the effect live observation.
-            ZYPHRYON_INLINE UInt Hash() const
-            {
-                return HashCombine(ID, Slot);
-            }
-        };
-
-        /// \brief Represents a live observer for a stat.
-        using Observations = Table<StatHandle, Set<EffectLiveObservation>>;
-
-        /// \brief Inserts a live observation for an effect.
-        ///
-        /// \param Effect The effect to observe.
-        void InsertLiveObservation(ConstRef<Effect> Effect);
-
-        /// \brief Removes a live observation for an effect.
-        ///
-        /// \param Effect The effect to stop observing.
-        void RemoveLiveObservation(ConstRef<Effect> Effect);
-
-        /// \brief Updates live observations for a specific stat.
-        ///
-        /// \param Handle The stat handle to update observations for.
-        void UpdateLiveObservation(StatHandle Handle);
-
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        MarkerSet    mMarkers;
-        StatSet      mStats;
-        EffectSet    mEffects;
-        Observations mObservations;
+        MarkerSet mMarkers;
+        StatSet   mStats;
+        EffectSet mEffects;
     };
 }

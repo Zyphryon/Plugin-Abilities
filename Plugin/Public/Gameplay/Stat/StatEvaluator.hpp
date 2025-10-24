@@ -149,7 +149,7 @@ namespace Gameplay
         /// \note The derived class must implement a method with the signature:
         ///       `Real32 Compute(ConstRef<Computation>, ConstRef<Computation>) const;`
         ZYPHRYON_INLINE AbstractStatEvaluator()
-            : StatEvaluator(Calculator::Create<&Impl::Compute>(static_cast<Ptr<Impl>>(this)))
+            : StatEvaluator(Calculator::Create<& Impl::Compute>(static_cast<Ptr<Impl>>(this)))
         {
         }
     };

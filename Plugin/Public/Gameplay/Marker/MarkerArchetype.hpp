@@ -122,7 +122,7 @@ namespace Gameplay
         /// \return A new marker archetype with increased arity and updated name.
         ZYPHRYON_INLINE MarkerArchetype Extend(ConstStr8 Name)
         {
-            LOG_ASSERT(mArity < Marker::kMaxNode, "Exceeded maximum arity for marker.");
+            LOG_ASSERT(mArity < Marker::kLimit, "Exceeded maximum arity for marker.");
 
             const ConstStr8 Path = !mPath.empty() ? Format("{}.{}", mPath, Name) : Name;
             return MarkerArchetype(mHandle.With(++mArity), Path, 0);

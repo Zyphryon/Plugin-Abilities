@@ -33,7 +33,7 @@ namespace Gameplay
               mFlat       { 0.0f },
               mAdditive   { 0.0f },
               mMultiplier { 1.0f },
-              mEffective  { kInfinity<Real32> },
+              mEffective  { 0.0f },
               mDirty      { true }
         {
         }
@@ -50,14 +50,6 @@ namespace Gameplay
         ZYPHRYON_INLINE Bool IsDirty() const
         {
             return mDirty;
-        }
-
-        /// \brief Checks if the stat's effective value is currently undefined.
-        ///
-        /// \return `true` if the effective value is undefined, `false` otherwise.
-        ZYPHRYON_INLINE Bool IsUndefined() const
-        {
-            return mEffective == kInfinity<Real32>;
         }
 
         /// \brief Retrieves the archetype associated with this stat instance.
@@ -146,7 +138,7 @@ namespace Gameplay
         /// \param Target The context providing access to other stats if needed.
         /// \return The calculated effective stat value.
         template<typename Context>
-        ZYPHRYON_INLINE Real32 GetOutcome(ConstRef<Context> Target) const
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Target) const
         {
             if (mDirty)
             {
@@ -269,6 +261,6 @@ namespace Gameplay
         Real32                  mAdditive;
         Real32                  mMultiplier;
         mutable Real32          mEffective;
-        mutable Bool            mDirty;
+        mutable Bool            mDirty;         // TODO: Steal a bit from Archetype (Reduce 25% size)
     };
 }

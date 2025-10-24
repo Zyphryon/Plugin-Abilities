@@ -9,6 +9,12 @@
 #pragma once
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// [  HEADER  ]
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+#include <Zyphryon.Base/Base.hpp>
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -56,5 +62,138 @@ namespace Gameplay
         Exponential, ///< Each stack increases the effect's intensity exponentially.
         Diminish,    ///< Each stack increases the effect's intensity but with diminishing returns.
         Independent, ///< Each stack is independent and does not affect intensity.
+    };
+
+    /// \brief Defines the policy rules for effect behavior.
+    class EffectPolicy final
+    {
+    public:
+
+        /// \brief Default constructor, initializes policies to default values.
+        ZYPHRYON_INLINE EffectPolicy()
+            : mPolicies { 0 }
+        {
+        }
+
+        /// \brief Sets the application policy for this effect.
+        ///
+        /// \param Policy The application policy to assign.
+        ZYPHRYON_INLINE void SetApplication(EffectApplication Policy)
+        {
+            mPolicies = SetBit(mPolicies, 0, 0b111, Enum::Cast(Policy));
+        }
+
+        /// \brief Retrieves the application policy of this effect.
+        ///
+        /// \return The effect application policy.
+        ZYPHRYON_INLINE EffectApplication GetApplication() const
+        {
+            return static_cast<EffectApplication>(GetBit(mPolicies, 0, 0b111));
+        }
+
+        /// \brief Sets the expiration policy for this effect.
+        ///
+        /// \param Policy The expiration policy to assign.
+        ZYPHRYON_INLINE void SetExpiration(EffectExpiration Policy)
+        {
+            mPolicies = SetBit(mPolicies, 3, 0b111, Enum::Cast(Policy));
+        }
+
+        /// \brief Retrieves the expiration policy of this effect.
+        ///
+        /// \return The effect expiration policy.
+        ZYPHRYON_INLINE EffectExpiration GetExpiration() const
+        {
+            return static_cast<EffectExpiration>(GetBit(mPolicies, 3, 0b111));
+        }
+
+        /// \brief Sets the refresh policy for this effect.
+        ///
+        /// \param Policy The refresh policy to assign.
+        ZYPHRYON_INLINE void SetRefresh(EffectRefresh Policy)
+        {
+            mPolicies = SetBit(mPolicies, 6, 0b111, Enum::Cast(Policy));
+        }
+
+        /// \brief Retrieves the refresh policy of this effect.
+        ///
+        /// \return The effect refresh policy.
+        ZYPHRYON_INLINE EffectRefresh GetRefresh() const
+        {
+            return static_cast<EffectRefresh>(GetBit(mPolicies, 6, 0b111));
+        }
+
+        /// \brief Sets the resolution policy for this effect.
+        ///
+        /// \param Policy The resolution policy to assign.
+        ZYPHRYON_INLINE void SetResolution(EffectResolution Policy)
+        {
+            mPolicies = SetBit(mPolicies, 9, 0b111, Enum::Cast(Policy));
+        }
+
+        /// \brief Retrieves the resolution policy of this effect.
+        ///
+        /// \return The effect resolution policy.
+        ZYPHRYON_INLINE EffectResolution GetResolution() const
+        {
+            return static_cast<EffectResolution>(GetBit(mPolicies, 9, 0b111));
+        }
+
+        /// \brief Sets the scaling policy for this effect.
+        ///
+        /// \param Policy The scaling policy to assign.
+        ZYPHRYON_INLINE void SetStack(EffectStack Policy)
+        {
+            mPolicies = SetBit(mPolicies, 12, 0b111, Enum::Cast(Policy));
+        }
+
+        /// \brief Retrieves the scaling policy of this effect.
+        ///
+        /// \return The effect scaling policy.
+        ZYPHRYON_INLINE EffectStack GetStack() const
+        {
+            return static_cast<EffectStack>(GetBit(mPolicies, 12, 0b111));
+        }
+
+        /// \brief Loads effect policies from a TOML section.
+        ///
+        /// \param Section The TOML section containing effect policy data.
+        ZYPHRYON_INLINE void Load(TOMLSection Section)
+        {
+            const EffectApplication Application = Enum::Cast(Section.GetString("Application"), EffectApplication::Temporary);
+            SetApplication(Application);
+
+            if (Application == EffectApplication::Temporary)
+            {
+                SetExpiration(Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single));
+                SetRefresh(Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace));
+                SetResolution(Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive));
+                SetStack(Enum::Cast(Section.GetString("Stack"), EffectStack::Linear));
+            }
+        }
+
+        /// \brief Saves effect policies to a TOML section.
+        ///
+        /// \param Section The TOML section to save effect policy data into.
+        ZYPHRYON_INLINE void Save(TOMLSection Section) const
+        {
+            const EffectApplication Application = GetApplication();
+            Section.SetString("Application", Enum::GetName(Application));
+
+            if (Application == EffectApplication::Temporary)
+            {
+                Section.SetString("Expiration", Enum::GetName(GetExpiration()));
+                Section.SetString("Refresh", Enum::GetName(GetRefresh()));
+                Section.SetString("Resolution", Enum::GetName(GetResolution()));
+                Section.SetString("Stack", Enum::GetName(GetStack()));
+            }
+        }
+
+    private:
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        UInt16 mPolicies;
     };
 }

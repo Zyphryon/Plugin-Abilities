@@ -23,17 +23,17 @@ namespace Gameplay
 
     void EffectArchetype::Load(TOMLSection Section)
     {
-        mHandle      = EffectHandle(Section.GetInteger("ID"));
-        mName        = Section.GetString("Name");
-        mCategory    = Section.GetInteger("Category");
-        mDuration.Load(Section.GetArray("Duration"));
-        mPeriod.Load(Section.GetArray("Period"));
-        mLimit       = Section.GetInteger("Limit");
-        mApplication = Enum::Cast(Section.GetString("Application"), EffectApplication::Temporary);
-        mExpiration  = Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single);
-        mRefresh     = Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace);
-        mResolution  = Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive);
-        mStack       = Enum::Cast(Section.GetString("Stack"), EffectStack::Linear);
+        mName     = Section.GetString("Name");
+        mHandle   = Section.GetInteger("ID");
+        mPolicies.Load(Section);
+        mCategory = Section.GetInteger("Category");
+
+        if (GetApplication() == EffectApplication::Temporary)
+        {
+            mDuration.Load(Section.GetArray("Duration"));
+            mPeriod.Load(Section.GetArray("Period"));
+            mLimit = Section.GetInteger("Limit");
+        }
 
         if (const TOMLArray Bonuses = Section.GetArray("Bonuses"); !Bonuses.IsEmpty())
         {
@@ -51,17 +51,17 @@ namespace Gameplay
 
     void EffectArchetype::Save(TOMLSection Section) const
     {
-        Section.SetInteger("ID", mHandle.GetID());
         Section.SetString("Name", mName);
+        Section.SetInteger("ID", mHandle.GetID());
+        mPolicies.Save(Section);
         Section.SetInteger("Category", mCategory.GetID());
-        mDuration.Save(Section.SetArray("Length"));
-        mPeriod.Save(Section.SetArray("Period"));
-        Section.SetInteger("Limit", mLimit);
-        Section.SetString("Application", Enum::GetName(mApplication));
-        Section.SetString("Expiration", Enum::GetName(mExpiration));
-        Section.SetString("Refresh", Enum::GetName(mRefresh));
-        Section.SetString("Resolution", Enum::GetName(mResolution));
-        Section.SetString("Stack", Enum::GetName(mStack));
+
+        if (GetApplication() == EffectApplication::Temporary)
+        {
+            mDuration.Save(Section.SetArray("Length"));
+            mPeriod.Save(Section.SetArray("Period"));
+            Section.SetInteger("Limit", mLimit);
+        }
 
         for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<EffectModifier> Modifier: mBonuses)
         {

@@ -20,7 +20,7 @@
 
 namespace Gameplay
 {
-    /// \brief Manages a collection of effect instances and their dependencies.
+    /// \brief Manages a collection of effect instances.
     class EffectSet final
     {
     public:
@@ -44,9 +44,12 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Tick(ConstRef<Time> Time, AnyRef<Function> Action)
         {
-            while (!mActives.empty())
+            Vector<Ptr<Effect>, 6> Threshold;
+
+            // Iterate over active effects in reverse order to handle expirations.
+            for (SInt32 Index = mActives.size() - 1; Index >= 0; --Index)
             {
-                Ref<Effect> Effect = mRegistry[mActives.back().GetID()];
+                Ref<Effect> Effect = mRegistry[mActives[Index].GetID()];
 
                 if (Effect.GetInterval() > Time.GetAbsolute())
                 {
@@ -63,13 +66,33 @@ namespace Gameplay
                 }
                 else
                 {
-                    if (mActives.size() > 1)
+                    if (Threshold.size() != Threshold.capacity())
                     {
-                        // Reposition the effect in the active list if its remaining time has changed.
-                        if (const auto Position = FindBestPosition(Effect); Position != mActives.end())
-                        {
-                            std::rotate(Position, mActives.end() - 1, mActives.end());
-                        }
+                        Threshold.emplace_back(& Effect);
+                    }
+                }
+            }
+
+            // Update intervals for effects that are still active.
+            if (Threshold.size() == Threshold.capacity())
+            {
+                // Re-sort the entire active list if all effects were processed.
+                std::sort(mActives.begin(), mActives.end(), [this](EffectHandle First, EffectHandle Second)
+                {
+                    ConstRef<Effect> FirstEffect  = mRegistry[First.GetID()];
+                    ConstRef<Effect> SecondEffect = mRegistry[Second.GetID()];
+                    return FirstEffect.GetInterval() >= SecondEffect.GetInterval();
+                });
+            }
+            else
+            {
+                // Reposition only the effects that were processed.
+                for (const Ptr<Effect> Effect : Threshold)
+                {
+                    // Reposition the effect in the active list if its remaining time has changed.
+                    if (const auto Position = FindBestPosition(* Effect); Position != mActives.end())
+                    {
+                        std::rotate(Position, mActives.end() - 1, mActives.end());
                     }
                 }
             }
@@ -99,11 +122,11 @@ namespace Gameplay
             mRegistry.Free(Instance.GetHandle().GetID());
         }
 
-        /// \brief Fetches an effect instance by its handle.
+        /// \brief Retrieves an effect instance by its handle.
         ///
         /// \param Handle The handle of the effect instance to fetch.
         /// \return The effect instance associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<Effect> Fetch(EffectHandle Handle) const
+        ZYPHRYON_INLINE ConstRef<Effect> GetInstance(EffectHandle Handle) const
         {
             return mRegistry[Handle.GetID()];
         }
@@ -182,7 +205,7 @@ namespace Gameplay
             }
         }
 
-        /// \brief Clears all effect instances and their dependencies from the set.
+        /// \brief Clears all effect instances from the set.
         ZYPHRYON_INLINE void Clear()
         {
             // Clear all active effects.
@@ -256,6 +279,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Catalog<Effect, kMaxInstances> mRegistry;
-        Vector<EffectHandle>           mActives;
+        Vector<EffectHandle>           mActives;        // TODO: Fixed size
     };
 }

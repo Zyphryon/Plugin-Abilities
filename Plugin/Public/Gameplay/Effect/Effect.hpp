@@ -237,7 +237,7 @@ namespace Gameplay
         /// \brief Sets the entity that instigated the effect.
         ///
         /// \param Instigator The instigating entity.
-        ZYPHRYON_INLINE void SetInstigator(Scene::Entity Instigator)
+        ZYPHRYON_INLINE void SetInstigator(UInt64 Instigator)
         {
             mInstigator = Instigator;
         }
@@ -245,7 +245,7 @@ namespace Gameplay
         /// \brief Retrieves the entity that instigated the effect.
         ///
         /// \return The instigating entity.
-        ZYPHRYON_INLINE Scene::Entity GetInstigator() const
+        ZYPHRYON_INLINE UInt64 GetInstigator() const
         {
             return mInstigator;
         }
@@ -283,13 +283,13 @@ namespace Gameplay
 
         ConstPtr<EffectArchetype>    mArchetype;
         EffectHandle                 mHandle;
-        UInt16                       mStack;
-        Real32                       mDuration;
-        Real32                       mPeriod;
-        Real32                       mIntensity;
-        Real64                       mExpiration;
-        Real64                       mInterval;
-        Scene::Entity                mInstigator;
+        UInt16                       mStack;       // TODO: Move out of here.
+        Real32                       mDuration;    // TODO: Move out of here.
+        Real32                       mPeriod;      // TODO: Move out of here.
+        Real32                       mIntensity;   // TODO: Move out of here.
+        Real64                       mExpiration;  // TODO: Move out of here.
+        Real64                       mInterval;    // TODO: Move out of here.
+        UInt64                       mInstigator;
         Array<Real32, kMaxSnapshots> mSnapshot;
     };
 }

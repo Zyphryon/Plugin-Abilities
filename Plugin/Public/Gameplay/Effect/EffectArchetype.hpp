@@ -35,16 +35,10 @@ namespace Gameplay
 
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE EffectArchetype()
-            : mHandle      { 0 },
-              mName        { "" },
-              mDuration    { 0.0f },
-              mPeriod      { 0.0f },
-              mLimit       { 0 },
-              mApplication { EffectApplication::Temporary },
-              mExpiration  { EffectExpiration::Single },
-              mRefresh     { EffectRefresh::Replace },
-              mResolution  { EffectResolution::Additive },
-              mStack       { EffectStack::Linear }
+            : mHandle   { 0 },
+              mDuration { 0.0f },
+              mPeriod   { 0.0f },
+              mLimit    { 0 }
         {
         }
 
@@ -179,7 +173,7 @@ namespace Gameplay
         /// \param Application The application to assign.
         ZYPHRYON_INLINE void SetApplication(EffectApplication Application)
         {
-            mApplication = Application;
+            mPolicies.SetApplication(Application);
         }
 
         /// \brief Retrieves the application of the effect archetype.
@@ -187,7 +181,7 @@ namespace Gameplay
         /// \return The effect application.
         ZYPHRYON_INLINE EffectApplication GetApplication() const
         {
-            return mApplication;
+            return mPolicies.GetApplication();
         }
 
         /// \brief Sets the expiration policy for this effect.
@@ -195,7 +189,7 @@ namespace Gameplay
         /// \param Policy The expiration policy to assign.
         ZYPHRYON_INLINE void SetExpiration(EffectExpiration Policy)
         {
-            mExpiration = Policy;
+            mPolicies.SetExpiration(Policy);
         }
 
         /// \brief Retrieves the expiration policy of this effect.
@@ -203,7 +197,7 @@ namespace Gameplay
         /// \return The effect expiration policy.
         ZYPHRYON_INLINE EffectExpiration GetExpiration() const
         {
-            return mExpiration;
+            return mPolicies.GetExpiration();
         }
 
         /// \brief Sets the refresh policy for this effect.
@@ -211,7 +205,7 @@ namespace Gameplay
         /// \param Policy The refresh policy to assign.
         ZYPHRYON_INLINE void SetRefresh(EffectRefresh Policy)
         {
-            mRefresh = Policy;
+            mPolicies.SetRefresh(Policy);
         }
 
         /// \brief Retrieves the refresh policy of this effect.
@@ -219,7 +213,7 @@ namespace Gameplay
         /// \return The effect refresh policy.
         ZYPHRYON_INLINE EffectRefresh GetRefresh() const
         {
-            return mRefresh;
+            return mPolicies.GetRefresh();
         }
 
         /// \brief Sets the resolution policy for this effect.
@@ -227,7 +221,7 @@ namespace Gameplay
         /// \param Policy The resolution policy to assign.
         ZYPHRYON_INLINE void SetResolution(EffectResolution Policy)
         {
-            mResolution = Policy;
+            mPolicies.SetResolution(Policy);
         }
 
         /// \brief Retrieves the resolution policy of this effect.
@@ -235,7 +229,7 @@ namespace Gameplay
         /// \return The effect resolution policy.
         ZYPHRYON_INLINE EffectResolution GetResolution() const
         {
-            return mResolution;
+            return mPolicies.GetResolution();
         }
 
         /// \brief Sets the scaling policy for this effect.
@@ -243,7 +237,7 @@ namespace Gameplay
         /// \param Policy The scaling policy to assign.
         ZYPHRYON_INLINE void SetStack(EffectStack Policy)
         {
-            mStack = Policy;
+            mPolicies.SetStack(Policy);
         }
 
         /// \brief Retrieves the scaling policy of this effect.
@@ -251,7 +245,7 @@ namespace Gameplay
         /// \return The effect scaling policy.
         ZYPHRYON_INLINE EffectStack GetStack() const
         {
-            return mStack;
+            return mPolicies.GetStack();
         }
 
         /// \brief Sets the stat modifiers associated with this effect archetype.
@@ -315,28 +309,19 @@ namespace Gameplay
 
     private:
 
-        /// \brief Type alias for a vector of effect modifiers.
-        using Modifiers = Vector<EffectModifier, kMaxBonuses>;
-
-    private:
-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle      mHandle;
-        Str8              mName;
-        Marker            mCategory;            // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)
-        StatInput         mDuration;
-        StatInput         mPeriod;
-        UInt16            mLimit;
-        EffectApplication mApplication;         // TODO: Merge Policy
-        EffectExpiration  mExpiration;          // TODO: Merge Policy
-        EffectRefresh     mRefresh;             // TODO: Merge Policy
-        EffectResolution  mResolution;          // TODO: Merge Policy
-        EffectStack       mStack;               // TODO: Merge Policy
-        Modifiers         mBonuses;
+        EffectHandle                        mHandle;
+        EffectPolicy                        mPolicies;
+        Str8                                mName;
+        Marker                              mCategory;
+        StatInput                           mDuration;
+        StatInput                           mPeriod;
+        UInt16                              mLimit;
+        Vector<EffectModifier, kMaxBonuses> mBonuses;
 
-        // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags)
-        //     : BlockedMarkers, AllowedMarkers, RequiredMarkers
+        // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)
+        // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags) BlockedMarkers, AllowedMarkers, RequiredMarkers
     };
 }

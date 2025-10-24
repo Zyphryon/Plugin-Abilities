@@ -25,6 +25,22 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Polls for marker change events and invokes the provided action for each event.
+        ///
+        /// \param Action The action to invoke for each marker change event.
+        template<typename Function>
+        ZYPHRYON_INLINE void Poll(AnyRef<Function> Action)
+        {
+            for (auto [Handle, Value] : mEvents)
+            {
+                if (const UInt32 Current = Count(Handle); Current != Value)
+                {
+                    Action(Handle, Value, Current);
+                }
+            }
+            mEvents.clear();
+        }
+
         /// \brief Inserts a marker token into the set, incrementing its count.
         ///
         /// \param Token The marker token to insert.
@@ -33,7 +49,11 @@ namespace Gameplay
         {
             Token.Iterate([this, Count](Marker Child)
             {
-                mRegistry[Child] += Count;
+                Ref<UInt32> Value = mRegistry[Child];
+
+                Publish(Child, Value);
+
+                Value += Count;
             });
         }
 
@@ -47,6 +67,10 @@ namespace Gameplay
             {
                 if (const auto Iterator = mRegistry.find(Child); Iterator != mRegistry.end())
                 {
+                    Ref<UInt32> Value = mRegistry[Child];
+
+                    Publish(Child, Value);
+
                     if (Iterator->second <= Count)
                     {
                         mRegistry.erase(Iterator);
@@ -75,6 +99,15 @@ namespace Gameplay
             return Iterator != mRegistry.end() ? Iterator->second : 0;
         }
 
+        /// \brief Publishes a marker change event for the specified token and previous value.
+        ///
+        /// \param Token The marker token that changed.
+        /// \param Value The previous value of the marker before the change.
+        ZYPHRYON_INLINE void Publish(Marker Token, UInt32 Value)
+        {
+            mEvents.emplace(Token, Value);
+        }
+
         /// \brief Traverses all marker tokens in the set, invoking the provided action for each.
         ///
         /// \param Action The action to invoke for each marker token and its count.
@@ -89,9 +122,34 @@ namespace Gameplay
 
     private:
 
+        /// \brief Represents a marker change event with its token and previous value.
+        struct Event
+        {
+            /// \brief The marker token that changed.
+            Marker Token;
+
+            /// \brief The previous value of the marker before the change.
+            UInt32 Value;
+
+            /// \brief Compares two events for equality based on their tokens.
+            ZYPHRYON_INLINE Bool operator==(ConstRef<Event> Other) const
+            {
+                return Token == Other.Token;
+            }
+
+            /// \brief Generates a hash value for the event based on its token.
+            ZYPHRYON_INLINE UInt64 Hash() const
+            {
+                return Token.Hash();
+            }
+        };
+
+    private:
+
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Table<Marker, UInt32> mRegistry;
+        Set<Event>            mEvents;
     };
 }
