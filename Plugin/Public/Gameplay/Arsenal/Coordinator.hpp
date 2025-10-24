@@ -27,13 +27,13 @@ namespace Gameplay
     public:
 
         /// \brief Delegate type for stat modification events.
-        using OnModifyStatMulticast   = MulticastDelegate<void(UInt64, Real32, Real32), DelegateInlineSize::Small>;
+        using OnModifyStatMulticast   = MulticastDelegate<void(Scene::Entity, Real32, Real32), DelegateInlineSize::Small>;
 
         /// \brief Delegate type for stat modification events.
         using OnModifyStat            = OnModifyStatMulticast::Type;
 
         /// \brief Delegate type for stat modification events.
-        using OnModifyMarkerMulticast = MulticastDelegate<void(UInt64, UInt32, UInt32), DelegateInlineSize::Small>;
+        using OnModifyMarkerMulticast = MulticastDelegate<void(Scene::Entity, UInt32, UInt32), DelegateInlineSize::Small>;
 
         /// \brief Delegate type for stat modification events.
         using OnModifyMarker          = OnModifyMarkerMulticast::Type;
@@ -56,7 +56,7 @@ namespace Gameplay
         /// \param Entity   The entity whose stat was modified.
         /// \param Previous The previous value of the stat.
         /// \param Current  The current value of the stat.
-        ZYPHRYON_INLINE void Publish(StatHandle Stat, UInt64 Entity, Real32 Previous, Real32 Current)
+        ZYPHRYON_INLINE void Publish(StatHandle Stat, Scene::Entity Entity, Real32 Previous, Real32 Current)
         {
             std::shared_lock Guard(mStatDelegatesMutex);
 
@@ -102,7 +102,7 @@ namespace Gameplay
         /// \param Entity   The entity whose marker was modified.
         /// \param Previous The previous count of the marker.
         /// \param Current  The current count of the marker.
-        ZYPHRYON_INLINE void Publish(Marker Token, UInt64 Entity, UInt32 Previous, UInt32 Current)
+        ZYPHRYON_INLINE void Publish(Marker Token, Scene::Entity Entity, UInt32 Previous, UInt32 Current)
         {
             std::shared_lock Guard(mMarkerDelegatesMutex);
 

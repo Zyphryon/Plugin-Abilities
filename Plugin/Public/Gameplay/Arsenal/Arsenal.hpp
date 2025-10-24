@@ -30,6 +30,17 @@ namespace Gameplay
 
     public:
 
+        /// \brief Default constructor, initializes an empty arsenal.
+        ZYPHRYON_INLINE Arsenal() = default;
+
+        /// \brief Constructs an arsenal for a specific entity.
+        ///
+        /// \param Actor The entity associated with the arsenal.
+        ZYPHRYON_INLINE Arsenal(Scene::Entity Actor)
+            : mActor { Actor }
+        {
+        }
+
         /// \brief Advances the state of the arsenal by the given time interval.
         ///
         /// \param Time The time interval to advance.
@@ -233,8 +244,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        MarkerSet mMarkers;
-        StatSet   mStats;
-        EffectSet mEffects;
+        Scene::Entity mActor;
+        MarkerSet     mMarkers;
+        StatSet       mStats;
+        EffectSet     mEffects;
     };
 }

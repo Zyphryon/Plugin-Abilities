@@ -33,13 +33,13 @@ namespace Gameplay
         // Poll markers for changes.
         mMarkers.Poll([this](Marker Token, UInt32 Previous, UInt32 Current)
         {
-            Coordinator::Instance().Publish(Token, 0 /* TODO */, Previous, Current);
+            Coordinator::Instance().Publish(Token, mActor, Previous, Current);
         });
 
         // Poll stats for changes.
         mStats.Poll(* this, [this](StatHandle Handle, Real32 Previous, Real32 Current)
         {
-            Coordinator::Instance().Publish(Handle, 0 /* TODO */, Previous, Current);
+            Coordinator::Instance().Publish(Handle, mActor, Previous, Current);
         });
     }
 
