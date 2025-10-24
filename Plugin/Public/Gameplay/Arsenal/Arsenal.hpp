@@ -16,6 +16,7 @@
 #include "Gameplay/Marker/MarkerSet.hpp"
 #include "Gameplay/Stat/StatRepository.hpp"
 #include "Gameplay/Stat/StatSet.hpp"
+#include <Zyphryon.Scene/Entity.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]

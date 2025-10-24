@@ -32,14 +32,14 @@ namespace Gameplay
         template<typename Context, typename Function>
         ZYPHRYON_INLINE void Poll(ConstRef<Context> Source, AnyRef<Function> Action)
         {
-            for (auto [Handle, Value] : mEvents)
+            for (auto [Handle, Value] : mNotifications)
             {
                 if (const Real32 Current = Source.GetStat(Handle); Current != Value)
                 {
                     Action(Handle, Value, Current);
                 }
             }
-            mEvents.clear();
+            mNotifications.clear();
         }
 
         /// \brief Attempts to retrieve a stat by its handle.
@@ -84,30 +84,30 @@ namespace Gameplay
         /// \param Value  The previous value of the stat before the change.
         ZYPHRYON_INLINE void Publish(StatHandle Handle, Real32 Value)
         {
-            mEvents.emplace(Handle, Value);
+            mNotifications.emplace(Handle, Value);
         }
 
     private:
 
-        /// \brief Represents a stat change event.
-        struct Event
+        /// \brief Represents a notification of a stat change.
+        struct Notification final
         {
             /// \brief The handle of the stat that changed.
-            StatHandle Handle;
+            StatHandle Key;
 
             /// \brief The previous value of the stat before the change.
             Real32     Value;
 
-            /// \brief Comparison operator to check equality between two events based on their stat handles.
-            ZYPHRYON_INLINE Bool operator==(ConstRef<Event> Other) const
-            {
-                return Handle == Other.Handle;
-            }
-
-            /// \brief Generates a hash value for the event based on its stat handle.
+            /// \brief Generates a hash value for the notification based on its stat handle.
             ZYPHRYON_INLINE UInt64 Hash() const
             {
-                return Handle.Hash();
+                return Key.Hash();
+            }
+
+            /// \brief Compares two notifications for equality based on their stat handles.
+            ZYPHRYON_INLINE Bool operator==(ConstRef<Notification> Other) const
+            {
+                return Key == Other.Key;
             }
         };
 
@@ -116,7 +116,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<Stat>  mRegistry;
-        Set<Event> mEvents;
+        Set<Stat>         mRegistry;
+        Set<Notification> mNotifications;
     };
 }

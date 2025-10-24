@@ -15,7 +15,6 @@
 #include "EffectHandle.hpp"
 #include "EffectModifier.hpp"
 #include "EffectPolicies.hpp"
-#include "Gameplay/Marker/Marker.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -94,22 +93,6 @@ namespace Gameplay
         ZYPHRYON_INLINE ConstStr8 GetName() const
         {
             return mName;
-        }
-
-        /// \brief Sets the category of the effect archetype.
-        ///
-        /// \param Category The category to assign.
-        ZYPHRYON_INLINE void SetCategory(Marker Category)
-        {
-            mCategory = Category;
-        }
-
-        /// \brief Retrieves the category of the effect archetype.
-        ///
-        /// \return The effect category.
-        ZYPHRYON_INLINE Marker GetCategory() const
-        {
-            return mCategory;
         }
 
         /// \brief Sets the total duration of the effect.
@@ -315,13 +298,12 @@ namespace Gameplay
         EffectHandle                        mHandle;
         EffectPolicy                        mPolicies;
         Str8                                mName;
-        Marker                              mCategory;
         StatInput                           mDuration;
         StatInput                           mPeriod;
         UInt16                              mLimit;
         Vector<EffectModifier, kMaxBonuses> mBonuses;
 
-        // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)
+        // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)?
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags) BlockedMarkers, AllowedMarkers, RequiredMarkers
     };
 }

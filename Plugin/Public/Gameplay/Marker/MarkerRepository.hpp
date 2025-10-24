@@ -31,7 +31,7 @@ namespace Gameplay
         /// \brief Default constructor, initializes the repository.
         ZYPHRYON_INLINE MarkerRepository()
         {
-            Clear();
+            mArchetypes.emplace();
         }
 
         /// \brief Loads marker archetypes from the content service.

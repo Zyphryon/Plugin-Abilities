@@ -31,14 +31,14 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Poll(AnyRef<Function> Action)
         {
-            for (auto [Handle, Value] : mEvents)
+            for (auto [Handle, Value] : mNotifications)
             {
                 if (const UInt32 Current = Count(Handle); Current != Value)
                 {
                     Action(Handle, Value, Current);
                 }
             }
-            mEvents.clear();
+            mNotifications.clear();
         }
 
         /// \brief Inserts a marker token into the set, incrementing its count.
@@ -51,7 +51,7 @@ namespace Gameplay
             {
                 Ref<UInt32> Value = mRegistry[Child];
 
-                Publish(Child, Value);
+                mNotifications.emplace(Child, Value);
 
                 Value += Count;
             });
@@ -69,7 +69,7 @@ namespace Gameplay
                 {
                     Ref<UInt32> Value = mRegistry[Child];
 
-                    Publish(Child, Value);
+                    mNotifications.emplace(Child, Value);
 
                     if (Iterator->second <= Count)
                     {
@@ -99,15 +99,6 @@ namespace Gameplay
             return Iterator != mRegistry.end() ? Iterator->second : 0;
         }
 
-        /// \brief Publishes a marker change event for the specified token and previous value.
-        ///
-        /// \param Token The marker token that changed.
-        /// \param Value The previous value of the marker before the change.
-        ZYPHRYON_INLINE void Publish(Marker Token, UInt32 Value)
-        {
-            mEvents.emplace(Token, Value);
-        }
-
         /// \brief Traverses all marker tokens in the set, invoking the provided action for each.
         ///
         /// \param Action The action to invoke for each marker token and its count.
@@ -122,25 +113,25 @@ namespace Gameplay
 
     private:
 
-        /// \brief Represents a marker change event with its token and previous value.
-        struct Event
+        /// \brief Represents a notification of a marker token change.
+        struct Notification final
         {
-            /// \brief The marker token that changed.
-            Marker Token;
+            /// \brief The marker token associated with the notification.
+            Marker Key;
 
-            /// \brief The previous value of the marker before the change.
+            /// \brief The previous count of the marker token before the change.
             UInt32 Value;
 
-            /// \brief Compares two events for equality based on their tokens.
-            ZYPHRYON_INLINE Bool operator==(ConstRef<Event> Other) const
-            {
-                return Token == Other.Token;
-            }
-
-            /// \brief Generates a hash value for the event based on its token.
+            /// \brief Generates a hash value for the notification based on its marker token.
             ZYPHRYON_INLINE UInt64 Hash() const
             {
-                return Token.Hash();
+                return Key.Hash();
+            }
+
+            /// \brief Compares two notifications for equality based on their marker tokens.
+            ZYPHRYON_INLINE Bool operator==(ConstRef<Notification> Other) const
+            {
+                return Key == Other.Key;
             }
         };
 
@@ -150,6 +141,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Table<Marker, UInt32> mRegistry;
-        Set<Event>            mEvents;
+        Set<Notification>     mNotifications;
     };
 }

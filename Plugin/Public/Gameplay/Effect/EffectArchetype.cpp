@@ -26,7 +26,6 @@ namespace Gameplay
         mName     = Section.GetString("Name");
         mHandle   = Section.GetInteger("ID");
         mPolicies.Load(Section);
-        mCategory = Section.GetInteger("Category");
 
         if (GetApplication() == EffectApplication::Temporary)
         {
@@ -54,7 +53,6 @@ namespace Gameplay
         Section.SetString("Name", mName);
         Section.SetInteger("ID", mHandle.GetID());
         mPolicies.Save(Section);
-        Section.SetInteger("Category", mCategory.GetID());
 
         if (GetApplication() == EffectApplication::Temporary)
         {

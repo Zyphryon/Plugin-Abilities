@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "EffectArchetype.hpp"
-#include <Zyphryon.Scene/Entity.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -41,6 +40,7 @@ namespace Gameplay
               mIntensity  { 0 },
               mExpiration { 0 },
               mInterval   { 0 },
+              mInstigator { 0 },
               mSnapshot   { }
         {
         }
@@ -57,6 +57,7 @@ namespace Gameplay
               mIntensity  { 1.0f },
               mExpiration { 0 },
               mInterval   { 0 },
+              mInstigator { 0 },
               mSnapshot   { }
         {
         }
