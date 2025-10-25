@@ -10,7 +10,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "MarkerRepository.hpp"
+#include "TokenRepository.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -21,7 +21,7 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Load(Ref<Content::Service> Content, ConstStr8 Filename)
+    void TokenRepository::Load(Ref<Content::Service> Content, ConstStr8 Filename)
     {
         if (const Blob Data = Content.Find(Filename); Data)
         {
@@ -30,14 +30,14 @@ namespace Gameplay
         }
         else
         {
-            LOG_WARNING("Failed to load markers from '{}'", Filename);
+            LOG_WARNING("Failed to load tokens from '{}'", Filename);
         }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Save(Ref<Content::Service> Content, ConstStr8 Filename) const
+    void TokenRepository::Save(Ref<Content::Service> Content, ConstStr8 Filename) const
     {
         TOMLParser Parser;
         Save(Parser);
@@ -48,7 +48,7 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Insert(ConstStr8 Name, Marker Parent)
+    void TokenRepository::Insert(ConstStr8 Name, Token Parent)
     {
         for (UInt Start = 0, End = 0; End != ConstStr8::npos; Start = End + 1)
         {
@@ -56,10 +56,10 @@ namespace Gameplay
             End = Name.find_first_of('.', Start);
 
             // Check if the segment already exists under the parent.
-            if (const Marker Token = GetTokenByName(Name.substr(0, End)); Token.IsEmpty())
+            if (const Token Token = GetByName(Name.substr(0, End)); Token.IsEmpty())
             {
-                MarkerArchetype Archetype = GetMutable(Parent).Extend(Name.substr(Start, End - Start));
-                Parent                    = Archetype.GetHandle();
+                TokenArchetype Archetype = GetMutable(Parent).Extend(Name.substr(Start, End - Start));
+                Parent                   = Archetype.GetHandle();
                 Insert(Move(Archetype));
             }
             else
@@ -72,9 +72,9 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Delete(Marker Token)
+    void TokenRepository::Delete(Token Handle)
     {
-        Ref<MarkerArchetype> Archetype = GetMutable(Token);
+        Ref<TokenArchetype> Archetype = GetMutable(Handle);
 
         // Remove the token from the lookup table.
         mTokens.erase(Archetype.GetName());
@@ -92,11 +92,11 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Load(Ref<TOMLParser> Parser)
+    void TokenRepository::Load(Ref<TOMLParser> Parser)
     {
         const TOMLArray Collection = Parser.GetRoot().GetArray("Tokens");
 
-        Ref<MarkerArchetype> Root = GetMutable(Marker::kEmpty);
+        Ref<TokenArchetype> Root = GetMutable(Token::kEmpty);
         Root.SetArity(Collection.GetSize());
 
         LoadItemRecursive(Collection, Root.GetHandle(), Root.GetPath());
@@ -105,23 +105,23 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::Save(Ref<TOMLParser> Parser) const
+    void TokenRepository::Save(Ref<TOMLParser> Parser) const
     {
         const TOMLArray Collection = Parser.GetRoot().GetArray("Tokens");
-        SaveItemRecursive(Collection, Get(Marker::kEmpty));
+        SaveItemRecursive(Collection, Get(Token::kEmpty));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::LoadItemRecursive(TOMLArray Collection, Marker Parent, ConstStr8 Prefix)
+    void TokenRepository::LoadItemRecursive(TOMLArray Collection, Token Parent, ConstStr8 Prefix)
     {
         for (UInt32 Index = 0; Index < Collection.GetSize(); ++Index)
         {
             const TOMLSection Node     = Collection.GetSection(Index);
             const TOMLArray   Children = Node.GetArray("Children", false);
 
-            MarkerArchetype Archetype;
+            TokenArchetype Archetype;
             Archetype.SetHandle(Parent.With(Index + 1));
 
             if (!Prefix.empty())
@@ -147,11 +147,11 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void MarkerRepository::SaveItemRecursive(TOMLArray Collection, ConstRef<MarkerArchetype> Parent) const
+    void TokenRepository::SaveItemRecursive(TOMLArray Collection, ConstRef<TokenArchetype> Parent) const
     {
         for (UInt8 Index = 1, Count = Parent.GetArity(); Index <= Count; ++Index)
         {
-            ConstRef<MarkerArchetype> Child = Get(Parent.GetHandle().With(Index));
+            ConstRef<TokenArchetype> Child = Get(Parent.GetHandle().With(Index));
 
             TOMLSection Node = Collection.AddSection();
             Node.SetString("Name", Child.GetName());

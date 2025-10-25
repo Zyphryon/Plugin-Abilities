@@ -12,7 +12,6 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatFormula.hpp"
 #include "StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -158,7 +157,7 @@ namespace Gameplay
         /// \brief Sets the formula used to calculate this stat's final value.
         ///
         /// \param Formula The formula to assign.
-        ZYPHRYON_INLINE void SetFormula(ConstTracker<StatFormula> Formula)
+        ZYPHRYON_INLINE void SetFormula(Ptr<StatFormula> Formula)
         {
             mFormula = Formula;
         }
@@ -166,52 +165,53 @@ namespace Gameplay
         /// \brief Retrieves the formula used to calculate this stat's final value.
         ///
         /// \return The stat formula.
-        ZYPHRYON_INLINE ConstTracker<StatFormula> GetFormula() const
+        ZYPHRYON_INLINE Ptr<StatFormula> GetFormula() const
         {
             return mFormula;
         }
 
-        /// \brief Calculates the final value of the stat based on the provided parameters and context.
+        /// \brief Calculates the effective stat value using the provided source context.
         ///
-        /// \param Target     The context providing access to other stats.
-        /// \param Flat       The flat modifier to be added to the base value.
-        /// \param Additive   The additive percentage modifier (e.g., 0.2 for +20%).
-        /// \param Multiplier The multiplicative modifier (e.g., 1.5 for x1.5).
-        /// \return The calculated and clamped final stat value.
+        /// \param Source     The source context to retrieve stat values from.
+        /// \param Flat       The flat modifier to apply to the base value.
+        /// \param Additive   The additive modifier to apply to the base value.
+        /// \param Multiplier The multiplier to apply to the base value.
+        /// \return The calculated and clamped stat value.
         template<typename Context>
-        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Target, Real32 Flat, Real32 Additive, Real32 Multiplier) const
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Source, Real32 Flat, Real32 Additive, Real32 Multiplier) const
         {
             Real32 Result;
 
-            if (mFormula)
+            if (!mFormula)
             {
-                Result = mFormula->Calculate(Target, mBase.Resolve(Target), Flat, Additive, Multiplier);
+                Result = StatFormula::Default(mBase.Resolve(Source), Flat, Additive, Multiplier);
             }
             else
             {
-                Result = StatFormula::Default(mBase.Resolve(Target), Flat, Additive, Multiplier);
+                Result = mFormula->Calculate(Source, mBase.Resolve(Source), Flat, Additive, Multiplier);
             }
-            return Clamp(Result, mMinimum.Resolve(Target), mMaximum.Resolve(Target));
+            return Clamp(Result, mMinimum.Resolve(Source), mMaximum.Resolve(Source));
         }
 
         /// \brief Iterates over all dependencies referenced by this archetype.
         ///
         /// \note Duplicate dependencies may be visited multiple times.
         ///
-        /// \tparam Function The type of the action to apply to each dependency.
+        /// \param Action The action to apply to each dependency.
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            mBase.Traverse(Action, StatOrigin::Target);
-            mMinimum.Traverse(Action, StatOrigin::Target);
-            mMaximum.Traverse(Action, StatOrigin::Target);
+            // Iterate over the base stat input.
+            mBase.Traverse(Action);
 
+            // Iterate over the min and max stat inputs.
+            mMinimum.Traverse(Action);
+            mMaximum.Traverse(Action);
+
+            // Iterate over the formula dependencies, if a formula is defined.
             if (mFormula)
             {
-                for (const StatHandle Dependency : mFormula->GetDependencies())
-                {
-                    Action(Dependency);
-                }
+                mFormula->Traverse(Action);
             }
         }
 
@@ -238,12 +238,12 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        StatHandle           mHandle;
-        StatCategory         mCategory;
-        Str8                 mName;
-        StatInput            mBase;
-        StatInput            mMinimum;
-        StatInput            mMaximum;
-        Tracker<StatFormula> mFormula;
+        StatHandle       mHandle;
+        StatCategory     mCategory;
+        Str8             mName;
+        StatInput        mBase;
+        StatInput        mMinimum;
+        StatInput        mMaximum;
+        Ptr<StatFormula> mFormula;
     };
 }

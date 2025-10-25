@@ -13,7 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Gameplay/Effect/Effect.hpp"
-#include "Gameplay/Marker/Marker.hpp"
+#include "Gameplay/Token/Token.hpp"
 #include <Zyphryon.Scene/Entity.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,17 +28,17 @@ namespace Gameplay
     {
     public:
 
-        /// \brief Delegate type for stat modification events.
+        /// \brief Multicast delegate type for stat modification events.
         using OnModifyStatMulticast   = MulticastDelegate<void(Scene::Entity, Real32, Real32), DelegateInlineSize::Small>;
 
         /// \brief Delegate type for stat modification events.
         using OnModifyStat            = OnModifyStatMulticast::Type;
 
-        /// \brief Delegate type for stat modification events.
-        using OnModifyMarkerMulticast = MulticastDelegate<void(Scene::Entity, UInt32, UInt32), DelegateInlineSize::Small>;
+        /// \brief Delegate type for token modification events.
+        using OnModifyTokenMulticast = MulticastDelegate<void(Scene::Entity, UInt32, UInt32), DelegateInlineSize::Small>;
 
-        /// \brief Delegate type for stat modification events.
-        using OnModifyMarker          = OnModifyMarkerMulticast::Type;
+        /// \brief Multicast delegate type for token modification events.
+        using OnModifyToken          = OnModifyTokenMulticast::Type;
 
     public:
 
@@ -88,48 +88,48 @@ namespace Gameplay
             }
         }
 
-        /// \brief Subscribes a delegate to marker modification events for a specific marker.
+        /// \brief Subscribes a delegate to token modification events for a specific token.
         ///
-        /// \param Token    The marker token to subscribe to.
-        /// \param Delegate The delegate to invoke on marker modification.
-        ZYPHRYON_INLINE void Subscribe(Marker Token, AnyRef<OnModifyMarker> Delegate)
+        /// \param Token    The handle of the token to subscribe to.
+        /// \param Delegate The delegate to invoke on token modification.
+        ZYPHRYON_INLINE void Subscribe(Token Token, AnyRef<OnModifyToken> Delegate)
         {
-            std::unique_lock Guard(mMarkerDelegatesMutex);
-            mMarkerDelegates[Token].Add(Move(Delegate));
+            std::unique_lock Guard(mTokenDelegatesMutex);
+            mTokenDelegates[Token].Add(Move(Delegate));
         }
 
-        /// \brief Publishes a marker modification event to all subscribed delegates.
+        /// \brief Publishes a token modification event to all subscribed delegates.
         ///
-        /// \param Token    The marker token that was modified.
-        /// \param Entity   The entity whose marker was modified.
-        /// \param Previous The previous count of the marker.
-        /// \param Current  The current count of the marker.
-        ZYPHRYON_INLINE void Publish(Marker Token, Scene::Entity Entity, UInt32 Previous, UInt32 Current)
+        /// \param Token    The handle of the modified token.
+        /// \param Entity   The entity whose token was modified.
+        /// \param Previous The previous count of the token.
+        /// \param Current  The current count of the token.
+        ZYPHRYON_INLINE void Publish(Token Token, Scene::Entity Entity, UInt32 Previous, UInt32 Current)
         {
-            std::shared_lock Guard(mMarkerDelegatesMutex);
+            std::shared_lock Guard(mTokenDelegatesMutex);
 
-            if (const auto Iterator = mMarkerDelegates.find(Token); Iterator != mMarkerDelegates.end())
+            if (const auto Iterator = mTokenDelegates.find(Token); Iterator != mTokenDelegates.end())
             {
                 Iterator->second.Broadcast(Entity, Previous, Current);
             }
         }
 
-        /// \brief Unsubscribes a delegate from marker modification events for a specific marker.
+        /// \brief Unsubscribes a delegate from token modification events for a specific token.
         ///
-        /// \param Token    The marker token to unsubscribe from.
+        /// \param Token    The handle of the token to unsubscribe from.
         /// \param Delegate The delegate to remove from the subscription list.
-        ZYPHRYON_INLINE void Unsubscribe(Marker Token, ConstRef<OnModifyMarker> Delegate)
+        ZYPHRYON_INLINE void Unsubscribe(Token Token, ConstRef<OnModifyToken> Delegate)
         {
-            std::unique_lock Guard(mMarkerDelegatesMutex);
+            std::unique_lock Guard(mTokenDelegatesMutex);
 
-            if (const auto Iterator = mMarkerDelegates.find(Token); Iterator != mMarkerDelegates.end())
+            if (const auto Iterator = mTokenDelegates.find(Token); Iterator != mTokenDelegates.end())
             {
-                Ref<OnModifyMarkerMulticast> Delegates = Iterator->second;
+                Ref<OnModifyTokenMulticast> Delegates = Iterator->second;
                 Delegates.Remove(Delegate);
 
                 if (Delegates.IsEmpty())
                 {
-                    mMarkerDelegates.erase(Iterator);
+                    mTokenDelegates.erase(Iterator);
                 }
             }
         }
@@ -152,7 +152,7 @@ namespace Gameplay
 
         Table<StatHandle, OnModifyStatMulticast> mStatDelegates;
         mutable std::shared_mutex                mStatDelegatesMutex;
-        Table<Marker, OnModifyMarkerMulticast>   mMarkerDelegates;
-        mutable std::shared_mutex                mMarkerDelegatesMutex;
+        Table<Token, OnModifyTokenMulticast>     mTokenDelegates;
+        mutable std::shared_mutex                mTokenDelegatesMutex;
     };
 }

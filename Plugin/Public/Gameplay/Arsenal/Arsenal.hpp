@@ -6,16 +6,18 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#pragma once
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Gameplay/Effect/EffectRepository.hpp"
 #include "Gameplay/Effect/EffectSet.hpp"
-#include "Gameplay/Marker/MarkerRepository.hpp"
-#include "Gameplay/Marker/MarkerSet.hpp"
 #include "Gameplay/Stat/StatRepository.hpp"
 #include "Gameplay/Stat/StatSet.hpp"
+#include "Gameplay/Token/TokenRepository.hpp"
+#include "Gameplay/Token/TokenSet.hpp"
 #include <Zyphryon.Scene/Entity.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -24,7 +26,7 @@
 
 namespace Gameplay
 {
-    /// \brief Encapsulates a collection of markers, stats, effects, and abilities for an entity.
+    /// \brief Encapsulates a collection of tokens, stats, effects, and abilities for an entity.
     class Arsenal final
     {
         // TODO: Concurrency and Live Modifiers.
@@ -47,46 +49,46 @@ namespace Gameplay
         /// \param Time The time interval to advance.
         void Tick(ConstRef<Time> Time);
 
-        /// \brief Inserts a marker into the arsenal by its name.
+        /// \brief Inserts a token into the arsenal with a specified count.
         ///
-        /// \param Name  The name of the marker to insert.
-        /// \param Count The number of markers to insert.
-        ZYPHRYON_INLINE void InsertMarker(ConstStr8 Name, UInt32 Count = 1)
+        /// \param Name  The name of the token to insert.
+        /// \param Count The count of the token to insert.
+        ZYPHRYON_INLINE void InsertToken(ConstStr8 Name, UInt32 Count = 1)
         {
-            const Marker Token = MarkerRepository::Instance().GetTokenByName(Name);
-            LOG_ASSERT(!Token.IsEmpty(), "Attempted to insert unknown marker '{}' into arsenal.", Name);
+            const Token Token = TokenRepository::Instance().GetByName(Name);
+            LOG_ASSERT(!Token.IsEmpty(), "Attempted to insert unknown token '{}' into arsenal.", Name);
 
-            mMarkers.Insert(Token, Count);
+            mTokens.Insert(Token, Count);
         }
 
-        /// \brief Inserts a marker into the arsenal.
+        /// \brief Inserts a token into the arsenal with a specified count.
         ///
-        /// \param Token The marker token to insert.
-        /// \param Count The number of markers to insert.
-        ZYPHRYON_INLINE void InsertMarker(Marker Token, UInt32 Count = 1)
+        /// \param Handle The handle of the token to insert.
+        /// \param Count  The count of the token to insert.
+        ZYPHRYON_INLINE void InsertToken(Token Handle, UInt32 Count = 1)
         {
-            mMarkers.Insert(Token, Count);
+            mTokens.Insert(Handle, Count);
         }
 
-        /// \brief Removes a marker from the arsenal by its name.
+        /// \brief Removes a token from the arsenal with a specified count.
         ///
-        /// \param Name  The name of the marker to remove.
-        /// \param Count The number of markers to insert.
-        ZYPHRYON_INLINE void RemoveMarker(ConstStr8 Name, UInt32 Count = 1)
+        /// \param Name  The name of the token to remove.
+        /// \param Count The count of the token to remove.
+        ZYPHRYON_INLINE void RemoveToken(ConstStr8 Name, UInt32 Count = 1)
         {
-            const Marker Token = MarkerRepository::Instance().GetTokenByName(Name);
-            LOG_ASSERT(!Token.IsEmpty(), "Attempted to remove an unknown marker '{}' from arsenal.", Name);
+            const Token Token = TokenRepository::Instance().GetByName(Name);
+            LOG_ASSERT(!Token.IsEmpty(), "Attempted to remove an unknown token '{}' from arsenal.", Name);
 
-            mMarkers.Remove(Token, Count);
+            mTokens.Remove(Token, Count);
         }
 
-        /// \brief Removes a marker from the arsenal.
+        /// \brief Removes a token from the arsenal with a specified count.
         ///
-        /// \param Token The marker token to remove.
-        /// \param Count The number of markers to remove.
-        ZYPHRYON_INLINE void RemoveMarker(Marker Token, UInt32 Count = 1)
+        /// \param Handle The handle of the token to remove.
+        /// \param Count  The count of the token to remove.
+        ZYPHRYON_INLINE void RemoveToken(Token Handle, UInt32 Count = 1)
         {
-            mMarkers.Remove(Token, Count);
+            mTokens.Remove(Handle, Count);
         }
 
         /// \brief Applies a modifier to the arsenal with a specified magnitude.
@@ -149,52 +151,52 @@ namespace Gameplay
             return Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
         }
 
-        /// \brief Retrieves the count of a specific marker in the arsenal by its name.
+        /// \brief Retrieves the count of a token by its name.
         ///
-        /// \param Name The name of the marker to query.
-        /// \return The count of the specified marker.
-        ZYPHRYON_INLINE UInt32 GetMarker(ConstStr8 Name) const
+        /// \param Name The name of the token to query.
+        /// \return The count of the specified token.
+        ZYPHRYON_INLINE UInt32 GetToken(ConstStr8 Name) const
         {
-            const Marker Token = MarkerRepository::Instance().GetTokenByName(Name);
-            LOG_ASSERT(!Token.IsEmpty(), "Attempted to query unknown marker '{}' in arsenal.", Name);
+            const Token Handle = TokenRepository::Instance().GetByName(Name);
+            LOG_ASSERT(!Handle.IsEmpty(), "Attempted to query unknown token '{}' in arsenal.", Name);
 
-            return mMarkers.Count(Token);
+            return mTokens.Count(Handle);
         }
 
-        /// \brief Retrieves the count of a specific marker in the arsenal.
+        /// \brief Retrieves the count of a specific token in the arsenal.
         ///
-        /// \param Token The marker token to query.
-        /// \return The count of the specified marker.
-        ZYPHRYON_INLINE UInt32 GetMarker(Marker Token) const
+        /// \param Handle The token handle to query.
+        /// \return The count of the specified token.
+        ZYPHRYON_INLINE UInt32 GetToken(Token Handle) const
         {
-            return mMarkers.Count(Token);
+            return mTokens.Count(Handle);
         }
 
-        /// \brief Checks if a specific marker exists in the arsenal by its name.
+        /// \brief Checks if the arsenal has a specific token by its name.
         ///
-        /// \param Name The name of the marker to check.
-        /// \return `true` if the marker exists, `false` otherwise.
-        ZYPHRYON_INLINE Bool HasMarker(ConstStr8 Name) const
+        /// \param Name The name of the token to check.
+        /// \return `true` if the token exists in the arsenal, `false` otherwise.
+        ZYPHRYON_INLINE Bool HasToken(ConstStr8 Name) const
         {
-            return GetMarker(Name) > 0;
+            return GetToken(Name) > 0;
         }
 
-        /// \brief Checks if a specific marker exists in the arsenal.
+        /// \brief Checks if the arsenal has a specific token.
         ///
-        /// \param Token The marker token to check.
-        /// \return `true` if the marker exists, `false` otherwise.
-        ZYPHRYON_INLINE Bool HasMarker(Marker Token) const
+        /// \param Handle The token handle to check.
+        /// \return `true` if the token exists in the arsenal, `false` otherwise.
+        ZYPHRYON_INLINE Bool HasToken(Token Handle) const
         {
-            return GetMarker(Token) > 0;
+            return GetToken(Handle) > 0;
         }
 
-        /// \brief Traverses each marker in the marker set and applies the given action.
+        /// \brief Traverses each token in the token set and applies the given action.
         ///
-        /// \param Action The action to apply to each marker.
+        /// \param Action The action to apply to each token.
         template<typename Function>
-        ZYPHRYON_INLINE void ForEachMarker(AnyRef<Function> Action)
+        ZYPHRYON_INLINE void ForEachToken(AnyRef<Function> Action)
         {
-            mMarkers.Traverse(Action);
+            mTokens.Traverse(Action);
         }
 
         /// \brief Traverses each effect in the effect set and applies the given action.
@@ -226,6 +228,7 @@ namespace Gameplay
         ///
         /// \param Effect The effect whose modifiers are to be reloaded.
         /// \param Slot   The slot index of the modifier to reload.
+        /// \param Value  The new value for the modifier.
         void ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot, Real32 Value);
 
         /// \brief Reverts effect modifiers from the arsenal.
@@ -245,9 +248,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Scene::Entity mActor;
-        MarkerSet     mMarkers;
+        Scene::Entity mActor;       // TODO: Investigate to remove from here?
         StatSet       mStats;
+        TokenSet      mTokens;
         EffectSet     mEffects;
     };
 }

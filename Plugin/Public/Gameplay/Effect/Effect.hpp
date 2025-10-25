@@ -25,25 +25,13 @@ namespace Gameplay
     {
     public:
 
-        /// \brief Defines max number of snapshots an effect can have.
-        static constexpr UInt32 kMaxSnapshots = EffectArchetype::kMaxBonuses;
+        /// \brief Defines the maximum number of bonuses an effect can have.
+        static constexpr UInt32 kMaxBonuses = EffectArchetype::kMaxBonuses;
 
     public:
 
         /// \brief Constructs an effect instance with default values.
-        ZYPHRYON_INLINE Effect()
-            : mArchetype  { nullptr },
-              mHandle     { 0 },
-              mStack      { 0 },
-              mDuration   { 0 },
-              mPeriod     { 0 },
-              mIntensity  { 0 },
-              mExpiration { 0 },
-              mInterval   { 0 },
-              mInstigator { 0 },
-              mSnapshot   { }
-        {
-        }
+        ZYPHRYON_INLINE Effect() = default;
 
         /// \brief Constructs an effect instance based on the provided archetype.
         ///
@@ -282,15 +270,15 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        ConstPtr<EffectArchetype>    mArchetype;
-        EffectHandle                 mHandle;
-        UInt16                       mStack;       // TODO: Move out of here.
-        Real32                       mDuration;    // TODO: Move out of here.
-        Real32                       mPeriod;      // TODO: Move out of here.
-        Real32                       mIntensity;   // TODO: Move out of here.
-        Real64                       mExpiration;  // TODO: Move out of here.
-        Real64                       mInterval;    // TODO: Move out of here.
-        UInt64                       mInstigator;
-        Array<Real32, kMaxSnapshots> mSnapshot;
+        ConstPtr<EffectArchetype>  mArchetype;
+        EffectHandle               mHandle;
+        UInt16                     mStack;       // TODO: Move out of here.
+        Real32                     mDuration;    // TODO: Move out of here.
+        Real32                     mPeriod;      // TODO: Move out of here.
+        Real32                     mIntensity;   // TODO: Move out of here.
+        Real64                     mExpiration;  // TODO: Move out of here.
+        Real64                     mInterval;    // TODO: Move out of here.
+        UInt64                     mInstigator;
+        Array<Real32, kMaxBonuses> mSnapshot;
     };
 }

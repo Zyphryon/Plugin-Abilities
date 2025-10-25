@@ -99,12 +99,17 @@ namespace Gameplay
             Real32     Value;
 
             /// \brief Generates a hash value for the notification based on its stat handle.
+            ///
+            /// \return A hash value uniquely representing the notification.
             ZYPHRYON_INLINE UInt64 Hash() const
             {
                 return Key.Hash();
             }
 
             /// \brief Compares two notifications for equality based on their stat handles.
+            ///
+            /// \param Other The other notification to compare against.
+            /// \return `true` if the notifications refer to the same stat handle, `false` otherwise.
             ZYPHRYON_INLINE Bool operator==(ConstRef<Notification> Other) const
             {
                 return Key == Other.Key;

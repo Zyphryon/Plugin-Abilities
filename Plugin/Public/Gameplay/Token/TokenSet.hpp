@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Marker.hpp"
+#include "Token.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -20,14 +20,14 @@
 
 namespace Gameplay
 {
-    /// \brief Manages a collection of marker tokens with their associated counts.
-    class MarkerSet final
+    /// \brief Manages a set of tokens with associated counts.
+    class TokenSet final
     {
     public:
 
-        /// \brief Polls for marker change events and invokes the provided action for each event.
+        /// \brief Polls for changes in the token counts and invokes the provided action for each change.
         ///
-        /// \param Action The action to invoke for each marker change event.
+        /// \param Action The action to invoke for each token whose count has changed.
         template<typename Function>
         ZYPHRYON_INLINE void Poll(AnyRef<Function> Action)
         {
@@ -41,13 +41,13 @@ namespace Gameplay
             mNotifications.clear();
         }
 
-        /// \brief Inserts a marker token into the set, incrementing its count.
+        /// \brief Inserts tokens into the set, incrementing their counts by the specified amount.
         ///
-        /// \param Token The marker token to insert.
-        /// \param Count The number of times to insert the marker token.
-        ZYPHRYON_INLINE void Insert(Marker Token, UInt32 Count)
+        /// \param Handle The token handle to insert.
+        /// \param Count  The amount to increment the token count by.
+        ZYPHRYON_INLINE void Insert(Token Handle, UInt32 Count)
         {
-            Token.Iterate([this, Count](Marker Child)
+            Handle.Iterate([this, Count](Token Child)
             {
                 Ref<UInt32> Value = mRegistry[Child];
 
@@ -57,13 +57,13 @@ namespace Gameplay
             });
         }
 
-        /// \brief Removes a marker token from the set, decrementing its count.
+        /// \brief Removes tokens from the set, decrementing their counts by the specified amount.
         ///
-        /// \param Token The marker token to remove.
-        /// \param Count The number of times to remove the marker token.
-        ZYPHRYON_INLINE void Remove(Marker Token, UInt32 Count)
+        /// \param Handle The token handle to remove.
+        /// \param Count  The amount to decrement the token count by.
+        ZYPHRYON_INLINE void Remove(Token Handle, UInt32 Count)
         {
-            Token.Iterate([this, Count](Marker Child)
+            Handle.Iterate([this, Count](Token Child)
             {
                 if (const auto Iterator = mRegistry.find(Child); Iterator != mRegistry.end())
                 {
@@ -83,52 +83,57 @@ namespace Gameplay
             });
         }
 
-        /// \brief Clears all markers from the set.
+        /// \brief Clears all tokens from the set.
         ZYPHRYON_INLINE void Clear()
         {
             mRegistry.clear();
         }
 
-        /// \brief Retrieves the count of a specific marker token in the set.
+        /// \brief Retrieves the count of a specific token in the set.
         ///
-        /// \param Token The marker token to retrieve the count for.
-        /// \return The count of the specified marker token.
-        ZYPHRYON_INLINE UInt32 Count(Marker Token) const
+        /// \param Handle The token handle to query.
+        /// \return The count of the specified token.
+        ZYPHRYON_INLINE UInt32 Count(Token Handle) const
         {
-            const auto Iterator = mRegistry.find(Token);
+            const auto Iterator = mRegistry.find(Handle);
             return Iterator != mRegistry.end() ? Iterator->second : 0;
         }
 
-        /// \brief Traverses all marker tokens in the set, invoking the provided action for each.
+        /// \brief Traverses all tokens in the set, invoking the provided action for each token and its count.
         ///
-        /// \param Action The action to invoke for each marker token and its count.
+        /// \tparam Function The type of the action to invoke for each token.
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (const auto [Token, Count] : mRegistry)
+            for (const auto [Handle, Count] : mRegistry)
             {
-                Action(Token, Count);
+                Action(Handle, Count);
             }
         }
 
     private:
 
-        /// \brief Represents a notification of a marker token change.
+        /// \brief Represents a notification for a token count change.
         struct Notification final
         {
-            /// \brief The marker token associated with the notification.
-            Marker Key;
+            /// \brief The token associated with the notification.
+            Token  Key;
 
-            /// \brief The previous count of the marker token before the change.
+            /// \brief The previous count value of the token.
             UInt32 Value;
 
-            /// \brief Generates a hash value for the notification based on its marker token.
+            /// \brief Generates a hash value for the notification based on its token.
+            ///
+            /// \return A hash value uniquely representing the notification.
             ZYPHRYON_INLINE UInt64 Hash() const
             {
                 return Key.Hash();
             }
 
-            /// \brief Compares two notifications for equality based on their marker tokens.
+            /// \brief Compares two notifications for equality based on their tokens.
+            ///
+            /// \param Other The other notification to compare against.
+            /// \return `true` if both notifications are for the same token, otherwise `false`.
             ZYPHRYON_INLINE Bool operator==(ConstRef<Notification> Other) const
             {
                 return Key == Other.Key;
@@ -140,7 +145,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Table<Marker, UInt32> mRegistry;
-        Set<Notification>     mNotifications;
+        Table<Token, UInt32> mRegistry;
+        Set<Notification>    mNotifications;
     };
 }

@@ -23,31 +23,30 @@ namespace Gameplay
     /// \brief Defines the category of a stat.
     enum class StatCategory : UInt8
     {
-        Attribute,      ///< A derived statistic calculated from formulas.
-        Resource,       ///< A depletable resource.
+        Attribute,  ///< A derived statistic calculated from formulas.
+        Resource,   ///< A depletable resource.
     };
 
     /// \brief Defines how a stat is evaluated.
     enum class StatEvaluation : UInt8
     {
-        Snapshot,       ///< The stat is resolved using a snapshot of values.
-        Live,           ///< The stat is resolved using live, real-time values.
+        Snapshot,   ///< The stat is resolved using a snapshot of values.
+        Live,       ///< The stat is resolved using live, real-time values.
     };
 
     /// \brief Defines the operation applied to a stat.
     enum class StatOperator : UInt8
     {
-        Flat,           ///< Directly adds or subtracts a flat value to/from the stat.
-        Additive,       ///< Adds or subtracts a percentage to/from the stat (e.g., +0.2 for +20%).
-        Multiplicative, ///< Multiplies the stat by a factor (e.g., x1.5 for 50% increase).
-        Divisive,       ///< Divides the stat by a factor (e.g., /1.5 for 33% decrease).
-        Replace,        ///< Overrides the stat value entirely.
+        Add,        ///< Adds or subtracts a flat value to/from the stat.
+        Percent,    ///< Adds or subtracts a percentage to/from the stat (e.g., +0.2 for +20%).
+        Scale,      ///< Multiplies the stat by a factor (e.g., x1.5 for 50% increase, or x0.5 for 50% decrease).
+        Set,        ///< Overrides the stat value entirely.
     };
 
     /// \brief Defines the origin context of a stat.
     enum class StatOrigin : UInt8
     {
-        Source,         ///< The stat originates from the source context.
-        Target,         ///< The stat originates from the target context.
+        Source,     ///< The stat originates from the source context.
+        Target,     ///< The stat originates from the target context.
     };
 }

@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatEvaluator.hpp"
+#include "StatFormula.hpp"
 #include "StatPolicies.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -24,14 +24,16 @@ namespace Gameplay
     /// \brief An expression representing a direct value, a reference to another stat, or a formula.
     class StatInput final
     {
+        // TODO: Reduce size from 24b to 16b by optimizing reference structure.
+
     public:
 
         /// \brief Defines the kind of data held by the proxy.
         enum class Kind : UInt8
         {
-            Float,   ///< Direct stat value.
-            Ref,     ///< Reference to another stat.
-            Formula, ///< A formula to compute the stat value.
+            Float,     ///< Direct stat value.
+            Ref,       ///< Reference to another stat.
+            Formula,   ///< A formula to compute the stat value.
         };
 
         /// \brief Structure representing a reference to another stat with an optional coefficient.
@@ -43,8 +45,11 @@ namespace Gameplay
             /// \brief Context of the referenced stat.
             StatOrigin Origin      = StatOrigin::Target;
 
+            /// \brief Base value to apply when referencing another stat.
+            Real32     Base        = 0.0f;  // TODO: Use Half and add Base half value.
+
             /// \brief Coefficient to apply when referencing another stat.
-            Real32     Coefficient = 1.0f;
+            Real32     Coefficient = 1.0f;  // TODO: Use Half and add Base half value.
 
             /// \brief Loads the reference data from a TOML array.
             ///
@@ -53,7 +58,8 @@ namespace Gameplay
             {
                 Handle      = Array.GetInteger(1);
                 Coefficient = Array.GetReal(2);
-                Origin      = Enum::Cast(Array.GetString(3), StatOrigin::Target);
+                Coefficient = Array.GetReal(3);
+                Origin      = Enum::Cast(Array.GetString(4), StatOrigin::Target);
             }
 
             /// \brief Saves the reference data to a TOML array.
@@ -62,6 +68,7 @@ namespace Gameplay
             ZYPHRYON_INLINE void Save(TOMLArray Array) const
             {
                 Array.AddInteger(Handle.GetID());
+                Array.AddReal(Base);
                 Array.AddReal(Coefficient);
                 Array.AddString(Enum::GetName(Origin));
             }
@@ -84,19 +91,19 @@ namespace Gameplay
         ///
         /// \param Handle      The handle of the referenced stat.
         /// \param Origin      The origin context of the referenced stat.
+        /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
-        ZYPHRYON_INLINE StatInput(StatHandle Handle, StatOrigin Origin, Real32 Coefficient)
-            : mContainer { Reference { Handle, Origin, Coefficient } }
+        ZYPHRYON_INLINE StatInput(StatHandle Handle, StatOrigin Origin, Real32 Base, Real32 Coefficient)
+            : mContainer { Reference { Handle, Origin, Base, Coefficient } }
         {
         }
 
         /// \brief Constructs a proxy holding a formula to compute the stat value.
         ///
         /// \param Formula The formula used to compute the stat value.
-        template<typename Type>
-        ZYPHRYON_INLINE StatInput(ConstTracker<Type> Formula)
+        ZYPHRYON_INLINE StatInput(Ptr<StatFormula> Formula)
+            : mContainer { Formula }
         {
-            mContainer.Emplace<Tracker<StatEvaluator>>(Formula);
         }
 
         /// \brief Retrieves the kind of data held by the proxy.
@@ -123,7 +130,21 @@ namespace Gameplay
         template<typename Context>
         ZYPHRYON_INLINE Real32 Resolve(ConstRef<Context> Source) const
         {
-            return Resolve(Source, Source);
+            switch (GetKind())
+            {
+            case Kind::Float:
+                return GetData<Real32>();
+            case Kind::Ref:
+            {
+                ConstRef<Reference> Data = GetData<Reference>();
+                return Data.Base + Source.GetStat(Data.Handle) * Data.Coefficient;
+            }
+            case Kind::Formula:
+            {
+                return GetData<Ptr<StatFormula>>()->Calculate(Source);
+            }
+            }
+            return 0.0f;
         }
 
         /// \brief Resolves the proxy to a concrete stat value using the provided source and target contexts.
@@ -140,22 +161,45 @@ namespace Gameplay
                 return GetData<Real32>();
             case Kind::Ref:
             {
-                ConstRef<Reference> Data = GetData<Reference>();
+                const auto [Handle, Origin, Base, Coefficient] = GetData<Reference>();
 
-                switch (Data.Origin)
+                switch (Origin)
                 {
                 case StatOrigin::Source:
-                    return Source.GetStat(Data.Handle) * Data.Coefficient;
+                    return Base + Source.GetStat(Handle) * Coefficient;
                 case StatOrigin::Target:
-                    return Target.GetStat(Data.Handle) * Data.Coefficient;
+                    return Base + Target.GetStat(Handle) * Coefficient;
                 }
             }
             case Kind::Formula:
             {
-                return GetData<Tracker<StatEvaluator>>()->Calculate(Source, Target);
+                return GetData<Ptr<StatFormula>>()->Calculate(Source, Target);
             }
             }
             return 0.0f;
+        }
+
+        /// \brief Iterates over all dependencies referenced by this proxy.
+        ///
+        /// \param Action The action to apply to each dependency.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+        {
+            switch (GetKind())
+            {
+            case Kind::Ref:
+            {
+                Action(GetData<Reference>().Handle);
+                break;
+            }
+            case Kind::Formula:
+            {
+                GetData<Ptr<StatFormula>>()->Traverse(Action);
+                break;
+            }
+            default:
+                break;
+            }
         }
 
         /// \brief Iterates over all dependencies referenced by this proxy.
@@ -171,7 +215,7 @@ namespace Gameplay
                 {
                     ConstRef<Reference> Data = GetData<Reference>();
 
-                    if (Origin == Data.Origin)
+                    if (Data.Origin == Origin)
                     {
                         Action(Data.Handle);
                     }
@@ -179,23 +223,7 @@ namespace Gameplay
                 }
                 case Kind::Formula:
                 {
-                    ConstTracker<StatEvaluator> Data = GetData<Tracker<StatEvaluator>>();
-
-                    switch (Origin)
-                    {
-                    case StatOrigin::Source:
-                        for (const StatHandle Dependency : Data->GetSourceDependencies())
-                        {
-                            Action(Dependency);
-                        }
-                        break;
-                    case StatOrigin::Target:
-                        for (const StatHandle Dependency : Data->GetTargetDependencies())
-                        {
-                            Action(Dependency);
-                        }
-                        break;
-                    }
+                    GetData<Ptr<StatFormula>>()->Traverse(Action, Origin);
                     break;
                 }
                 default:
@@ -240,9 +268,34 @@ namespace Gameplay
                 GetData<Reference>().Save(Array);
                 break;
             case Kind::Formula:
+                Array.AddString("Formula");
                 LOG_WARNING("Saving formulas is not supported yet.");
                 break;
             }
+        }
+
+    public:
+
+        /// \brief Creates a source stat reference input.
+        ///
+        /// \param Handle      The handle of the referenced stat.
+        /// \param Base        The base value to apply when referencing the stat.
+        /// \param Coefficient The coefficient to apply when referencing the stat.
+        /// \return A new stat input representing a source stat reference.
+        ZYPHRYON_INLINE static StatInput CreateSourceRef(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        {
+            return StatInput(Handle, StatOrigin::Source, Base, Coefficient);
+        }
+
+        /// \brief Creates a target stat reference input.
+        ///
+        /// \param Handle      The handle of the referenced stat.
+        /// \param Base        The base value to apply when referencing the stat.
+        /// \param Coefficient The coefficient to apply when referencing the stat.
+        /// \return A new stat input representing a target stat reference.
+        ZYPHRYON_INLINE static StatInput CreateTargetRef(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        {
+            return StatInput(Handle, StatOrigin::Target, Base, Coefficient);
         }
 
     private:
@@ -250,6 +303,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Variant<Real32, Reference, Tracker<StatEvaluator>> mContainer;
+        Variant<Real32, Reference, Ptr<StatFormula>> mContainer;
     };
 }

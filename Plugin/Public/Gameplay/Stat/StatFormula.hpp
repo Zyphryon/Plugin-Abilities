@@ -13,6 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "StatHandle.hpp"
+#include "StatPolicies.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -20,58 +21,127 @@
 
 namespace Gameplay
 {
-    /// \brief Defines a formula for calculating the final value of a stat.
-    class StatFormula : public Trackable<StatFormula>
+    /// \brief Represents a formula used to calculate the effective value of a stat based on dependencies.
+    class StatFormula final
     {
+        // TODO: Allow to query tokens
+
     public:
 
-        /// \brief Maximum number of dependencies a formula can have.
-        static constexpr UInt32 kMaxDependencies = 10;  // TODO: Macro Configurable
+        /// \brief Maximum number of dependencies a formula can have for source and target each.
+        static constexpr UInt32 kMaxDependencies = 10;   // TODO: Macro Configurable
+
+        /// \brief Maximum number of tokens in a computation snapshot.
+        static constexpr UInt32 kMaxTokens       = 4;    // TODO: Macro Configurable
+
+        /// \brief Structure representing a dependency on another stat.
+        ///
+        /// \note We steal 1 bit from the StatHandle to store the origin context.
+        struct Dependency final
+        {
+            /// \brief Constructs a dependency with the specified stat handle and origin.
+            ///
+            /// \param Handle The handle of the dependent stat.
+            /// \param Origin The origin context of the dependent stat.
+            ZYPHRYON_INLINE Dependency(StatHandle Handle, StatOrigin Origin)
+                : mPackage { static_cast<UInt16>(Handle.GetID() | static_cast<UInt16>(Origin) << 15) }
+            {
+            }
+
+            /// \brief Retrieves the stat handle of the dependency.
+            ///
+            /// \return The stat handle.
+            ZYPHRYON_INLINE StatHandle GetHandle() const
+            {
+                return StatHandle(GetBit(mPackage, 0, 0x7FFF));
+            }
+
+            /// \brief Retrieves the origin context of the dependency.
+            ///
+            /// \return The stat origin.
+            ZYPHRYON_INLINE StatOrigin GetOrigin() const
+            {
+                return static_cast<StatOrigin>(GetBit(mPackage, 15, 0x8000));
+            }
+
+        private:
+
+            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+            UInt16 mPackage;
+        };
 
         /// \brief Structure representing the components of a stat calculation.
         struct Computation final
         {
+            /// \brief Default constructor, all members are undefined.
+            ZYPHRYON_INLINE Computation() = default;
+
             /// \brief Constructs a `Computation` instance with the given parameters.
             ///
             /// \param Base       The base value of the stat.
-            /// \param Flat       The flat modifier to be added to the base.
-            /// \param Additive   The additive percentage modifier (e.g., 0.2 for +20%).
-            /// \param Multiplier The multiplicative factor to apply (e.g., 1.5 for +50%).
+            /// \param Flat       The flat addition to apply to the base value.
+            /// \param Additive   The percentage addition to apply to the base value.
+            /// \param Multiplier The multiplier to apply to the base value.
             ZYPHRYON_INLINE Computation(Real32 Base, Real32 Flat, Real32 Additive, Real32 Multiplier)
                 : Base       { Base },
                   Flat       { Flat },
                   Additive   { Additive },
                   Multiplier { Multiplier },
-                  Snapshot   { 0.0f }
+                  Snapshot   { }
             {
             }
 
-            /// \brief Populates the snapshots of dependent stat values from the source context.
+            /// \brief Populates the snapshots from a single context based on the dependencies.
             ///
-            /// \param Target       The context providing access to stats.
-            /// \param Dependencies The list of stat handles that this formula depends on.
+            /// \param Source       The source context to retrieve stat values from.
+            /// \param Dependencies The list of dependencies to populate snapshots for.
             template<typename Context>
-            ZYPHRYON_INLINE void Populate(ConstRef<Context> Target, ConstSpan<StatHandle> Dependencies)
+            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstSpan<Dependency> Dependencies)
             {
                 for (UInt32 Index = 0; Index < Dependencies.size(); ++Index)
                 {
-                    Snapshot[Index] = Target.GetStat(Dependencies[Index]);
+                    Snapshot[Index] = Source.GetStat(Dependencies[Index].GetHandle());
+                }
+            }
+
+            /// \brief Populates the snapshots from both source and target contexts based on the dependencies.
+            ///
+            /// \param Source       The source context to retrieve stat values from.
+            /// \param Target       The target context to retrieve stat values from.
+            /// \param Dependencies The list of dependencies to populate snapshots for.
+            template<typename Context>
+            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstRef<Context> Target, ConstSpan<Dependency> Dependencies)
+            {
+                for (UInt32 Index = 0; Index < Dependencies.size(); ++Index)
+                {
+                    ConstRef<Dependency> Dependency = Dependencies[Index];
+
+                    if (Dependency.GetOrigin() == StatOrigin::Source)
+                    {
+                        Snapshot[Index] = Source.GetStat(Dependency.GetHandle());
+                    }
+                    else
+                    {
+                        Snapshot[Index] = Target.GetStat(Dependency.GetHandle());
+                    }
                 }
             }
 
             /// \brief The base value of the stat.
             Real32                          Base;
 
-            /// \brief The flat modifier to be added to the base.
+            /// \brief The flat addition to apply to the base value.
             Real32                          Flat;
 
-            /// \brief The additive percentage modifier (e.g., 0.2 for +20%).
+            /// \brief The percentage addition to apply to the base value.
             Real32                          Additive;
 
-            /// \brief The multiplicative factor to apply (e.g., 1.5 for +50%).
+            /// \brief The multiplier to apply to the base value.
             Real32                          Multiplier;
 
-            /// \brief Snapshots of dependent stat values at the time of computation.
+            /// \brief Snapshot of source stat values at the time of computation.
             Array<Real32, kMaxDependencies> Snapshot;
         };
 
@@ -80,61 +150,115 @@ namespace Gameplay
 
     public:
 
+        /// \brief Default constructor, initializes with an empty calculator.
+        ZYPHRYON_INLINE StatFormula() = default;
+
         /// \brief Constructs a formula with the specified calculation function.
         ///
-        /// \param Calculator The function used to calculate the stat value.
+        /// \param Calculator The function used to compute the stat value.
         ZYPHRYON_INLINE StatFormula(AnyRef<Calculator> Calculator)
             : mCalculator { Move(Calculator) }
         {
         }
 
-        /// \brief Destructor for proper cleanup in derived classes.
-        virtual ~StatFormula() = default;
-
-        /// \brief Calculates the final value of a stat based on the provided source and target contexts.
+        /// \brief Sets the calculation function for this formula.
         ///
-        /// \param Source     The source context containing source stat snapshots.
+        /// \param Calculator The function used to compute the stat value.
+        ZYPHRYON_INLINE void SetCalculator(AnyRef<Calculator> Calculator)
+        {
+            mCalculator = Move(Calculator);
+        }
+
+        /// \brief Adds a dependency stat handle to the source dependencies of this formula.
+        ///
+        /// \param Dependency The stat handle that this formula depends on from the source.
+        ZYPHRYON_INLINE void AddSourceDependency(StatHandle Dependency)
+        {
+            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
+
+            mDependencies.emplace_back(Dependency, StatOrigin::Source);
+        }
+
+        /// \brief Adds a dependency stat handle to the target dependencies of this formula.
+        ///
+        /// \param Dependency The stat handle that this formula depends on from the target.
+        ZYPHRYON_INLINE void AddTargetDependency(StatHandle Dependency)
+        {
+            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
+
+            mDependencies.emplace_back(Dependency, StatOrigin::Target);
+        }
+
+        /// \brief Calculates the effective stat value using the provided source context.
+        ///
+        /// \param Source     The source context to retrieve stat values from.
         /// \param Base       The base value of the stat.
-        /// \param Flat       The flat modifier to be added to the base.
-        /// \param Additive   The additive percentage modifier (e.g., 0.2 for +20%).
-        /// \param Multiplier The multiplicative factor to apply (e.g., 1.5 for +50%).
-        /// \return The calculated final value of the stat.
+        /// \param Flat       The flat addition to apply to the base value.
+        /// \param Additive   The percentage addition to apply to the base value.
+        /// \param Multiplier The multiplier to apply to the base value.
+        /// \return The calculated stat value.
         template<typename Context>
         ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Source, Real32 Base, Real32 Flat, Real32 Additive, Real32 Multiplier) const
         {
             Computation Computation(Base, Flat, Additive, Multiplier);
-            Computation.Populate(Source, GetDependencies());
+            Computation.Populate(Source, mDependencies);
 
             return mCalculator(Computation);
         }
 
-        /// \brief Calculates the final value of a stat based on its components and context.
+        /// \brief Calculates the effective stat value using the provided source context.
         ///
-        /// \param Computation The components required for the calculation.
-        /// \return The calculated final value of the stat.
-        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Computation> Computation) const
+        /// \param Source The source context to retrieve stat values from.
+        /// \return The calculated stat value.
+        template<typename Context>
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Source) const
         {
+            Computation Computation;
+            Computation.Populate(Source, mDependencies);
+
             return mCalculator(Computation);
         }
 
-        /// \brief Retrieves a list of stat handles that this formula depends on.
+        /// \brief Calculates the effective stat value using the provided source and target contexts.
         ///
-        /// \return A constant span of dependent stat handles.
-        ZYPHRYON_INLINE ConstSpan<StatHandle> GetDependencies() const
+        /// \param Source The source context to retrieve stat values from.
+        /// \param Target The target context to retrieve stat values from.
+        /// \return The calculated stat value.
+        template<typename Context>
+        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Source, ConstRef<Context> Target) const
         {
-            return mDependencies;
+            Computation Computation;
+            Computation.Populate(Source, Target, mDependencies);
+
+            return mCalculator(Computation);
         }
 
-    protected:
-
-        /// \brief Adds a dependency stat handle to this formula.
+        /// \brief Iterates over all dependencies referenced by this formula.
         ///
-        /// \param Dependency The stat handle that this formula depends on.
-        ZYPHRYON_INLINE void AddDependency(StatHandle Dependency)
+        /// \param Action The action to apply to each dependency.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
+            for (ConstRef<Dependency> Dependency : mDependencies)
+            {
+                Action(Dependency.GetHandle());
+            }
+        }
 
-            mDependencies.push_back(Dependency);
+        /// \brief Iterates over all dependencies referenced by this formula.
+        ///
+        /// \param Action The action to apply to each dependency.
+        /// \param Origin The origin context of dependencies to consider.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        {
+            for (ConstRef<Dependency> Dependency : mDependencies)
+            {
+                if (Dependency.GetOrigin() == Origin)
+                {
+                    Action(Dependency.GetHandle());
+                }
+            }
         }
 
     public:
@@ -142,9 +266,9 @@ namespace Gameplay
         /// \brief Default formula implementation that applies a standard calculation.
         ///
         /// \param Base       The base value of the stat.
-        /// \param Flat       The flat modifier to be added to the base.
-        /// \param Additive   The additive percentage modifier (e.g., 0.2 for +20%).
-        /// \param Multiplier The multiplicative factor to apply (e.g., 1.5 for +50%).
+        /// \param Flat       The flat addition to apply to the base value.
+        /// \param Additive   The percentage addition to apply to the base value.
+        /// \param Multiplier The multiplier to apply to the base value.
         /// \return The calculated final value using the default formula.
         ZYPHRYON_INLINE static constexpr Real32 Default(Real32 Base, Real32 Flat, Real32 Additive, Real32 Multiplier)
         {
@@ -157,24 +281,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Calculator                           mCalculator;
-        Vector<StatHandle, kMaxDependencies> mDependencies;
-    };
-
-    /// \brief A base class for creating custom stat formulas by implementing the `Compute` method.
-    ///
-    /// \tparam Impl The derived class implementing the `Compute` method.
-    template<typename Impl>
-    class AbstractStatFormula : public StatFormula
-    {
-    public:
-
-        /// \brief Default constructor that sets up the formula using the derived class's `Compute` method.
-        ///
-        /// \note The derived class must implement a method with the signature:
-        ///       `Real32 Compute(ConstRef<Computation>) const;`
-        ZYPHRYON_INLINE AbstractStatFormula()
-            : StatFormula(Calculator::Create<& Impl::Compute>(static_cast<Ptr<Impl>>(this)))
-        {
-        }
+        Vector<Dependency, kMaxDependencies> mDependencies;
     };
 }

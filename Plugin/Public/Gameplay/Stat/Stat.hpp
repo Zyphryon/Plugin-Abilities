@@ -194,33 +194,30 @@ namespace Gameplay
 
         /// \brief Modifies the stat based on the specified operator and amount, applying or reverting the change.
         ///
-        /// \param Target   The context providing access to other stats if needed.
-        /// \param Operator The type of modification to apply.
-        /// \param Amount   The amount to modify the stat by.
+        /// \param Target    The context providing access to other stats if needed.
+        /// \param Operator  The type of modification to apply.
+        /// \param Magnitude The amount to modify the stat by.
         template<Bool Apply, typename Context>
-        void Modify(ConstRef<Context> Target, StatOperator Operator, Real32 Amount)
+        void Modify(ConstRef<Context> Target, StatOperator Operator, Real32 Magnitude)
         {
             switch (mArchetype->GetCategory())
             {
             case StatCategory::Attribute:
                 switch (Operator)
                 {
-                case StatOperator::Flat:
-                    mFlat += (Apply ? Amount : -Amount);
+                case StatOperator::Add:
+                    mFlat += (Apply ? Magnitude : -Magnitude);
                     break;
-                case StatOperator::Additive:
-                    mAdditive += (Apply ? Amount : -Amount);
+                case StatOperator::Percent:
+                    mAdditive += (Apply ? Magnitude : -Magnitude);
                     break;
-                case StatOperator::Multiplicative:
-                    mMultiplier *= (Apply ? Amount : 1.0f / Amount);
+                case StatOperator::Scale:
+                    mMultiplier *= (Apply ? Magnitude : 1.0f / Magnitude);
                     break;
-                case StatOperator::Divisive:
-                    mMultiplier *= (Apply ? 1.0f / Amount : Amount);
-                    break;
-                case StatOperator::Replace:
+                case StatOperator::Set:
                     if constexpr (Apply)
                     {
-                        SetEffective(Target, Amount);
+                        SetEffective(Target, Magnitude);
                     }
                     else
                     {
@@ -235,20 +232,17 @@ namespace Gameplay
                 {
                     switch (Operator)
                     {
-                    case StatOperator::Flat:
-                        SetEffective(Target, mEffective + Amount);
+                    case StatOperator::Add:
+                        SetEffective(Target, mEffective + Magnitude);
                         break;
-                    case StatOperator::Additive:
-                        SetEffective(Target, mEffective * (1.0f + Amount));
+                    case StatOperator::Percent:
+                        SetEffective(Target, mEffective * (1.0f + Magnitude));
                         break;
-                    case StatOperator::Multiplicative:
-                        SetEffective(Target, mEffective * Amount);
+                    case StatOperator::Scale:
+                        SetEffective(Target, mEffective * Magnitude);
                         break;
-                    case StatOperator::Divisive:
-                        SetEffective(Target, mEffective * (1.0f / Amount));
-                        break;
-                    case StatOperator::Replace:
-                        SetEffective(Target, Amount);
+                    case StatOperator::Set:
+                        SetEffective(Target, Magnitude);
                         break;
                     }
                 }
