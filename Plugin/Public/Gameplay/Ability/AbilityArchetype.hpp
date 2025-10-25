@@ -12,6 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#include "AbilityCost.hpp"
 #include "AbilityHandle.hpp"
 #include "AbilityPolicies.hpp"
 
@@ -115,6 +116,6 @@ namespace Gameplay
         // TODO: Policies
         // TODO: Cooldown
         // TODO: Effects
-        // TODO: Costs
+        AbilityCost   mCost;
     };
 }

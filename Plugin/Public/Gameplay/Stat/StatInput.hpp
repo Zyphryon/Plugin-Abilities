@@ -24,7 +24,7 @@ namespace Gameplay
     /// \brief An expression representing a direct value, a reference to another stat, or a formula.
     class StatInput final
     {
-        // TODO: Reduce size from 24b to 16b by optimizing reference structure.
+        // TODO: Reduce size from 24b to 16b by optimizing reference structure (using Half Float).
 
     public:
 
@@ -46,10 +46,10 @@ namespace Gameplay
             StatOrigin Origin      = StatOrigin::Target;
 
             /// \brief Base value to apply when referencing another stat.
-            Real32     Base        = 0.0f;  // TODO: Use Half and add Base half value.
+            Real32     Base        = 0.0f;  // TODO: Use Half Float.
 
             /// \brief Coefficient to apply when referencing another stat.
-            Real32     Coefficient = 1.0f;  // TODO: Use Half and add Base half value.
+            Real32     Coefficient = 1.0f;  // TODO: Use Half Float.
 
             /// \brief Loads the reference data from a TOML array.
             ///
@@ -104,6 +104,14 @@ namespace Gameplay
         ZYPHRYON_INLINE StatInput(Ptr<StatFormula> Formula)
             : mContainer { Formula }
         {
+        }
+
+        /// \brief Constructs a proxy by loading data from a TOML array.
+        ///
+        /// \param Array The TOML array to load from.
+        ZYPHRYON_INLINE StatInput(TOMLArray Array)
+        {
+            Load(Array);
         }
 
         /// \brief Retrieves the kind of data held by the proxy.
@@ -282,7 +290,7 @@ namespace Gameplay
         /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
         /// \return A new stat input representing a source stat reference.
-        ZYPHRYON_INLINE static StatInput CreateSourceRef(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        ZYPHRYON_INLINE static StatInput CreateSourceReference(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
         {
             return StatInput(Handle, StatOrigin::Source, Base, Coefficient);
         }
@@ -293,7 +301,7 @@ namespace Gameplay
         /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
         /// \return A new stat input representing a target stat reference.
-        ZYPHRYON_INLINE static StatInput CreateTargetRef(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        ZYPHRYON_INLINE static StatInput CreateTargetReference(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
         {
             return StatInput(Handle, StatOrigin::Target, Base, Coefficient);
         }
