@@ -24,8 +24,6 @@ namespace Gameplay
     /// \brief An expression representing a direct value, a reference to another stat, or a formula.
     class StatInput final
     {
-        // TODO: Reduce size from 24b to 16b by optimizing reference structure (using Half Float).
-
     public:
 
         /// \brief Defines the kind of data held by the proxy.
@@ -46,10 +44,10 @@ namespace Gameplay
             StatOrigin Origin      = StatOrigin::Target;
 
             /// \brief Base value to apply when referencing another stat.
-            Real32     Base        = 0.0f;  // TODO: Use Half Float.
+            Real16     Base        = 0.0f;
 
             /// \brief Coefficient to apply when referencing another stat.
-            Real32     Coefficient = 1.0f;  // TODO: Use Half Float.
+            Real16     Coefficient = 1.0f;
 
             /// \brief Loads the reference data from a TOML array.
             ///
@@ -57,8 +55,8 @@ namespace Gameplay
             ZYPHRYON_INLINE void Load(TOMLArray Array)
             {
                 Handle      = Array.GetInteger(1);
-                Coefficient = Array.GetReal(2);
-                Coefficient = Array.GetReal(3);
+                Base        = FloatToHalf(Array.GetReal(2));
+                Coefficient = FloatToHalf(Array.GetReal(3));
                 Origin      = Enum::Cast(Array.GetString(4), StatOrigin::Target);
             }
 
@@ -68,8 +66,8 @@ namespace Gameplay
             ZYPHRYON_INLINE void Save(TOMLArray Array) const
             {
                 Array.AddInteger(Handle.GetID());
-                Array.AddReal(Base);
-                Array.AddReal(Coefficient);
+                Array.AddReal(HalfToFloat(Base));
+                Array.AddReal(HalfToFloat(Coefficient));
                 Array.AddString(Enum::GetName(Origin));
             }
         };
@@ -94,7 +92,7 @@ namespace Gameplay
         /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
         ZYPHRYON_INLINE StatInput(StatHandle Handle, StatOrigin Origin, Real32 Base, Real32 Coefficient)
-            : mContainer { Reference { Handle, Origin, Base, Coefficient } }
+            : mContainer { Reference { Handle, Origin, FloatToHalf(Base), FloatToHalf(Coefficient) } }
         {
         }
 
@@ -145,7 +143,7 @@ namespace Gameplay
             case Kind::Ref:
             {
                 ConstRef<Reference> Data = GetData<Reference>();
-                return Data.Base + Source.GetStat(Data.Handle) * Data.Coefficient;
+                return HalfToFloat(Data.Base) + Source.GetStat(Data.Handle) * HalfToFloat(Data.Coefficient);
             }
             case Kind::Formula:
             {
@@ -174,9 +172,9 @@ namespace Gameplay
                 switch (Origin)
                 {
                 case StatOrigin::Source:
-                    return Base + Source.GetStat(Handle) * Coefficient;
+                    return HalfToFloat(Base) + Source.GetStat(Handle) * HalfToFloat(Coefficient);
                 case StatOrigin::Target:
-                    return Base + Target.GetStat(Handle) * Coefficient;
+                    return HalfToFloat(Base) + Target.GetStat(Handle) * HalfToFloat(Coefficient);
                 }
             }
             case Kind::Formula:
