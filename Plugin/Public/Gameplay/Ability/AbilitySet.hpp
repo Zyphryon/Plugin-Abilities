@@ -20,9 +20,63 @@
 
 namespace Gameplay
 {
-    /// \brief Manages a collection of ability instances and their dependencies.
+    /// \brief Manages a collection of ability instances.
     class AbilitySet final
     {
-        // TODO
+    public:
+
+        /// \brief Inserts a new ability archetype into the set.
+        ///
+        /// \param Archetype The ability archetype to insert.
+        ZYPHRYON_INLINE void Insert(ConstRef<AbilityArchetype> Archetype)
+        {
+            mRegistry.emplace(Archetype);
+        }
+
+        /// \brief Removes an ability from the set by its handle.
+        ///
+        /// \param Handle The handle of the ability to remove.
+        ZYPHRYON_INLINE void Remove(AbilityHandle Handle)
+        {
+            mRegistry.erase(Handle);
+        }
+
+        /// \brief Attempts to retrieve an ability by its handle.
+        ///
+        /// \param Handle The handle of the ability to retrieve.
+        /// \return A pointer to the ability if found, otherwise nullptr.
+        ZYPHRYON_INLINE Ptr<Ability> TryGet(AbilityHandle Handle)
+        {
+            if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
+            {
+                return const_cast<Ptr<Ability>>(&*Iterator);
+            }
+            return nullptr;
+        }
+
+        /// \brief Clears all abilities from the set.
+        ZYPHRYON_INLINE void Clear()
+        {
+            mRegistry.clear();
+        }
+
+        /// \brief Traverses all abilities in the set and invokes the provided action for each ability.
+        ///
+        /// \param Action The action to invoke for each ability.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+        {
+            for (ConstRef<Ability> Instance : mRegistry)
+            {
+                Action(Instance);
+            }
+        }
+
+    private:
+
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+        Set<Ability> mRegistry;
     };
 }

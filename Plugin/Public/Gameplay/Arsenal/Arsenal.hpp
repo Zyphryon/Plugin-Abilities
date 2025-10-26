@@ -12,6 +12,8 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#include "Gameplay/Ability/AbilityRepository.hpp"
+#include "Gameplay/Ability/AbilitySet.hpp"
 #include "Gameplay/Effect/EffectRepository.hpp"
 #include "Gameplay/Effect/EffectSet.hpp"
 #include "Gameplay/Stat/StatRepository.hpp"
@@ -48,6 +50,23 @@ namespace Gameplay
         ///
         /// \param Time The time interval to advance.
         void Tick(ConstRef<Time> Time);
+
+        /// \brief Grants an ability to the arsenal.
+        ///
+        /// \param Handle The handle of the ability to grant.
+        ZYPHRYON_INLINE void Grant(AbilityHandle Handle)
+        {
+            ConstRef<AbilityArchetype> Archetype = AbilityRepository::Instance().Get(Handle);
+            mAbilities.Insert(Archetype);
+        }
+
+        /// \brief Revokes an ability from the arsenal.
+        ///
+        /// \param Handle The handle of the ability to revoke.
+        ZYPHRYON_INLINE void Revoke(AbilityHandle Handle)
+        {
+            mAbilities.Remove(Handle);
+        }
 
         /// \brief Inserts a token into the arsenal with a specified count.
         ///
@@ -190,6 +209,15 @@ namespace Gameplay
             return GetToken(Handle) > 0;
         }
 
+        /// \brief Traverses each ability in the ability set and applies the given action.
+        ///
+        /// \param Action The action to apply to each ability.
+        template<typename Function>
+        ZYPHRYON_INLINE void ForEachAbility(AnyRef<Function> Action)
+        {
+            mAbilities.Traverse(Action);
+        }
+
         /// \brief Traverses each token in the token set and applies the given action.
         ///
         /// \param Action The action to apply to each token.
@@ -252,5 +280,6 @@ namespace Gameplay
         StatSet       mStats;
         TokenSet      mTokens;
         EffectSet     mEffects;
+        AbilitySet    mAbilities;
     };
 }

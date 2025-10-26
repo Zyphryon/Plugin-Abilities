@@ -27,6 +27,16 @@ namespace Gameplay
         mName   = Section.GetString("Name");
         mCooldown.Load(Section.GetSection("Cooldown"));
         mCost.Load(Section.GetArray("Cost"));
+
+        if (const TOMLArray Effects = Section.GetArray("Effects"); !Effects.IsEmpty())
+        {
+            mEffects.resize(Effects.GetSize());
+
+            for (UInt32 Element = 0; Element < mEffects.size(); ++Element)
+            {
+                mEffects[Element].Load(Effects.GetArray(Element));
+            }
+        }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -38,5 +48,10 @@ namespace Gameplay
         Section.SetString("Name", mName);
         mCooldown.Save(Section.SetSection("Cooldown"));
         mCost.Save(Section.SetArray("Cost"));
+
+        for (TOMLArray Effects = Section.SetArray("Effects"); ConstRef<EffectSpec> Spec : mEffects)
+        {
+            Spec.Save(Effects.AddArray());
+        }
     }
 }

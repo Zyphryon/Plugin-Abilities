@@ -65,13 +65,27 @@ namespace Gameplay
             return mTime;
         }
 
+        /// \brief Checks equality between this ability instance and another ability handle.
+        ZYPHRYON_INLINE Bool operator==(AbilityHandle Handle) const
+        {
+            return mArchetype->GetHandle() == Handle;
+        }
+
+        /// \brief Checks equality between this ability instance and another ability archetype.
+        ZYPHRYON_INLINE Bool operator==(ConstRef<AbilityArchetype> Archetype) const
+        {
+            return mArchetype->GetHandle() == Archetype.GetHandle();
+        }
+
         /// \brief Generates a hash value for the ability instance based on its archetype.
         ///
         /// \return A hash value uniquely representing the ability ability.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mArchetype->Hash();
         }
+
+        // TODO: Activation / Resource Management / Etc
 
     private:
 

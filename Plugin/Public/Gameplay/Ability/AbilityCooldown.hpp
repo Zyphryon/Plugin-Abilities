@@ -107,12 +107,11 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
+            // Traverse the cooldown input.
             mCooldown.Traverse(Action);
 
-            if (mMechanism == Mechanism::Charges)
-            {
-                mLimit.Traverse(Action);
-            }
+            // Traverse the limit input.
+            mLimit.Traverse(Action);
         }
 
         /// \brief Loads the ability cooldown data from a TOML section.

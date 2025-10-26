@@ -15,6 +15,7 @@
 #include "AbilityCooldown.hpp"
 #include "AbilityCost.hpp"
 #include "AbilityHandle.hpp"
+#include "Gameplay/Effect/EffectSpec.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -27,10 +28,13 @@ namespace Gameplay
     {
     public:
 
+        /// \brief Maximum number of effects an ability can have.
+        static constexpr UInt32 kMaxEffects = 4; // TODO: Macro Configurable
+
+    public:
+
         /// \brief Default constructor, initializes members to default values.
-        ZYPHRYON_INLINE AbilityArchetype()
-        {
-        }
+        ZYPHRYON_INLINE AbilityArchetype() = default;
 
         /// \brief Constructs an ability archetype by loading data from a TOML section.
         ///
@@ -118,6 +122,41 @@ namespace Gameplay
             return mCost;
         }
 
+        /// \brief Sets the effects associated with this ability archetype.
+        ///
+        /// \param Effects A span of effect specifications to assign.
+        ZYPHRYON_INLINE void SetEffects(ConstSpan<EffectSpec> Effects)
+        {
+            mEffects.assign(Effects.begin(), Effects.end());
+        }
+
+        /// \brief Retrieves the effects associated with this ability archetype.
+        ///
+        /// \return A span of effect specifications.
+        ZYPHRYON_INLINE ConstSpan<EffectSpec> GetEffects() const
+        {
+            return mEffects;
+        }
+
+        /// \brief Iterates over all dependencies referenced by this archetype.
+        ///
+        /// \param Action The action to apply to each dependency.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+        {
+            // Traverse cooldown inputs.
+            mCooldown.Traverse(Action);
+
+            // Traverse cost inputs.
+            mCost.Traverse(Action);
+
+            // Traverse effect specifications.
+            for (ConstRef<EffectSpec> Effect : mEffects)
+            {
+                Effect.Traverse(Action);
+            }
+        }
+
         /// \brief Loads the ability archetype data from a TOML section.
         ///
         /// \param Section The TOML section to load from.
@@ -141,11 +180,11 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        AbilityHandle   mHandle;
-        Str8            mName;
+        AbilityHandle                   mHandle;
         // TODO: Policies
-        // TODO: Effects
-        AbilityCooldown mCooldown;
-        AbilityCost     mCost;
+        Str8                            mName;
+        AbilityCooldown                 mCooldown;
+        AbilityCost                     mCost;
+        Vector<EffectSpec, kMaxEffects> mEffects;
     };
 }
