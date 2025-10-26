@@ -33,15 +33,17 @@ namespace Gameplay
               mFlat       { 0.0f },
               mAdditive   { 0.0f },
               mMultiplier { 1.0f },
-              mEffective  { 0.0f },
-              mDirty      { true }
+              mEffective  { 0.0f }
         {
+            SetDirty();
         }
 
-        /// \brief Marks the stat as dirty, indicating that its effective value needs to be recalculated.
-        ZYPHRYON_INLINE void SetDirty() const
+        /// \brief Sets the dirty flag for the stat's effective value.
+        ///
+        /// \param Dirty If `true`, marks the stat as dirty; if `false`, marks it as clean.
+        ZYPHRYON_INLINE void SetDirty(Bool Dirty = true) const
         {
-            mDirty = true;
+            SetBit(mArchetype, 0x00, 0x01, Dirty);  // Steal a bit from archetype pointer
         }
 
         /// \brief Checks if the stat's effective value is marked as dirty and needs recalculation.
@@ -49,7 +51,7 @@ namespace Gameplay
         /// \return `true` if the stat is dirty, `false` otherwise.
         ZYPHRYON_INLINE Bool IsDirty() const
         {
-            return mDirty;
+            return GetBit(mArchetype, 0x00, 0x01); // Steal a bit from archetype pointer
         }
 
         /// \brief Retrieves the archetype associated with this stat instance.
@@ -122,7 +124,6 @@ namespace Gameplay
             const Real32 Maximum = mArchetype->GetMaximum().Resolve(Target);
 
             mEffective = Clamp(Effective, Minimum, Maximum);
-            mDirty     = false;
         }
 
         /// \brief Retrieves the current effective value of this stat without recalculating.
@@ -140,9 +141,9 @@ namespace Gameplay
         template<typename Context>
         ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Target) const
         {
-            if (mDirty)
+            if (IsDirty())
             {
-                mDirty     = false;
+                SetDirty(false);
                 mEffective = mArchetype->Calculate(Target, mFlat, mAdditive, mMultiplier);
             }
             return mEffective;
@@ -171,13 +172,13 @@ namespace Gameplay
         }
 
         /// \brief Checks if this stat instance corresponds to the given stat handle.
-        ZYPHRYON_INLINE constexpr Bool operator==(StatHandle Handle) const
+        ZYPHRYON_INLINE Bool operator==(StatHandle Handle) const
         {
             return mArchetype->GetHandle() == Handle;
         }
 
         /// \brief Checks if this stat instance corresponds to the given stat archetype.
-        ZYPHRYON_INLINE constexpr Bool operator==(ConstRef<StatArchetype> Archetype) const
+        ZYPHRYON_INLINE Bool operator==(ConstRef<StatArchetype> Archetype) const
         {
             return mArchetype->GetHandle() == Archetype.GetHandle();
         }
@@ -185,7 +186,7 @@ namespace Gameplay
         /// \brief Computes a hash value for the stat instance based on its archetype.
         ///
         /// \return A hash value uniquely representing the stat instance.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mArchetype->Hash();
         }
@@ -200,9 +201,9 @@ namespace Gameplay
         template<Bool Apply, typename Context>
         void Modify(ConstRef<Context> Target, StatOperator Operator, Real32 Magnitude)
         {
-            switch (mArchetype->GetCategory())
+            switch (mArchetype->GetKind())
             {
-            case StatCategory::Attribute:
+            case StatKind::Attribute:
                 switch (Operator)
                 {
                 case StatOperator::Add:
@@ -227,7 +228,7 @@ namespace Gameplay
                 }
                 SetDirty();
                 break;
-            case StatCategory::Resource:
+            case StatKind::Resource:
                 if constexpr (Apply)
                 {
                     switch (Operator)
@@ -255,11 +256,10 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        ConstPtr<StatArchetype> mArchetype;
-        Real32                  mFlat;
-        Real32                  mAdditive;
-        Real32                  mMultiplier;
-        mutable Real32          mEffective;
-        mutable Bool            mDirty;         // TODO: Steal a bit from Archetype (Reduce 25% size)
+        mutable ConstPtr<StatArchetype> mArchetype;
+        Real32                          mFlat;
+        Real32                          mAdditive;
+        Real32                          mMultiplier;
+        mutable Real32                  mEffective;
     };
 }

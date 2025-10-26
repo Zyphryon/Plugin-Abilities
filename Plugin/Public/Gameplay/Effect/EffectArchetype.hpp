@@ -285,7 +285,7 @@ namespace Gameplay
         /// \brief Generates a hash value for the effect archetype based on its handle.
         ///
         /// \return A hash value uniquely representing the effect archetype.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mHandle.Hash();
         }

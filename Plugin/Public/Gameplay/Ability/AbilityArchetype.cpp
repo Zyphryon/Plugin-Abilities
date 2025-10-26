@@ -23,7 +23,10 @@ namespace Gameplay
 
     void AbilityArchetype::Load(TOMLSection Section)
     {
-        // TODO
+        mHandle = Section.GetInteger("ID");
+        mName   = Section.GetString("Name");
+        mCooldown.Load(Section.GetSection("Cooldown"));
+        mCost.Load(Section.GetArray("Cost"));
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -31,6 +34,9 @@ namespace Gameplay
 
     void AbilityArchetype::Save(TOMLSection Section) const
     {
-        // TODO
+        Section.SetInteger("ID", mHandle.GetID());
+        Section.SetString("Name", mName);
+        mCooldown.Save(Section.SetSection("Cooldown"));
+        mCost.Save(Section.SetArray("Cost"));
     }
 }

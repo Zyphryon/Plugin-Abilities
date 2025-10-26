@@ -30,15 +30,15 @@ namespace Gameplay
 
         /// \brief Constructs an effect modifier with specified parameters.
         ///
-        /// \param Handle     The target stat handle.
-        /// \param Evaluation The evaluation method for the modifier.
-        /// \param Operator   The operator type for the modifier.
-        /// \param Magnitude  The magnitude value for the modifier.
-        ZYPHRYON_INLINE EffectModifier(StatHandle Handle, StatEvaluation Evaluation, StatOperator Operator, AnyRef<StatInput> Magnitude)
-            : mTarget     { Handle },
-              mEvaluation { Evaluation },
-              mOperator   { Operator },
-              mMagnitude  { Move(Magnitude) }
+        /// \param Handle    The target stat handle.
+        /// \param Mode      The evaluation method for the modifier.
+        /// \param Operator  The operator type for the modifier.
+        /// \param Magnitude The magnitude value for the modifier.
+        ZYPHRYON_INLINE EffectModifier(StatHandle Handle, StatMode Mode, StatOperator Operator, AnyRef<StatInput> Magnitude)
+            : mTarget    { Handle },
+              mMode      { Mode },
+              mOperator  { Operator },
+              mMagnitude { Move(Magnitude) }
         {
         }
 
@@ -60,18 +60,18 @@ namespace Gameplay
 
         /// \brief Sets the evaluation method for this modifier.
         ///
-        /// \param Evaluation The evaluation method to assign.
-        ZYPHRYON_INLINE void SetEvaluation(StatEvaluation Evaluation)
+        /// \param Mode The evaluation method to assign.
+        ZYPHRYON_INLINE void SetMode(StatMode Mode)
         {
-            mEvaluation = Evaluation;
+            mMode = Mode;
         }
 
         /// \brief Retrieves the evaluation method for this modifier.
         ///
         /// \return The evaluation method of this modifier.
-        ZYPHRYON_INLINE StatEvaluation GetEvaluation() const
+        ZYPHRYON_INLINE StatMode GetMode() const
         {
-            return mEvaluation;
+            return mMode;
         }
 
         /// \brief Sets the operator type for this modifier.
@@ -121,9 +121,9 @@ namespace Gameplay
         /// \param Array The TOML array to load from.
         ZYPHRYON_INLINE void Load(TOMLArray Array)
         {
-            mTarget     = Array.GetInteger(0);
-            mEvaluation = Enum::Cast(Array.GetString(1), StatEvaluation::Snapshot);
-            mOperator   = Enum::Cast(Array.GetString(2), StatOperator::Add);
+            mTarget    = Array.GetInteger(0);
+            mMode      = Enum::Cast(Array.GetString(1), StatMode::Snapshot);
+            mOperator  = Enum::Cast(Array.GetString(2), StatOperator::Add);
             mMagnitude.Load(Array.GetArray(3));
         }
 
@@ -133,7 +133,7 @@ namespace Gameplay
         ZYPHRYON_INLINE void Save(TOMLArray Array) const
         {
             Array.AddInteger(mTarget.GetID());
-            Array.AddString(Enum::GetName(mEvaluation));
+            Array.AddString(Enum::GetName(mMode));
             Array.AddString(Enum::GetName(mOperator));
             mMagnitude.Save(Array);
         }
@@ -148,7 +148,7 @@ namespace Gameplay
         /// \return A new effect modifier instance configured as live.
         static EffectModifier CreateLive(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
         {
-            return EffectModifier(Target, StatEvaluation::Live, Operator, Move(Magnitude));
+            return EffectModifier(Target, StatMode::Live, Operator, Move(Magnitude));
         }
 
         /// \brief Creates a snapshot effect modifier.
@@ -159,7 +159,7 @@ namespace Gameplay
         /// \return A new effect modifier instance configured as a snapshot.
         static EffectModifier CreateSnapshot(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
         {
-            return EffectModifier(Target, StatEvaluation::Snapshot, Operator, Move(Magnitude));
+            return EffectModifier(Target, StatMode::Snapshot, Operator, Move(Magnitude));
         }
 
     private:
@@ -168,7 +168,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         StatHandle     mTarget;
-        StatEvaluation mEvaluation;
+        StatMode       mMode;
         StatOperator   mOperator;
         StatInput      mMagnitude;
     };

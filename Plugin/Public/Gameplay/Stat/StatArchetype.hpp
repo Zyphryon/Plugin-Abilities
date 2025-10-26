@@ -28,7 +28,7 @@ namespace Gameplay
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE StatArchetype()
             : mHandle   { 0 },
-              mCategory { StatCategory::Attribute },
+              mKind     { StatKind::Attribute },
               mBase     { 0.0f },
               mMinimum  { 0.0f },
               mMaximum  { 0.0f },
@@ -90,20 +90,20 @@ namespace Gameplay
             return mName;
         }
 
-        /// \brief Sets the category of the stat archetype.
+        /// \brief Sets the kind of the stat archetype.
         ///
-        /// \param Category The category to assign.
-        ZYPHRYON_INLINE void SetCategory(StatCategory Category)
+        /// \param Kind The kind to assign.
+        ZYPHRYON_INLINE void SetKind(StatKind Kind)
         {
-            mCategory = Category;
+            mKind = Kind;
         }
 
-        /// \brief Retrieves the category of the stat archetype.
+        /// \brief Retrieves the kind of the stat archetype.
         ///
-        /// \return The stat category.
-        ZYPHRYON_INLINE StatCategory GetCategory() const
+        /// \return The stat kind.
+        ZYPHRYON_INLINE StatKind GetKind() const
         {
-            return mCategory;
+            return mKind;
         }
 
         /// \brief Sets the base value for this stat archetype.
@@ -195,8 +195,6 @@ namespace Gameplay
 
         /// \brief Iterates over all dependencies referenced by this archetype.
         ///
-        /// \note Duplicate dependencies may be visited multiple times.
-        ///
         /// \param Action The action to apply to each dependency.
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
@@ -228,7 +226,7 @@ namespace Gameplay
         /// \brief Generates a hash value for the stat archetype based on its handle.
         ///
         /// \return A hash value uniquely representing the stat archetype.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mHandle.GetID();
         }
@@ -239,7 +237,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         StatHandle       mHandle;
-        StatCategory     mCategory;
+        StatKind         mKind;
         Str8             mName;
         StatInput        mBase;
         StatInput        mMinimum;

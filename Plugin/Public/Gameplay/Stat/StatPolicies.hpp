@@ -20,15 +20,15 @@
 
 namespace Gameplay
 {
-    /// \brief Defines the category of a stat.
-    enum class StatCategory : UInt8
+    /// \brief Defines the type of a stat.
+    enum class StatKind : UInt8
     {
         Attribute,  ///< A derived statistic calculated from formulas.
         Resource,   ///< A depletable resource.
     };
 
-    /// \brief Defines how a stat is evaluated.
-    enum class StatEvaluation : UInt8
+    // \brief Defines how a stat is resolved.
+    enum class StatMode : UInt8
     {
         Snapshot,   ///< The stat is resolved using a snapshot of values.
         Live,       ///< The stat is resolved using live, real-time values.

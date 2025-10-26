@@ -83,7 +83,7 @@ namespace Gameplay
         Archetype.SetPath("");
 
         // Delete all children recursively.
-        for (UInt8 Children = 1; Children <= Archetype.GetArity(); ++Children)
+        for (UInt8 Children = 1; Children <= Archetype.GetSize(); ++Children)
         {
             Delete(Archetype.GetHandle().With(Children));
         }
@@ -97,7 +97,7 @@ namespace Gameplay
         const TOMLArray Collection = Parser.GetRoot().GetArray("Tokens");
 
         Ref<TokenArchetype> Root = GetMutable(Token::kEmpty);
-        Root.SetArity(Collection.GetSize());
+        Root.SetSize(Collection.GetSize());
 
         LoadItemRecursive(Collection, Root.GetHandle(), Root.GetPath());
     }
@@ -135,7 +135,7 @@ namespace Gameplay
 
             if (!Children.IsNull())
             {
-                Archetype.SetArity(Children.GetSize());
+                Archetype.SetSize(Children.GetSize());
 
                 LoadItemRecursive(Children, Archetype.GetHandle(), Archetype.GetPath());
             }
@@ -149,14 +149,14 @@ namespace Gameplay
 
     void TokenRepository::SaveItemRecursive(TOMLArray Collection, ConstRef<TokenArchetype> Parent) const
     {
-        for (UInt8 Index = 1, Count = Parent.GetArity(); Index <= Count; ++Index)
+        for (UInt8 Index = 1, Count = Parent.GetSize(); Index <= Count; ++Index)
         {
             ConstRef<TokenArchetype> Child = Get(Parent.GetHandle().With(Index));
 
             TOMLSection Node = Collection.AddSection();
             Node.SetString("Name", Child.GetName());
 
-            if (Child.GetArity() > 0)
+            if (Child.GetSize() > 0)
             {
                 SaveItemRecursive(Node.SetArray("Children"), Child);
             }

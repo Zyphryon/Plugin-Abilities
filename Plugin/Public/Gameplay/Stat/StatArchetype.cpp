@@ -23,9 +23,9 @@ namespace Gameplay
 
     void StatArchetype::Load(TOMLSection Section)
     {
-        mHandle   = Section.GetInteger("ID");
-        mName     = Section.GetString("Name");
-        mCategory = Enum::Cast(Section.GetString("Category"), StatCategory::Attribute);
+        mHandle = Section.GetInteger("ID");
+        mName   = Section.GetString("Name");
+        mKind   = Enum::Cast(Section.GetString("Kind"), StatKind::Attribute);
         mBase.Load(Section.GetArray("Base"));
         mMinimum.Load(Section.GetArray("Minimum"));
         mMaximum.Load(Section.GetArray("Maximum"));
@@ -39,7 +39,7 @@ namespace Gameplay
     {
         Section.SetInteger("ID", mHandle.GetID());
         Section.SetString("Name", mName);
-        Section.SetString("Category", Enum::GetName(mCategory));
+        Section.SetString("Kind", Enum::GetName(mKind));
         mBase.Save(Section.SetArray("Base"));
         mMinimum.Save(Section.SetArray("Minimum"));
         mMaximum.Save(Section.SetArray("Maximum"));

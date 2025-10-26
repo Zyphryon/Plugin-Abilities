@@ -27,18 +27,18 @@ namespace Gameplay
 
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE TokenArchetype()
-            : mArity { 0 }
+            : mSize { 0 }
         {
         }
 
-        /// \brief Constructs a token archetype with the specified handle and name.
+        /// \brief Constructs a token archetype with specified parameters.
         ///
         /// \param Handle The token handle.
-        /// \param Arity  The arity of the token.
+        /// \param Size   The size of the token.
         /// \param Path   The path of the token.
-        ZYPHRYON_INLINE TokenArchetype(Token Handle, UInt8 Arity, ConstStr8 Path)
+        ZYPHRYON_INLINE TokenArchetype(Token Handle, UInt8 Size, ConstStr8 Path)
             : mHandle { Handle },
-              mArity  { Arity },
+              mSize   { Size },
               mPath   { Path }
         {
         }
@@ -59,20 +59,20 @@ namespace Gameplay
             return mHandle;
         }
 
-        /// \brief Sets the arity of the token.
+        /// \brief Sets the size of the token.
         ///
-        /// \param Arity The arity to assign.
-        ZYPHRYON_INLINE void SetArity(UInt8 Arity)
+        /// \param Size The size to assign.
+        ZYPHRYON_INLINE void SetSize(UInt8 Size)
         {
-            mArity = Arity;
+            mSize = Size;
         }
 
-        /// \brief Retrieves the arity of the token.
+        /// \brief Retrieves the size of the token.
         ///
-        /// \return The token arity.
-        ZYPHRYON_INLINE UInt8 GetArity() const
+        /// \return The token size.
+        ZYPHRYON_INLINE UInt8 GetSize() const
         {
-            return mArity;
+            return mSize;
         }
 
         /// \brief Sets the path of the token.
@@ -116,26 +116,26 @@ namespace Gameplay
             return mHandle.IsRoot();
         }
 
-        /// \brief Extends the token archetype by increasing its arity and appending a new name segment.
+        /// \brief Extends the token archetype by increasing its size and appending a new name segment.
         ///
         /// \param Name The name segment to append.
-        /// \return A new token archetype with increased arity and updated name.
+        /// \return A new token archetype with increased size and updated name.
         ZYPHRYON_INLINE TokenArchetype Extend(ConstStr8 Name)
         {
-            LOG_ASSERT(mArity < Token::kDepth, "Exceeded maximum arity for token.");
+            LOG_ASSERT(mSize < Token::kDepth, "Exceeded maximum size for token.");
 
             const ConstStr8 Path = !mPath.empty() ? Format("{}.{}", mPath, Name) : Name;
-            return TokenArchetype(mHandle.With(++mArity), 0, Path);
+            return TokenArchetype(mHandle.With(++mSize), 0, Path);
         }
 
         /// \brief Compares the token's handle for equality.
-        ZYPHRYON_INLINE constexpr Bool operator==(Token Handle) const
+        ZYPHRYON_INLINE Bool operator==(Token Handle) const
         {
             return mHandle == Handle;
         }
 
         /// \brief Compares the token archetype for equality based on its handle.
-        ZYPHRYON_INLINE constexpr Bool operator==(ConstRef<TokenArchetype> Archetype) const
+        ZYPHRYON_INLINE Bool operator==(ConstRef<TokenArchetype> Archetype) const
         {
             return mHandle == Archetype.GetHandle();
         }
@@ -143,7 +143,7 @@ namespace Gameplay
         /// \brief Generates a hash value for the token archetype based on its handle.
         ///
         /// \return A hash value uniquely representing the token archetype.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mHandle.Hash();
         }
@@ -154,7 +154,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Token mHandle;
-        UInt8 mArity;
+        UInt8 mSize;
         Str8  mPath;
     };
 }

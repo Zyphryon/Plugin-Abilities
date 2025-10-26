@@ -12,9 +12,9 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#include "AbilityCooldown.hpp"
 #include "AbilityCost.hpp"
 #include "AbilityHandle.hpp"
-#include "AbilityPolicies.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,8 +29,6 @@ namespace Gameplay
 
         /// \brief Default constructor, initializes members to default values.
         ZYPHRYON_INLINE AbilityArchetype()
-            : mHandle { 0 },
-              mName   { "" }
         {
         }
 
@@ -88,6 +86,38 @@ namespace Gameplay
             return mName;
         }
 
+        /// \brief Sets the cooldown configuration for the ability.
+        ///
+        /// \param Cooldown The cooldown configuration to assign.
+        ZYPHRYON_INLINE void SetCooldown(AnyRef<AbilityCooldown> Cooldown)
+        {
+            mCooldown = Move(Cooldown);
+        }
+
+        /// \brief Retrieves the cooldown configuration for the ability.
+        ///
+        /// \return The ability cooldown configuration.
+        ZYPHRYON_INLINE ConstRef<AbilityCooldown> GetCooldown() const
+        {
+            return mCooldown;
+        }
+
+        /// \brief Sets the cost configuration for the ability.
+        ///
+        /// \param Cost The cost configuration to assign.
+        ZYPHRYON_INLINE void SetCost(AnyRef<AbilityCost> Cost)
+        {
+            mCost = Move(Cost);
+        }
+
+        /// \brief Retrieves the cost configuration for the ability.
+        ///
+        /// \return The ability cost configuration.
+        ZYPHRYON_INLINE ConstRef<AbilityCost> GetCost() const
+        {
+            return mCost;
+        }
+
         /// \brief Loads the ability archetype data from a TOML section.
         ///
         /// \param Section The TOML section to load from.
@@ -111,11 +141,11 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        AbilityHandle mHandle;
-        Str8          mName;
+        AbilityHandle   mHandle;
+        Str8            mName;
         // TODO: Policies
-        // TODO: Cooldown
         // TODO: Effects
-        AbilityCost   mCost;
+        AbilityCooldown mCooldown;
+        AbilityCost     mCost;
     };
 }
