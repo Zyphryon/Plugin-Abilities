@@ -24,9 +24,11 @@ namespace Gameplay
     void AbilityArchetype::Load(TOMLSection Section)
     {
         mHandle = Section.GetInteger("ID");
+        mKind   = Enum::Cast(Section.GetString("Kind"), AbilityKind::Active);
         mName   = Section.GetString("Name");
         mCooldown.Load(Section.GetSection("Cooldown"));
         mCost.Load(Section.GetArray("Cost"));
+        mTarget.Load(Section.GetSection("Target"));
 
         if (const TOMLArray Effects = Section.GetArray("Effects"); !Effects.IsEmpty())
         {
@@ -45,9 +47,11 @@ namespace Gameplay
     void AbilityArchetype::Save(TOMLSection Section) const
     {
         Section.SetInteger("ID", mHandle.GetID());
+        Section.SetString("Kind", Enum::GetName(mKind));
         Section.SetString("Name", mName);
         mCooldown.Save(Section.SetSection("Cooldown"));
         mCost.Save(Section.SetArray("Cost"));
+        mTarget.Save(Section.SetSection("Target"));
 
         for (TOMLArray Effects = Section.SetArray("Effects"); ConstRef<EffectSpec> Spec : mEffects)
         {

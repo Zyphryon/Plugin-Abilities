@@ -15,6 +15,8 @@
 #include "AbilityCooldown.hpp"
 #include "AbilityCost.hpp"
 #include "AbilityHandle.hpp"
+#include "AbilityPolicies.hpp"
+#include "AbilityTarget.hpp"
 #include "Gameplay/Effect/EffectSpec.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -74,6 +76,22 @@ namespace Gameplay
             return mHandle;
         }
 
+        /// \brief Sets the kind of the ability archetype.
+        ///
+        /// \param Kind The ability kind to assign.
+        ZYPHRYON_INLINE void SetKind(AbilityKind Kind)
+        {
+            mKind = Kind;
+        }
+
+        /// \brief Retrieves the kind of the ability archetype.
+        ///
+        /// \return The ability kind.
+        ZYPHRYON_INLINE AbilityKind GetKind() const
+        {
+            return mKind;
+        }
+
         /// \brief Sets the name of the ability archetype.
         ///
         /// \param Name The name to assign.
@@ -120,6 +138,22 @@ namespace Gameplay
         ZYPHRYON_INLINE ConstRef<AbilityCost> GetCost() const
         {
             return mCost;
+        }
+
+        /// \brief Sets the target configuration for the ability.
+        ///
+        /// \param Target The target configuration to assign.
+        ZYPHRYON_INLINE void SetTarget(AnyRef<AbilityTarget> Target)
+        {
+            mTarget = Move(Target);
+        }
+
+        /// \brief Retrieves the target configuration for the ability.
+        ///
+        /// \return The ability target configuration.
+        ZYPHRYON_INLINE ConstRef<AbilityTarget> GetTarget() const
+        {
+            return mTarget;
         }
 
         /// \brief Sets the effects associated with this ability archetype.
@@ -170,7 +204,7 @@ namespace Gameplay
         /// \brief Generates a hash value for the ability archetype based on its handle.
         ///
         /// \return A hash value uniquely representing the ability archetype.
-        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        ZYPHRYON_INLINE UInt64 Hash() const
         {
             return mHandle.Hash();
         }
@@ -181,10 +215,16 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         AbilityHandle                   mHandle;
-        // TODO: Policies
+        AbilityKind                     mKind;
         Str8                            mName;
         AbilityCooldown                 mCooldown;
         AbilityCost                     mCost;
+        AbilityTarget                   mTarget;
         Vector<EffectSpec, kMaxEffects> mEffects;
+
+        // TODO: Organizational (Category:Marker, SubCategory:Packed)?
+        // TODO: Requirements?
+        // TODO: Cast Time?
+        // TODO: Range?
     };
 }

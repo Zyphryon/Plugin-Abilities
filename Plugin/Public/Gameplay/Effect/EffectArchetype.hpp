@@ -303,7 +303,7 @@ namespace Gameplay
         UInt16                              mLimit;
         Vector<EffectModifier, kMaxBonuses> mBonuses;
 
-        // TODO: Multiple Categories (Category:Marker, SubCategory:Packed)?
+        // TODO: Organizational (Category:Marker, SubCategory:Packed)?
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags) BlockedMarkers, AllowedMarkers, RequiredMarkers
     };
 }

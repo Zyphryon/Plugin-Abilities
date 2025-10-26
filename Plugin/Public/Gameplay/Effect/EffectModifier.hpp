@@ -167,9 +167,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        StatHandle     mTarget;
-        StatMode       mMode;
-        StatOperator   mOperator;
-        StatInput      mMagnitude;
+        StatHandle   mTarget;
+        StatMode     mMode;
+        StatOperator mOperator;
+        StatInput    mMagnitude;
     };
 }

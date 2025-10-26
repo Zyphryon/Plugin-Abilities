@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Effect/Effect.hpp"
+#include "Gameplay/Stat/StatHandle.hpp"
 #include "Gameplay/Token/Token.hpp"
 #include <Zyphryon.Scene/Entity.hpp>
 

@@ -61,12 +61,28 @@ namespace Gameplay
         {
         }
 
+        /// \brief Sets the influence type of the cooldown.
+        ///
+        /// \param Influence The influence type to assign.
+        ZYPHRYON_INLINE void SetInfluence(Influence Influence)
+        {
+            mInfluence = Influence;
+        }
+
         /// \brief Retrieves the influence type of the cooldown.
         ///
         /// \return The influence type.
         ZYPHRYON_INLINE Influence GetInfluence() const
         {
             return mInfluence;
+        }
+
+        /// \brief Sets the mechanism type of the cooldown.
+        ///
+        /// \param Mechanism The mechanism type to assign.
+        ZYPHRYON_INLINE void SetMechanism(Mechanism Mechanism)
+        {
+            mMechanism = Mechanism;
         }
 
         /// \brief Retrieves the mechanism type of the cooldown.
@@ -77,6 +93,14 @@ namespace Gameplay
             return mMechanism;
         }
 
+        /// \brief Sets the category token associated with the cooldown.
+        ///
+        /// \param Category The category token to assign.
+        ZYPHRYON_INLINE void SetCategory(Token Category)
+        {
+            mCategory = Category;
+        }
+
         /// \brief Retrieves the category token associated with the cooldown.
         ///
         /// \return The category token.
@@ -85,12 +109,28 @@ namespace Gameplay
             return mCategory;
         }
 
+        /// \brief Sets the cooldown duration or charge replenishment rate.
+        ///
+        /// \param Cooldown The cooldown duration or charge replenishment rate to assign.
+        ZYPHRYON_INLINE void SetCooldown(AnyRef<StatInput> Cooldown)
+        {
+            mCooldown = Move(Cooldown);
+        }
+
         /// \brief Retrieves the cooldown duration or charge replenishment rate.
         ///
         /// \return The cooldown duration or charge replenishment rate.
         ZYPHRYON_INLINE ConstRef<StatInput> GetCooldown() const
         {
             return mCooldown;
+        }
+
+        /// \brief Sets the maximum number of charges for the cooldown mechanism.
+        ///
+        /// \param Limit The maximum number of charges to assign.
+        ZYPHRYON_INLINE void SetLimit(AnyRef<StatInput> Limit)
+        {
+            mLimit = Move(Limit);
         }
 
         /// \brief Retrieves the maximum number of charges for the cooldown mechanism.

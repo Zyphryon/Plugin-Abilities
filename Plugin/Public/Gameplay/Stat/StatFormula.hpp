@@ -25,6 +25,7 @@ namespace Gameplay
     class StatFormula final
     {
         // TODO: Allow to query tokens
+        // TODO: Optimize Dependency without StatOrigin bit stealing
 
     public:
 
