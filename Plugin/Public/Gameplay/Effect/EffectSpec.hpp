@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "EffectHandle.hpp"
+#include "Gameplay/Effect/Effect.hpp"
 #include "Gameplay/Stat/StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -34,7 +34,7 @@ namespace Gameplay
         /// \param Target    The effect handle representing the target effect.
         /// \param Stack     The stack input for the effect.
         /// \param Intensity The intensity input for the effect.
-        ZYPHRYON_INLINE EffectSpec(EffectHandle Target, AnyRef<StatInput> Stack, AnyRef<StatInput> Intensity)
+        ZYPHRYON_INLINE EffectSpec(Effect Target, AnyRef<StatInput> Stack, AnyRef<StatInput> Intensity)
             : mTarget    { Target },
               mStack     { Move(Stack) },
               mIntensity { Move(Intensity) }
@@ -52,7 +52,7 @@ namespace Gameplay
         /// \brief Sets the target effect handle for this specification.
         ///
         /// \param Handle The effect handle to set as the target.
-        ZYPHRYON_INLINE void SetTarget(EffectHandle Handle)
+        ZYPHRYON_INLINE void SetTarget(Effect Handle)
         {
             mTarget = Handle;
         }
@@ -60,7 +60,7 @@ namespace Gameplay
         /// \brief Retrieves the target effect handle for this specification.
         ///
         /// \return The effect handle that is the target of this specification.
-        ZYPHRYON_INLINE EffectHandle GetTarget() const
+        ZYPHRYON_INLINE Effect GetTarget() const
         {
             return mTarget;
         }
@@ -132,8 +132,8 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle mTarget;
-        StatInput    mStack;
-        StatInput    mIntensity;
+        Effect    mTarget;
+        StatInput mStack;
+        StatInput mIntensity;
     };
 }

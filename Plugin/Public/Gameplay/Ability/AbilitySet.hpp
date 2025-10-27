@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Ability.hpp"
+#include "Gameplay/Ability/AbilityData.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -36,7 +36,7 @@ namespace Gameplay
         /// \brief Removes an ability from the set by its handle.
         ///
         /// \param Handle The handle of the ability to remove.
-        ZYPHRYON_INLINE void Remove(AbilityHandle Handle)
+        ZYPHRYON_INLINE void Remove(Ability Handle)
         {
             mRegistry.erase(Handle);
         }
@@ -45,11 +45,11 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the ability to retrieve.
         /// \return A pointer to the ability if found, otherwise nullptr.
-        ZYPHRYON_INLINE Ptr<Ability> TryGet(AbilityHandle Handle)
+        ZYPHRYON_INLINE Ptr<AbilityData> TryGet(Ability Handle)
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
             {
-                return const_cast<Ptr<Ability>>(&*Iterator);
+                return const_cast<Ptr<AbilityData>>(&*Iterator);
             }
             return nullptr;
         }
@@ -66,7 +66,7 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (ConstRef<Ability> Instance : mRegistry)
+            for (ConstRef<AbilityData> Instance : mRegistry)
             {
                 Action(Instance);
             }
@@ -77,6 +77,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<Ability> mRegistry;
+        Set<AbilityData> mRegistry;
     };
 }

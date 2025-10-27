@@ -131,18 +131,27 @@ namespace Gameplay
         }
 
         /// \brief Compares two tokens for equality based on their hierarchy.
+        ///
+        /// \param Other The other token to compare against.
+        /// \return `true` if both tokens are equal, otherwise `false`.
         ZYPHRYON_INLINE constexpr Bool operator==(ConstRef<Token> Other) const
         {
             return mKey == Other.mKey;
         }
 
         /// \brief Compares two tokens for inequality based on their hierarchy.
+        ///
+        /// \param Other The other token to compare against.
+        /// \return `true` if both tokens are not equal, otherwise `false`.
         ZYPHRYON_INLINE constexpr Bool operator!=(ConstRef<Token> Other) const
         {
             return !(*this == Other);
         }
 
         /// \brief Compares two tokens to determine if this token is less than the other based on their hierarchy.
+        ///
+        /// \param Other The other token to compare against.
+        /// \return `true` if this token is less than the other, otherwise `false`.
         ZYPHRYON_INLINE constexpr Bool operator<(ConstRef<Token> Other) const
         {
             return mKey < Other.mKey;

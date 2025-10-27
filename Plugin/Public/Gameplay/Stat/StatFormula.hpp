@@ -12,8 +12,9 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatHandle.hpp"
-#include "StatPolicies.hpp"
+#include "Gameplay/Stat/Stat.hpp"
+#include "Gameplay/Stat/StatPolicies.hpp"
+#include "Gameplay/Token/Token.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -24,53 +25,115 @@ namespace Gameplay
     /// \brief Represents a formula used to calculate the effective value of a stat based on dependencies.
     class StatFormula final
     {
-        // TODO: Allow to query tokens
-        // TODO: Optimize Dependency without StatOrigin bit stealing
-
     public:
 
-        /// \brief Maximum number of dependencies a formula can have for source and target each.
-        static constexpr UInt32 kMaxDependencies = 10;   // TODO: Macro Configurable
+        /// \brief Maximum number of stats in a computation snapshot.
+        static constexpr UInt32 kMaxStats  = 10;   // TODO: Macro Configurable
 
         /// \brief Maximum number of tokens in a computation snapshot.
-        static constexpr UInt32 kMaxTokens       = 4;    // TODO: Macro Configurable
+        static constexpr UInt32 kMaxTokens = 4;    // TODO: Macro Configurable
 
-        /// \brief Structure representing a dependency on another stat.
-        ///
-        /// \note We steal 1 bit from the StatHandle to store the origin context.
-        struct Dependency final
+        /// \brief Structure representing the dependency graph for a stat calculation.
+        struct Graph final
         {
-            /// \brief Constructs a dependency with the specified stat handle and origin.
-            ///
-            /// \param Handle The handle of the dependent stat.
-            /// \param Origin The origin context of the dependent stat.
-            ZYPHRYON_INLINE Dependency(StatHandle Handle, StatOrigin Origin)
-                : mPackage { static_cast<UInt16>(Handle.GetID() | static_cast<UInt16>(Origin) << 15) }
+            /// \brief Default constructor, initializes an empty graph.
+            ZYPHRYON_INLINE Graph()
+                : mScopes { }
             {
             }
 
-            /// \brief Retrieves the stat handle of the dependency.
+            /// \brief Adds a source stat dependency to the graph.
             ///
-            /// \return The stat handle.
-            ZYPHRYON_INLINE StatHandle GetHandle() const
+            /// \param Dependency The stat handle that is a source dependency.
+            ZYPHRYON_INLINE void AddSourceDependency(Stat Dependency)
             {
-                return StatHandle(GetBit(mPackage, 0, 0x7FFF));
+                LOG_ASSERT(mStats.size() < kMaxStats, "Exceeded maximum number of dependencies.");
+
+                mScopes[mStats.size()] = StatScope::Source;
+                mStats.emplace_back(Dependency);
             }
 
-            /// \brief Retrieves the origin context of the dependency.
+            /// \brief Adds a source token dependency to the graph.
             ///
-            /// \return The stat origin.
-            ZYPHRYON_INLINE StatOrigin GetOrigin() const
+            /// \param Dependency The token handle that is a source dependency.
+            ZYPHRYON_INLINE void AddSourceDependency(Token Dependency)
             {
-                return static_cast<StatOrigin>(GetBit(mPackage, 15, 0x8000));
+                LOG_ASSERT(mTokens.size() < kMaxTokens, "Exceeded maximum number of dependencies.");
+
+                mScopes[kMaxStats + mTokens.size()] = StatScope::Source;
+                mTokens.emplace_back(Dependency);
             }
 
-        private:
+            /// \brief Adds a target stat dependency to the graph.
+            ///
+            /// \param Dependency The stat handle that is a target dependency.
+            ZYPHRYON_INLINE void AddTargetDependency(Stat Dependency)
+            {
+                LOG_ASSERT(mStats.size() < kMaxStats, "Exceeded maximum number of dependencies.");
 
-            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-            // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+                mScopes[mStats.size()] = StatScope::Target;
+                mStats.emplace_back(Dependency);
+            }
 
-            UInt16 mPackage;
+            /// \brief Adds a target token dependency to the graph.
+            ///
+            /// \param Dependency The token handle that is a target dependency.
+            ZYPHRYON_INLINE void AddTargetDependency(Token Dependency)
+            {
+                LOG_ASSERT(mTokens.size() < kMaxTokens, "Exceeded maximum number of dependencies.");
+
+                mScopes[kMaxStats + mTokens.size()] = StatScope::Target;
+                mTokens.emplace_back(Dependency);
+            }
+
+            /// \brief Traverses all dependencies in the graph, invoking the provided action for each.
+            ///
+            /// \param Action The action to invoke for each dependency.
+            template<typename Function>
+            ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+            {
+                for (const Stat Dependency : mStats)
+                {
+                    Action(Dependency);
+                }
+                for (const Token Dependency : mTokens)
+                {
+                    Action(Dependency);
+                }
+            }
+
+            /// \brief Traverses dependencies in the graph filtered by scope, invoking the provided action for each.
+            ///
+            /// \param Action The action to invoke for each dependency.
+            /// \param Scope  The scope to filter dependencies by.
+            template<typename Type, typename Function>
+            ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
+            {
+                for (UInt32 Index = 0; Index < mStats.size(); ++Index)
+                {
+                    if (mScopes[Index] == Scope)
+                    {
+                        Action(mStats[Index]);
+                    }
+                }
+
+                for (UInt32 Index = 0; Index < mTokens.size(); ++Index)
+                {
+                    if (mScopes[Index + kMaxStats] == Scope)
+                    {
+                        Action(mTokens[Index]);
+                    }
+                }
+            }
+
+            /// \brief Array of scopes corresponding to each stat and token in the graph.
+            Array<StatScope, kMaxStats + kMaxTokens> mScopes;
+
+            /// \brief Arrays of stats and tokens involved in the graph.
+            Vector<Stat,     kMaxStats>              mStats;
+
+            /// \brief Arrays of tokens involved in the graph.
+            Vector<Token,    kMaxTokens>             mTokens;
         };
 
         /// \brief Structure representing the components of a stat calculation.
@@ -88,22 +151,27 @@ namespace Gameplay
             ZYPHRYON_INLINE Computation(Real32 Base, Real32 Flat, Real32 Additive, Real32 Multiplier)
                 : Base       { Base },
                   Flat       { Flat },
-                  Additive   { Additive },
+                  Additive   { Additive   },
                   Multiplier { Multiplier },
-                  Snapshot   { }
+                  Stats      { },
+                  Tokens     { }
             {
             }
 
             /// \brief Populates the snapshots from a single context based on the dependencies.
             ///
             /// \param Source       The source context to retrieve stat values from.
-            /// \param Dependencies The list of dependencies to populate snapshots for.
+            /// \param Dependencies The dependency graph defining which stats to retrieve.
             template<typename Context>
-            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstSpan<Dependency> Dependencies)
+            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstRef<Graph> Dependencies)
             {
-                for (UInt32 Index = 0; Index < Dependencies.size(); ++Index)
+                for (UInt32 Index = 0; Index < Dependencies.mStats.size(); ++Index)
                 {
-                    Snapshot[Index] = Source.GetStat(Dependencies[Index].GetHandle());
+                    Stats[Index] = Source.GetStat(Dependencies.mStats[Index]);
+                }
+                for (UInt32 Index = 0; Index < Dependencies.mTokens.size(); ++Index)
+                {
+                    Tokens[Index] = Source.GetToken(Dependencies.mTokens[Index]);
                 }
             }
 
@@ -111,39 +179,52 @@ namespace Gameplay
             ///
             /// \param Source       The source context to retrieve stat values from.
             /// \param Target       The target context to retrieve stat values from.
-            /// \param Dependencies The list of dependencies to populate snapshots for.
+            /// \param Dependencies The dependency graph defining which stats to retrieve.
             template<typename Context>
-            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstRef<Context> Target, ConstSpan<Dependency> Dependencies)
+            ZYPHRYON_INLINE void Populate(ConstRef<Context> Source, ConstRef<Context> Target, ConstRef<Graph> Dependencies)
             {
-                for (UInt32 Index = 0; Index < Dependencies.size(); ++Index)
+                for (UInt32 Index = 0; Index < Dependencies.mStats.size(); ++Index)
                 {
-                    ConstRef<Dependency> Dependency = Dependencies[Index];
-
-                    if (Dependency.GetOrigin() == StatOrigin::Source)
+                    if (Dependencies.mScopes[Index] == StatScope::Source)
                     {
-                        Snapshot[Index] = Source.GetStat(Dependency.GetHandle());
+                        Stats[Index] = Source.GetStat(Dependencies.mStats[Index]);
                     }
                     else
                     {
-                        Snapshot[Index] = Target.GetStat(Dependency.GetHandle());
+                        Stats[Index] = Target.GetStat(Dependencies.mStats[Index]);
+                    }
+                }
+
+                for (UInt32 Index = 0; Index < Dependencies.mTokens.size(); ++Index)
+                {
+                    if (Dependencies.mScopes[Index + kMaxStats] == StatScope::Source)
+                    {
+                        Tokens[Index] = Source.GetToken(Dependencies.mTokens[Index]);
+                    }
+                    else
+                    {
+                        Tokens[Index] = Target.GetToken(Dependencies.mTokens[Index]);
                     }
                 }
             }
 
             /// \brief The base value of the stat.
-            Real32                          Base;
+            Real32                    Base;
 
             /// \brief The flat addition to apply to the base value.
-            Real32                          Flat;
+            Real32                    Flat;
 
             /// \brief The percentage addition to apply to the base value.
-            Real32                          Additive;
+            Real32                    Additive;
 
             /// \brief The multiplier to apply to the base value.
-            Real32                          Multiplier;
+            Real32                    Multiplier;
 
-            /// \brief Snapshot of source stat values at the time of computation.
-            Array<Real32, kMaxDependencies> Snapshot;
+            /// \brief Snapshot of stat values at the time of computation.
+            Array<Real32, kMaxStats>  Stats;
+
+            /// \brief Snapshot of token counters at the time of computation.
+            Array<UInt32, kMaxTokens> Tokens;
         };
 
         /// \brief Type alias for a function that computes a stat value from a `Computation`.
@@ -170,24 +251,36 @@ namespace Gameplay
             mCalculator = Move(Calculator);
         }
 
-        /// \brief Adds a dependency stat handle to the source dependencies of this formula.
+        /// \brief Adds a source stat dependency to the formula.
         ///
-        /// \param Dependency The stat handle that this formula depends on from the source.
-        ZYPHRYON_INLINE void AddSourceDependency(StatHandle Dependency)
+        /// \param Dependency The stat handle that is a source dependency.
+        ZYPHRYON_INLINE void AddSourceDependency(Stat Dependency)
         {
-            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
-
-            mDependencies.emplace_back(Dependency, StatOrigin::Source);
+            mDependencies.AddSourceDependency(Dependency);
         }
 
-        /// \brief Adds a dependency stat handle to the target dependencies of this formula.
+        /// \brief Adds a target stat dependency to the formula.
         ///
-        /// \param Dependency The stat handle that this formula depends on from the target.
-        ZYPHRYON_INLINE void AddTargetDependency(StatHandle Dependency)
+        /// \param Dependency The stat handle that is a target dependency.
+        ZYPHRYON_INLINE void AddSourceDependency(Token Dependency)
         {
-            LOG_ASSERT(mDependencies.size() < kMaxDependencies, "Exceeded maximum number of dependencies.");
+            mDependencies.AddSourceDependency(Dependency);
+        }
 
-            mDependencies.emplace_back(Dependency, StatOrigin::Target);
+        /// \brief Adds a source token dependency to the formula.
+        ///
+        /// \param Dependency The token handle that is a source dependency.
+        ZYPHRYON_INLINE void AddTargetDependency(Stat Dependency)
+        {
+            mDependencies.AddTargetDependency(Dependency);
+        }
+
+        /// \brief Adds a target token dependency to the formula.
+        ///
+        /// \param Dependency The token handle that is a target dependency.
+        ZYPHRYON_INLINE void AddTargetDependency(Token Dependency)
+        {
+            mDependencies.AddTargetDependency(Dependency);
         }
 
         /// \brief Calculates the effective stat value using the provided source context.
@@ -234,32 +327,23 @@ namespace Gameplay
             return mCalculator(Computation);
         }
 
-        /// \brief Iterates over all dependencies referenced by this formula.
+        /// \brief Traverses all dependencies in the formula, invoking the provided action for each.
         ///
-        /// \param Action The action to apply to each dependency.
+        /// \param Action The action to invoke for each dependency.
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (ConstRef<Dependency> Dependency : mDependencies)
-            {
-                Action(Dependency.GetHandle());
-            }
+            mDependencies.Traverse(Action);
         }
 
-        /// \brief Iterates over all dependencies referenced by this formula.
+        /// \brief Traverses dependencies in the formula filtered by scope, invoking the provided action for each.
         ///
-        /// \param Action The action to apply to each dependency.
-        /// \param Origin The origin context of dependencies to consider.
-        template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        /// \param Action The action to invoke for each dependency.
+        /// \param Scope  The scope to filter dependencies by.
+        template<typename Type, typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
         {
-            for (ConstRef<Dependency> Dependency : mDependencies)
-            {
-                if (Dependency.GetOrigin() == Origin)
-                {
-                    Action(Dependency.GetHandle());
-                }
-            }
+            mDependencies.Traverse(Action, Scope);
         }
 
     public:
@@ -281,7 +365,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Calculator                           mCalculator;
-        Vector<Dependency, kMaxDependencies> mDependencies;
+        Calculator mCalculator;
+        Graph      mDependencies;
     };
 }

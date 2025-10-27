@@ -10,7 +10,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatArchetype.hpp"
+#include "Gameplay/Stat/StatArchetype.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -25,7 +25,7 @@ namespace Gameplay
     {
         mHandle = Section.GetInteger("ID");
         mName   = Section.GetString("Name");
-        mKind   = Enum::Cast(Section.GetString("Kind"), StatKind::Attribute);
+        mKind   = Section.GetEnum("Kind", StatKind::Attribute);
         mBase.Load(Section.GetArray("Base"));
         mMinimum.Load(Section.GetArray("Minimum"));
         mMaximum.Load(Section.GetArray("Maximum"));
@@ -39,7 +39,7 @@ namespace Gameplay
     {
         Section.SetInteger("ID", mHandle.GetID());
         Section.SetString("Name", mName);
-        Section.SetString("Kind", Enum::GetName(mKind));
+        Section.SetEnum("Kind", mKind);
         mBase.Save(Section.SetArray("Base"));
         mMinimum.Save(Section.SetArray("Minimum"));
         mMaximum.Save(Section.SetArray("Maximum"));

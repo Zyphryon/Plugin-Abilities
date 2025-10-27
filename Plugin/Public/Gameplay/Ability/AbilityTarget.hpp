@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Token/Token.hpp"
+#include "Gameplay/Token/TokenFamily.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,19 +29,19 @@ namespace Gameplay
         enum class Kind : UInt8
         {
             Self,       ///< Targets the ability user themselves.
-            Token,      ///< Targets a specific token.
             Any,        ///< Targets any valid entity.
+            Category,   ///< Targets a category of entities.
             Area,       ///< Targets a specific area.
             None,       ///< No specific target, used for self-contained abilities.
         };
 
-        /// \brief Maximum number of requirements an ability target can have.
-        static constexpr UInt32 kMaxRequirements = 2; // TODO: Macro Configurable
-
     public:
 
         /// \brief Default constructor, initializes members to default values.
-        ZYPHRYON_INLINE AbilityTarget() = default;
+        ZYPHRYON_INLINE AbilityTarget()
+            : mKind { Kind::Self }
+        {
+        }
 
         /// \brief Sets the kind of target for this ability.
         ///
@@ -59,20 +59,20 @@ namespace Gameplay
             return mKind;
         }
 
-        /// \brief Sets the requirements for this ability target.
+        /// \brief Sets the requirement token family for this ability.
         ///
-        /// \param Requirements A constant span of tokens representing the requirements to set.
-        ZYPHRYON_INLINE void SetRequirements(ConstSpan<Token> Requirements)
+        /// \param Requirement The token family defining the requirements.
+        ZYPHRYON_INLINE void SetRequirement(AnyRef<TokenFamily> Requirement)
         {
-            mRequirements.assign(Requirements.begin(), Requirements.end());
+            mRequirement = Requirement;
         }
 
-        /// \brief Retrieves the requirements for this ability target.
+        /// \brief Retrieves the requirement token family for this ability.
         ///
-        /// \return A constant span of tokens representing the requirements.
-        ZYPHRYON_INLINE ConstSpan<Token> GetRequirements() const
+        /// \return The token family defining the requirements.
+        ZYPHRYON_INLINE ConstRef<TokenFamily> GetRequirement() const
         {
-            return mRequirements;
+            return mRequirement;
         }
 
         /// \brief Loads the ability target data from a TOML section.
@@ -80,17 +80,8 @@ namespace Gameplay
         /// \param Section The TOML section to load from.
         ZYPHRYON_INLINE void Load(TOMLSection Section)
         {
-            mKind = Enum::Cast(Section.GetString("Kind"), Kind::Any);
-
-            if (const TOMLArray Requirements = Section.GetArray("Requirements"); !Requirements.IsEmpty())
-            {
-                mRequirements.resize(Requirements.GetSize());
-
-                for (UInt32 Element = 0; Element < mRequirements.size(); ++Element)
-                {
-                    mRequirements[Element] = Requirements.GetInteger(Element);
-                }
-            }
+            mKind = Section.GetEnum("Kind", Kind::Any);
+            mRequirement.Load(Section.GetArray("Requirement"));
         }
 
         /// \brief Saves the ability target data to a TOML section.
@@ -98,12 +89,8 @@ namespace Gameplay
         /// \param Section The TOML section to save to.
         ZYPHRYON_INLINE void Save(TOMLSection Section) const
         {
-            Section.SetString("Kind", Enum::GetName(mKind));
-
-            for (TOMLArray Requirements = Section.SetArray("Requirements"); Token Requirement : mRequirements)
-            {
-                Requirements.AddInteger(Requirement.GetID());
-            }
+            Section.SetEnum("Kind", mKind);
+            mRequirement.Save(Section.SetArray("Requirement"));
         }
 
     private:
@@ -111,7 +98,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Kind                            mKind;
-        Vector<Token, kMaxRequirements> mRequirements;
+        Kind        mKind;
+        TokenFamily mRequirement;
     };
 }

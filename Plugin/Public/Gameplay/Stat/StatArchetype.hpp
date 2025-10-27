@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatInput.hpp"
+#include "Gameplay/Stat/StatInput.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -61,7 +61,7 @@ namespace Gameplay
         /// \brief Sets the unique handle for this stat archetype.
         ///
         /// \param Handle The unique stat handle to assign.
-        ZYPHRYON_INLINE void SetHandle(StatHandle Handle)
+        ZYPHRYON_INLINE void SetHandle(Stat Handle)
         {
             mHandle = Handle;
         }
@@ -69,7 +69,7 @@ namespace Gameplay
         /// \brief Retrieves the unique handle of this stat archetype.
         ///
         /// \return The stat handle.
-        ZYPHRYON_INLINE StatHandle GetHandle() const
+        ZYPHRYON_INLINE Stat GetHandle() const
         {
             return mHandle;
         }
@@ -236,7 +236,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        StatHandle       mHandle;
+        Stat             mHandle;
         StatKind         mKind;
         Str8             mName;
         StatInput        mBase;

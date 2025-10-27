@@ -20,22 +20,22 @@
 
 namespace Gameplay
 {
-    /// \brief Defines the type of a stat.
+    /// \brief Defines the fundamental nature of a stat.
     enum class StatKind : UInt8
     {
         Attribute,  ///< A derived statistic calculated from formulas.
         Resource,   ///< A depletable resource.
     };
 
-    // \brief Defines how a stat is resolved.
+    /// \brief Defines how a stat's value is resolved.
     enum class StatMode : UInt8
     {
-        Snapshot,   ///< The stat is resolved using a snapshot of values.
-        Live,       ///< The stat is resolved using live, real-time values.
+        Snapshot,   ///< The stat is resolved once and cached.
+        Dynamic,    ///< The stat is resolved dynamically in real-time.
     };
 
-    /// \brief Defines the operation applied to a stat.
-    enum class StatOperator : UInt8
+    /// \brief Defines how a stat modifier affects a stat's value.
+    enum class StatModifier : UInt8
     {
         Add,        ///< Adds or subtracts a flat value to/from the stat.
         Percent,    ///< Adds or subtracts a percentage to/from the stat (e.g., +0.2 for +20%).
@@ -43,8 +43,8 @@ namespace Gameplay
         Set,        ///< Overrides the stat value entirely.
     };
 
-    /// \brief Defines the origin context of a stat.
-    enum class StatOrigin : UInt8
+    /// \brief Defines the scope of a stat, indicating whether it applies to the source or target context.
+    enum class StatScope : UInt8
     {
         Source,     ///< The stat originates from the source context.
         Target,     ///< The stat originates from the target context.

@@ -30,22 +30,23 @@ namespace Gameplay
 
         /// \brief Constructs an effect modifier with specified parameters.
         ///
-        /// \param Handle    The target stat handle.
+        /// \param Target    The target stat handle.
         /// \param Mode      The evaluation method for the modifier.
-        /// \param Operator  The operator type for the modifier.
+        /// \param Modifier  The type of modifier to apply.
         /// \param Magnitude The magnitude value for the modifier.
-        ZYPHRYON_INLINE EffectModifier(StatHandle Handle, StatMode Mode, StatOperator Operator, AnyRef<StatInput> Magnitude)
-            : mTarget    { Handle },
+        ZYPHRYON_INLINE EffectModifier(Stat Target, StatMode Mode, StatModifier Modifier, AnyRef<StatInput> Magnitude)
+            : mTarget    { Target },
               mMode      { Mode },
-              mOperator  { Operator },
+              mModifier  { Modifier },
               mMagnitude { Move(Magnitude) }
+
         {
         }
 
         /// \brief Sets the target stat handle for this modifier.
         ///
         /// \param Handle The stat handle to set as the target.
-        ZYPHRYON_INLINE void SetTarget(StatHandle Handle)
+        ZYPHRYON_INLINE void SetTarget(Stat Handle)
         {
             mTarget = Handle;
         }
@@ -53,7 +54,7 @@ namespace Gameplay
         /// \brief Retrieves the target stat handle for this modifier.
         ///
         /// \return The stat handle that is the target of this modifier.
-        ZYPHRYON_INLINE StatHandle GetTarget() const
+        ZYPHRYON_INLINE Stat GetTarget() const
         {
             return mTarget;
         }
@@ -74,20 +75,20 @@ namespace Gameplay
             return mMode;
         }
 
-        /// \brief Sets the operator type for this modifier.
+        /// \brief Sets the type of modifier to apply.
         ///
-        /// \param Operator The operator type to assign.
-        ZYPHRYON_INLINE void SetOperator(StatOperator Operator)
+        /// \param Modifier The modifier type to assign.
+        ZYPHRYON_INLINE void SetModifier(StatModifier Modifier)
         {
-            mOperator = Operator;
+            mModifier = Modifier;
         }
 
-        /// \brief Retrieves the operator type for this modifier.
+        /// \brief Retrieves the type of modifier to apply.
         ///
-        /// \return The operator type of this modifier.
-        ZYPHRYON_INLINE StatOperator GetOperator() const
+        /// \return The modifier type.
+        ZYPHRYON_INLINE StatModifier GetModifier() const
         {
-            return mOperator;
+            return mModifier;
         }
 
         /// \brief Sets the magnitude of the modifier.
@@ -109,11 +110,11 @@ namespace Gameplay
         /// \brief Iterates over all dependencies referenced by the modifier.
         ///
         /// \param Action The action to apply to each dependency.
-        /// \param Origin The origin context of dependencies to consider.
+        /// \param Scope  The scope context of dependencies to consider.
         template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
         {
-            mMagnitude.Traverse(Action, Origin);
+            mMagnitude.Traverse(Action, Scope);
         }
 
         /// \brief Loads the stat modifier data from a TOML array.
@@ -122,8 +123,8 @@ namespace Gameplay
         ZYPHRYON_INLINE void Load(TOMLArray Array)
         {
             mTarget    = Array.GetInteger(0);
-            mMode      = Enum::Cast(Array.GetString(1), StatMode::Snapshot);
-            mOperator  = Enum::Cast(Array.GetString(2), StatOperator::Add);
+            mMode      = Array.GetEnum(1, StatMode::Snapshot);
+            mModifier  = Array.GetEnum(2, StatModifier::Add);
             mMagnitude.Load(Array.GetArray(3));
         }
 
@@ -133,22 +134,22 @@ namespace Gameplay
         ZYPHRYON_INLINE void Save(TOMLArray Array) const
         {
             Array.AddInteger(mTarget.GetID());
-            Array.AddString(Enum::GetName(mMode));
-            Array.AddString(Enum::GetName(mOperator));
+            Array.AddEnum(mMode);
+            Array.AddEnum(mModifier);
             mMagnitude.Save(Array);
         }
 
     public:
 
-        /// \brief Creates a live effect modifier.
+        /// \brief Creates a dynamic effect modifier.
         ///
         /// \param Target    The target stat handle.
         /// \param Operator  The operator type to apply.
         /// \param Magnitude The magnitude value for the modifier.
-        /// \return A new effect modifier instance configured as live.
-        static EffectModifier CreateLive(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
+        /// \return A new effect modifier instance configured as dynamic.
+        static EffectModifier CreateDynamic(Stat Target, StatModifier Operator, AnyRef<StatInput> Magnitude)
         {
-            return EffectModifier(Target, StatMode::Live, Operator, Move(Magnitude));
+            return EffectModifier(Target, StatMode::Dynamic, Operator, Move(Magnitude));
         }
 
         /// \brief Creates a snapshot effect modifier.
@@ -156,8 +157,8 @@ namespace Gameplay
         /// \param Target    The target stat handle.
         /// \param Operator  The operator type to apply.
         /// \param Magnitude The magnitude value for the modifier.
-        /// \return A new effect modifier instance configured as a snapshot.
-        static EffectModifier CreateSnapshot(StatHandle Target, StatOperator Operator, AnyRef<StatInput> Magnitude)
+        /// \return A new effect modifier instance configured as snapshot.
+        static EffectModifier CreateSnapshot(Stat Target, StatModifier Operator, AnyRef<StatInput> Magnitude)
         {
             return EffectModifier(Target, StatMode::Snapshot, Operator, Move(Magnitude));
         }
@@ -167,9 +168,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        StatHandle   mTarget;
+        Stat         mTarget;
         StatMode     mMode;
-        StatOperator mOperator;
+        StatModifier mModifier;
         StatInput    mMagnitude;
     };
 }

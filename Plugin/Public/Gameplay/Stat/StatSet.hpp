@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Stat.hpp"
+#include "Gameplay/Stat/StatData.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -46,7 +46,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat to retrieve.
         /// \return A constant pointer to the stat if found, otherwise nullptr.
-        ZYPHRYON_INLINE ConstPtr<Stat> TryGet(StatHandle Handle) const
+        ZYPHRYON_INLINE ConstPtr<StatData> TryGet(Stat Handle) const
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
             {
@@ -61,7 +61,7 @@ namespace Gameplay
         /// \param Archetype The archetype defining the stat to retrieve or insert.
         /// \return A reference to the retrieved or newly inserted stat.
         template<typename Context>
-        ZYPHRYON_INLINE Ref<Stat> GetOrInsert(ConstRef<Context> Source, ConstRef<StatArchetype> Archetype)
+        ZYPHRYON_INLINE Ref<StatData> GetOrInsert(ConstRef<Context> Source, ConstRef<StatArchetype> Archetype)
         {
             const auto [Iterator, Inserted] = mRegistry.emplace(Archetype);
 
@@ -69,7 +69,7 @@ namespace Gameplay
             {
                 Iterator->Calculate(Source);
             }
-            return const_cast<Ref<Stat>>(* Iterator);
+            return const_cast<Ref<StatData>>(* Iterator);
         }
 
         /// \brief Clears all stats from the registry.
@@ -82,7 +82,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat that changed.
         /// \param Value  The previous value of the stat before the change.
-        ZYPHRYON_INLINE void Publish(StatHandle Handle, Real32 Value)
+        ZYPHRYON_INLINE void Publish(Stat Handle, Real32 Value)
         {
             mNotifications.emplace(Handle, Value);
         }
@@ -93,7 +93,7 @@ namespace Gameplay
         struct Notification final
         {
             /// \brief The handle of the stat that changed.
-            StatHandle Key;
+            Stat Key;
 
             /// \brief The previous value of the stat before the change.
             Real32     Value;
@@ -121,7 +121,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<Stat>         mRegistry;
+        Set<StatData>     mRegistry;
         Set<Notification> mNotifications;
     };
 }

@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatArchetype.hpp"
+#include "Gameplay/Stat/StatArchetype.hpp"
 #include <Zyphryon.Content/Service.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -48,7 +48,7 @@ namespace Gameplay
         /// \return A reference to the newly allocated stat archetype.
         ZYPHRYON_INLINE Ref<StatArchetype> Allocate()
         {
-            const StatHandle Handle = mArchetypes.Allocate();
+            const Stat Handle = mArchetypes.Allocate();
 
             Ref<StatArchetype> Archetype = mArchetypes[Handle.GetID()];
             Archetype.SetHandle(Handle);
@@ -77,7 +77,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat archetype to retrieve.
         /// \return The stat archetype associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<StatArchetype> Get(StatHandle Handle) const
+        ZYPHRYON_INLINE ConstRef<StatArchetype> Get(Stat Handle) const
         {
             return mArchetypes[Handle.GetID()];
         }
@@ -92,40 +92,85 @@ namespace Gameplay
 
         /// \brief Inserts a dependency relationship between two stats.
         ///
-        /// \param Stat       The stat that depends on another stat.
+        /// \param Dependant  The stat that depends on another stat.
         /// \param Dependency The stat that is depended upon.
-        ZYPHRYON_INLINE void InsertDependency(StatHandle Stat, StatHandle Dependency)
+        ZYPHRYON_INLINE void InsertDependency(Stat Dependant, Stat Dependency)
         {
-            mDependencies[Dependency].insert(Stat);
+            mValueDependencies[Dependency].insert(Dependant);
+        }
+
+        /// \brief Inserts a dependency relationship between a stat and a token.
+        ///
+        /// \param Dependant  The stat that depends on another stat.
+        /// \param Dependency The token that is depended upon.
+        ZYPHRYON_INLINE void InsertDependency(Stat Dependant, Token Dependency)
+        {
+            mTokenDependencies[Dependency].insert(Dependant);
         }
 
         /// \brief Removes a dependency relationship between two stats.
         ///
-        /// \param Stat       The stat that depends on another stat.
+        /// \param Dependant  The stat that depends on another stat.
         /// \param Dependency The stat that is depended upon.
-        ZYPHRYON_INLINE void RemoveDependency(StatHandle Stat, StatHandle Dependency)
+        ZYPHRYON_INLINE void RemoveDependency(Stat Dependant, Stat Dependency)
         {
-            if (const auto Iterator = mDependencies.find(Dependency); Iterator != mDependencies.end())
+            if (const auto Iterator = mValueDependencies.find(Dependency); Iterator != mValueDependencies.end())
             {
-                Iterator->second.erase(Stat);
+                Iterator->second.erase(Dependant);
 
                 if (Iterator->second.empty())
                 {
-                    mDependencies.erase(Iterator);
+                    mValueDependencies.erase(Iterator);
+                }
+            }
+        }
+
+        /// \brief Removes a dependency relationship between a stat and a token.
+        ///
+        /// \param Dependant  The stat that depends on another stat.
+        /// \param Dependency The token that is depended upon.
+        ZYPHRYON_INLINE void RemoveDependency(Stat Dependant, Token Dependency)
+        {
+            if (const auto Iterator = mTokenDependencies.find(Dependency); Iterator != mTokenDependencies.end())
+            {
+                Iterator->second.erase(Dependant);
+
+                if (Iterator->second.empty())
+                {
+                    mTokenDependencies.erase(Iterator);
                 }
             }
         }
 
         /// \brief Notifies all stats that depend on the given stat by invoking the provided action.
         ///
-        /// \param Stat   The stat whose dependents should be notified.
-        /// \param Action The action to invoke for each dependent stat.
+        /// \param Dependant The stat whose dependents should be notified.
+        /// \param Action    The action to invoke for each dependent stat.
         template<typename Function>
-        ZYPHRYON_INLINE void NotifyDependency(StatHandle Stat, AnyRef<Function> Action)
+        ZYPHRYON_INLINE void NotifyDependency(Stat Dependant, AnyRef<Function> Action)
         {
-            if (const auto Iterator = mDependencies.find(Stat); Iterator != mDependencies.end())
+            if (const auto Iterator = mValueDependencies.find(Dependant); Iterator != mValueDependencies.end())
             {
-                for (const StatHandle Dependent : Iterator->second)
+                for (const Stat Dependent : Iterator->second)
+                {
+                    Action(Dependent);
+
+                    // Recursively notify dependents of the dependent stat.
+                    NotifyDependency(Dependent, Action);
+                }
+            }
+        }
+
+        /// \brief Notifies all stats that depend on the given token by invoking the provided action.
+        ///
+        /// \param Dependant The token whose dependents should be notified.
+        /// \param Action    The action to invoke for each dependent stat.
+        template<typename Function>
+        ZYPHRYON_INLINE void NotifyDependency(Token Dependant, AnyRef<Function> Action)
+        {
+            if (const auto Iterator = mTokenDependencies.find(Dependant); Iterator != mTokenDependencies.end())
+            {
+                for (const Stat Dependent : Iterator->second)
                 {
                     Action(Dependent);
 
@@ -152,7 +197,7 @@ namespace Gameplay
         /// \param Archetype The stat archetype whose dependencies to insert.
         ZYPHRYON_INLINE void InsertDependencies(ConstRef<StatArchetype> Archetype)
         {
-            Archetype.Traverse([&](StatHandle Dependency)
+            Archetype.Traverse([&]<typename T0>(T0 Dependency)
             {
                 InsertDependency(Archetype.GetHandle(), Dependency);
             });
@@ -163,7 +208,7 @@ namespace Gameplay
         /// \param Archetype The stat archetype whose dependencies to delete.
         ZYPHRYON_INLINE void DeleteDependencies(ConstRef<StatArchetype> Archetype)
         {
-            Archetype.Traverse([&](StatHandle Dependency)
+            Archetype.Traverse([&]<typename T0>(T0 Dependency)
             {
                 RemoveDependency(Archetype.GetHandle(), Dependency);
             });
@@ -186,6 +231,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
         Pool<StatArchetype, kMaxArchetypes> mArchetypes;
-        Table<StatHandle, Set<StatHandle>>  mDependencies;
+        Table<Stat,  Set<Stat>>             mValueDependencies;
+        Table<Token, Set<Stat>>             mTokenDependencies;
     };
 }

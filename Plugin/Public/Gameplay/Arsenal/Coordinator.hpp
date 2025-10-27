@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Stat/StatHandle.hpp"
+#include "Gameplay/Stat/Stat.hpp"
 #include "Gameplay/Token/Token.hpp"
 #include <Zyphryon.Scene/Entity.hpp>
 
@@ -24,6 +24,7 @@ namespace Gameplay
 {
     /// \brief Coordinates stat and marker modification events within the gameplay system.
     /// TODO: Investigate Batch / ECS way
+    /// TODO: Consider using Event Bus pattern?
     class Coordinator final
     {
     public:
@@ -44,25 +45,25 @@ namespace Gameplay
 
         /// \brief Subscribes a delegate to stat modification events for a specific stat.
         ///
-        /// \param Stat     The handle of the stat to subscribe to.
+        /// \param Target   The handle of the stat to subscribe to.
         /// \param Delegate The delegate to invoke on stat modification.
-        ZYPHRYON_INLINE void Subscribe(StatHandle Stat, AnyRef<OnModifyStat> Delegate)
+        ZYPHRYON_INLINE void Subscribe(Stat Target, AnyRef<OnModifyStat> Delegate)
         {
             std::unique_lock Guard(mStatDelegatesMutex);
-            mStatDelegates[Stat].Add(Move(Delegate));
+            mStatDelegates[Target].Add(Move(Delegate));
         }
 
         /// \brief Publishes a stat modification event to all subscribed delegates.
         ///
-        /// \param Stat     The handle of the modified stat.
+        /// \param Target   The handle of the modified stat.
         /// \param Entity   The entity whose stat was modified.
         /// \param Previous The previous value of the stat.
         /// \param Current  The current value of the stat.
-        ZYPHRYON_INLINE void Publish(StatHandle Stat, Scene::Entity Entity, Real32 Previous, Real32 Current)
+        ZYPHRYON_INLINE void Publish(Stat Target, Scene::Entity Entity, Real32 Previous, Real32 Current)
         {
             std::shared_lock Guard(mStatDelegatesMutex);
 
-            if (const auto Iterator = mStatDelegates.find(Stat); Iterator != mStatDelegates.end())
+            if (const auto Iterator = mStatDelegates.find(Target); Iterator != mStatDelegates.end())
             {
                 Iterator->second.Broadcast(Entity, Previous, Current);
             }
@@ -70,13 +71,13 @@ namespace Gameplay
 
         /// \brief Unsubscribes a delegate from stat modification events for a specific stat.
         ///
-        /// \param Stat     The handle of the stat to unsubscribe from.
+        /// \param Target   The handle of the stat to unsubscribe from.
         /// \param Delegate The delegate to remove from the subscription list.
-        ZYPHRYON_INLINE void Unsubscribe(StatHandle Stat, ConstRef<OnModifyStat> Delegate)
+        ZYPHRYON_INLINE void Unsubscribe(Stat Target, ConstRef<OnModifyStat> Delegate)
         {
             std::unique_lock Guard(mStatDelegatesMutex);
 
-            if (const auto Iterator = mStatDelegates.find(Stat); Iterator != mStatDelegates.end())
+            if (const auto Iterator = mStatDelegates.find(Target); Iterator != mStatDelegates.end())
             {
                 Ref<OnModifyStatMulticast> Delegates = Iterator->second;
                 Delegates.Remove(Delegate);
@@ -90,25 +91,25 @@ namespace Gameplay
 
         /// \brief Subscribes a delegate to token modification events for a specific token.
         ///
-        /// \param Token    The handle of the token to subscribe to.
+        /// \param Target   The handle of the token to subscribe to.
         /// \param Delegate The delegate to invoke on token modification.
-        ZYPHRYON_INLINE void Subscribe(Token Token, AnyRef<OnModifyToken> Delegate)
+        ZYPHRYON_INLINE void Subscribe(Token Target, AnyRef<OnModifyToken> Delegate)
         {
             std::unique_lock Guard(mTokenDelegatesMutex);
-            mTokenDelegates[Token].Add(Move(Delegate));
+            mTokenDelegates[Target].Add(Move(Delegate));
         }
 
         /// \brief Publishes a token modification event to all subscribed delegates.
         ///
-        /// \param Token    The handle of the modified token.
+        /// \param Target   The handle of the modified token.
         /// \param Entity   The entity whose token was modified.
         /// \param Previous The previous count of the token.
         /// \param Current  The current count of the token.
-        ZYPHRYON_INLINE void Publish(Token Token, Scene::Entity Entity, UInt32 Previous, UInt32 Current)
+        ZYPHRYON_INLINE void Publish(Token Target, Scene::Entity Entity, UInt32 Previous, UInt32 Current)
         {
             std::shared_lock Guard(mTokenDelegatesMutex);
 
-            if (const auto Iterator = mTokenDelegates.find(Token); Iterator != mTokenDelegates.end())
+            if (const auto Iterator = mTokenDelegates.find(Target); Iterator != mTokenDelegates.end())
             {
                 Iterator->second.Broadcast(Entity, Previous, Current);
             }
@@ -116,13 +117,13 @@ namespace Gameplay
 
         /// \brief Unsubscribes a delegate from token modification events for a specific token.
         ///
-        /// \param Token    The handle of the token to unsubscribe from.
+        /// \param Target   The handle of the token to unsubscribe from.
         /// \param Delegate The delegate to remove from the subscription list.
-        ZYPHRYON_INLINE void Unsubscribe(Token Token, ConstRef<OnModifyToken> Delegate)
+        ZYPHRYON_INLINE void Unsubscribe(Token Target, ConstRef<OnModifyToken> Delegate)
         {
             std::unique_lock Guard(mTokenDelegatesMutex);
 
-            if (const auto Iterator = mTokenDelegates.find(Token); Iterator != mTokenDelegates.end())
+            if (const auto Iterator = mTokenDelegates.find(Target); Iterator != mTokenDelegates.end())
             {
                 Ref<OnModifyTokenMulticast> Delegates = Iterator->second;
                 Delegates.Remove(Delegate);
@@ -150,9 +151,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Table<StatHandle, OnModifyStatMulticast> mStatDelegates;
-        mutable std::shared_mutex                mStatDelegatesMutex;
-        Table<Token, OnModifyTokenMulticast>     mTokenDelegates;
-        mutable std::shared_mutex                mTokenDelegatesMutex;
+        Table<Stat, OnModifyStatMulticast>   mStatDelegates;
+        mutable std::shared_mutex            mStatDelegatesMutex;
+        Table<Token, OnModifyTokenMulticast> mTokenDelegates;
+        mutable std::shared_mutex            mTokenDelegatesMutex;
     };
 }

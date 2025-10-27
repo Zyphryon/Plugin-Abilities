@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "EffectArchetype.hpp"
+#include "Gameplay/Effect/EffectArchetype.hpp"
 #include <Zyphryon.Content/Service.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -48,7 +48,7 @@ namespace Gameplay
         /// \return A reference to the newly allocated effect archetype.
         ZYPHRYON_INLINE Ref<EffectArchetype> Allocate()
         {
-            const EffectHandle Handle = mArchetypes.Allocate();
+            const Effect Handle = mArchetypes.Allocate();
 
             Ref<EffectArchetype> Archetype = mArchetypes[Handle.GetID()];
             Archetype.SetHandle(Handle);
@@ -75,7 +75,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the effect archetype to retrieve.
         /// \return The effect archetype associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<EffectArchetype> Get(EffectHandle Handle) const
+        ZYPHRYON_INLINE ConstRef<EffectArchetype> Get(Effect Handle) const
         {
             return mArchetypes[Handle.GetID()];
         }

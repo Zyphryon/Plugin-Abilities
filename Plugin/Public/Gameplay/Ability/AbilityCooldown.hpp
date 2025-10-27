@@ -13,7 +13,6 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Gameplay/Stat/StatInput.hpp"
-#include "Gameplay/Token/Token.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -43,7 +42,11 @@ namespace Gameplay
     public:
 
         /// \brief Default constructor, initializes members to default values.
-        ZYPHRYON_INLINE AbilityCooldown() = default;
+        ZYPHRYON_INLINE AbilityCooldown()
+            : mInfluence  { Influence::Individual },
+              mMechanism  { Mechanism::Timer }
+        {
+        }
 
         /// \brief Constructs an ability cooldown with specified parameters.
         ///
@@ -159,8 +162,8 @@ namespace Gameplay
         /// \param Section The TOML section to load from.
         ZYPHRYON_INLINE void Load(TOMLSection Section)
         {
-            mInfluence = Enum::Cast(Section.GetString("Influence"), Influence::Individual);
-            mMechanism = Enum::Cast(Section.GetString("Mechanism"), Mechanism::Timer);
+            mInfluence = Section.GetEnum("Influence", Influence::Individual);
+            mMechanism = Section.GetEnum("Mechanism", Mechanism::Timer);
             mCategory  = Section.GetInteger("Category");
             mCooldown.Load(Section.GetArray("Cooldown"));
 
@@ -175,8 +178,8 @@ namespace Gameplay
         /// \param Section The TOML section to save to.
         ZYPHRYON_INLINE void Save(TOMLSection Section) const
         {
-            Section.SetString("Influence", Enum::GetName(mInfluence));
-            Section.SetString("Mechanism", Enum::GetName(mMechanism));
+            Section.SetEnum("Influence", mInfluence);
+            Section.SetEnum("Mechanism", mMechanism);
 
             if (mInfluence == Influence::Category)
             {

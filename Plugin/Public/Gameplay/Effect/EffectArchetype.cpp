@@ -10,7 +10,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "EffectArchetype.hpp"
+#include "Gameplay/Effect/EffectArchetype.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -25,7 +25,8 @@ namespace Gameplay
     {
         mName     = Section.GetString("Name");
         mHandle   = Section.GetInteger("ID");
-        mPolicies.Load(Section);
+        mPolicies.Load(Section.GetSection("Policies"));
+        mCategory.Load(Section.GetArray("Category"));
 
         if (GetApplication() == EffectApplication::Temporary)
         {
@@ -52,7 +53,8 @@ namespace Gameplay
     {
         Section.SetString("Name", mName);
         Section.SetInteger("ID", mHandle.GetID());
-        mPolicies.Save(Section);
+        mPolicies.Save(Section.SetSection("Policies"));
+        mCategory.Save(Section.SetArray("Category"));
 
         if (GetApplication() == EffectApplication::Temporary)
         {

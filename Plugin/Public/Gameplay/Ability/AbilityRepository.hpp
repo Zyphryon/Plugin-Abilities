@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "AbilityArchetype.hpp"
+#include "Gameplay/Ability/AbilityArchetype.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -35,7 +35,7 @@ namespace Gameplay
         /// \return A reference to the newly allocated ability archetype.
         ZYPHRYON_INLINE Ref<AbilityArchetype> Allocate()
         {
-            const AbilityHandle Handle = mArchetypes.Allocate();
+            const Ability Handle = mArchetypes.Allocate();
 
             Ref<AbilityArchetype> Archetype = mArchetypes[Handle.GetID()];
             Archetype.SetHandle(Handle);
@@ -62,7 +62,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the ability archetype to retrieve.
         /// \return The ability archetype associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<AbilityArchetype> Get(AbilityHandle Handle) const
+        ZYPHRYON_INLINE ConstRef<AbilityArchetype> Get(Ability Handle) const
         {
             return mArchetypes[Handle.GetID()];
         }

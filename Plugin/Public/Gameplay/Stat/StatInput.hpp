@@ -12,8 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "StatFormula.hpp"
-#include "StatPolicies.hpp"
+#include "Gameplay/Stat/StatFormula.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -26,27 +25,27 @@ namespace Gameplay
     {
     public:
 
-        /// \brief Defines the kind of data held by the proxy.
+        /// \brief Defines the kind of data held by the stat input.
         enum class Kind : UInt8
         {
-            Float,     ///< Direct stat value.
-            Ref,       ///< Reference to another stat.
-            Formula,   ///< A formula to compute the stat value.
+            Float,     ///< A direct floating-point value.
+            Ref,       ///< A reference to another stat.
+            Formula,   ///< A custom formula.
         };
 
-        /// \brief Structure representing a reference to another stat with an optional coefficient.
+        /// \brief Structure representing a reference to another stat with an optional base and coefficient.
         struct Reference final
         {
-            /// \brief Handle to the referenced stat.
-            StatHandle Handle;
+            /// \brief The handle of the referenced stat.
+            Stat       Handle;
 
-            /// \brief Context of the referenced stat.
-            StatOrigin Origin      = StatOrigin::Target;
+            /// \brief The scope context of the referenced stat.
+            StatScope  Scope       = StatScope::Target;
 
-            /// \brief Base value to apply when referencing another stat.
+            /// \brief The base value applied when referencing the stat.
             Real16     Base        = 0.0f;
 
-            /// \brief Coefficient to apply when referencing another stat.
+            /// \brief The coefficient applied to the referenced stat.
             Real16     Coefficient = 1.0f;
 
             /// \brief Loads the reference data from a TOML array.
@@ -55,9 +54,9 @@ namespace Gameplay
             ZYPHRYON_INLINE void Load(TOMLArray Array)
             {
                 Handle      = Array.GetInteger(1);
-                Base        = FloatToHalf(Array.GetReal(2));
-                Coefficient = FloatToHalf(Array.GetReal(3));
-                Origin      = Enum::Cast(Array.GetString(4), StatOrigin::Target);
+                Scope       = Array.GetEnum(2, StatScope::Target);
+                Base        = FloatToHalf(Array.GetReal(3));
+                Coefficient = FloatToHalf(Array.GetReal(4));
             }
 
             /// \brief Saves the reference data to a TOML array.
@@ -66,45 +65,45 @@ namespace Gameplay
             ZYPHRYON_INLINE void Save(TOMLArray Array) const
             {
                 Array.AddInteger(Handle.GetID());
+                Array.AddEnum(Scope);
                 Array.AddReal(HalfToFloat(Base));
                 Array.AddReal(HalfToFloat(Coefficient));
-                Array.AddString(Enum::GetName(Origin));
             }
         };
 
     public:
 
-        /// \brief Default constructor, initializes an empty proxy.
+        /// \brief Default constructor, initializes an empty stat input.
         ZYPHRYON_INLINE StatInput() = default;
 
-        /// \brief Constructs a proxy holding a direct stat value.
+        /// \brief Constructs a stat input from a floating-point value.
         ///
-        /// \param Value The direct stat value.
+        /// \param Value The floating-point value to use.
         ZYPHRYON_INLINE StatInput(Real32 Value)
             : mContainer { Value }
         {
         }
 
-        /// \brief Constructs a proxy holding a reference to another stat.
+        /// \brief Constructs a stat input from a stat reference.
         ///
         /// \param Handle      The handle of the referenced stat.
-        /// \param Origin      The origin context of the referenced stat.
-        /// \param Base        The base value to apply when referencing the stat.
-        /// \param Coefficient The coefficient to apply when referencing the stat.
-        ZYPHRYON_INLINE StatInput(StatHandle Handle, StatOrigin Origin, Real32 Base, Real32 Coefficient)
-            : mContainer { Reference { Handle, Origin, FloatToHalf(Base), FloatToHalf(Coefficient) } }
+        /// \param Scope       The scope context of the referenced stat.
+        /// \param Base        The base value applied when referencing the stat.
+        /// \param Coefficient The coefficient applied to the referenced stat.
+        ZYPHRYON_INLINE StatInput(Stat Handle, StatScope Scope, Real32 Base, Real32 Coefficient)
+            : mContainer { Reference { Handle, Scope, FloatToHalf(Base), FloatToHalf(Coefficient) } }
         {
         }
 
-        /// \brief Constructs a proxy holding a formula to compute the stat value.
+        /// \brief Constructs a stat input from a formula pointer.
         ///
-        /// \param Formula The formula used to compute the stat value.
+        /// \param Formula The formula pointer to use.
         ZYPHRYON_INLINE StatInput(Ptr<StatFormula> Formula)
             : mContainer { Formula }
         {
         }
 
-        /// \brief Constructs a proxy by loading data from a TOML array.
+        /// \brief Constructs a stat input from a TOML array.
         ///
         /// \param Array The TOML array to load from.
         ZYPHRYON_INLINE StatInput(TOMLArray Array)
@@ -112,7 +111,7 @@ namespace Gameplay
             Load(Array);
         }
 
-        /// \brief Retrieves the kind of data held by the proxy.
+        /// \brief Retrieves the kind of data held by the stat input.
         ///
         /// \return The kind of data.
         ZYPHRYON_INLINE Kind GetKind() const
@@ -120,19 +119,18 @@ namespace Gameplay
             return static_cast<Kind>(mContainer.GetIndex());
         }
 
-        /// \brief Retrieves the data held by the proxy, cast to the specified type.
+        /// \brief Retrieves the underlying data of the stat input.
         ///
-        /// \tparam Type The type to cast the data to.
+        /// \return A constant reference to the underlying data.
         template<typename Type>
         ZYPHRYON_INLINE ConstRef<Type> GetData() const
         {
             return mContainer.GetData<Type>();
         }
 
-        /// \brief Resolves the proxy to a concrete stat value using the provided source context.
+        /// \brief Resolves the stat input using the source context.
         ///
-        /// \param Source The source context providing access to stats.
-        /// \return The resolved stat value.
+        /// \param Source The source context to retrieve stat values from.
         template<typename Context>
         ZYPHRYON_INLINE Real32 Resolve(ConstRef<Context> Source) const
         {
@@ -153,11 +151,10 @@ namespace Gameplay
             return 0.0f;
         }
 
-        /// \brief Resolves the proxy to a concrete stat value using the provided source and target contexts.
+        /// \brief Resolves the stat input using both source and target contexts.
         ///
-        /// \param Source The source context providing access to stats.
-        /// \param Target The target context providing access to stats.
-        /// \return The resolved stat value.
+        /// \param Source The source context to retrieve stat values from.
+        /// \param Target The target context to retrieve stat values from.
         template<typename Context>
         ZYPHRYON_INLINE Real32 Resolve(ConstRef<Context> Source, ConstRef<Context> Target) const
         {
@@ -167,13 +164,13 @@ namespace Gameplay
                 return GetData<Real32>();
             case Kind::Ref:
             {
-                const auto [Handle, Origin, Base, Coefficient] = GetData<Reference>();
+                const auto [Handle, Scope, Base, Coefficient] = GetData<Reference>();
 
-                switch (Origin)
+                switch (Scope)
                 {
-                case StatOrigin::Source:
+                case StatScope::Source:
                     return HalfToFloat(Base) + Source.GetStat(Handle) * HalfToFloat(Coefficient);
-                case StatOrigin::Target:
+                case StatScope::Target:
                     return HalfToFloat(Base) + Target.GetStat(Handle) * HalfToFloat(Coefficient);
                 }
             }
@@ -185,9 +182,9 @@ namespace Gameplay
             return 0.0f;
         }
 
-        /// \brief Iterates over all dependencies referenced by this proxy.
+        /// \brief Traverses all dependencies in the stat input, invoking the provided action for each.
         ///
-        /// \param Action The action to apply to each dependency.
+        /// \param Action The action to invoke for each dependency.
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
@@ -208,12 +205,12 @@ namespace Gameplay
             }
         }
 
-        /// \brief Iterates over all dependencies referenced by this proxy.
+        /// \brief Traverses dependencies in the stat input filtered by scope, invoking the provided action for each.
         ///
-        /// \param Action The action to apply to each dependency.
-        /// \param Origin The origin context of dependencies to consider.
+        /// \param Action The action to invoke for each dependency.
+        /// \param Scope  The scope to filter dependencies by.
         template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
         {
             switch (GetKind())
             {
@@ -221,7 +218,7 @@ namespace Gameplay
                 {
                     ConstRef<Reference> Data = GetData<Reference>();
 
-                    if (Data.Origin == Origin)
+                    if (Data.Scope == Scope)
                     {
                         Action(Data.Handle);
                     }
@@ -229,7 +226,7 @@ namespace Gameplay
                 }
                 case Kind::Formula:
                 {
-                    GetData<Ptr<StatFormula>>()->Traverse(Action, Origin);
+                    GetData<Ptr<StatFormula>>()->Traverse(Action, Scope);
                     break;
                 }
                 default:
@@ -237,7 +234,7 @@ namespace Gameplay
             }
         }
 
-        /// \brief Loads the proxy data from a TOML array.
+        /// \brief Loads the stat input from a TOML array.
         ///
         /// \param Array The TOML array to load from.
         ZYPHRYON_INLINE void Load(TOMLArray Array)
@@ -258,7 +255,7 @@ namespace Gameplay
             }
         }
 
-        /// \brief Saves the proxy data to a TOML array.
+        /// \brief Saves the stat input to a TOML array.
         ///
         /// \param Array The TOML array to save to.
         ZYPHRYON_INLINE void Save(TOMLArray Array) const
@@ -288,9 +285,9 @@ namespace Gameplay
         /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
         /// \return A new stat input representing a source stat reference.
-        ZYPHRYON_INLINE static StatInput CreateSourceReference(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        ZYPHRYON_INLINE static StatInput CreateSourceRef(Stat Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
         {
-            return StatInput(Handle, StatOrigin::Source, Base, Coefficient);
+            return StatInput(Handle, StatScope::Source, Base, Coefficient);
         }
 
         /// \brief Creates a target stat reference input.
@@ -299,9 +296,9 @@ namespace Gameplay
         /// \param Base        The base value to apply when referencing the stat.
         /// \param Coefficient The coefficient to apply when referencing the stat.
         /// \return A new stat input representing a target stat reference.
-        ZYPHRYON_INLINE static StatInput CreateTargetReference(StatHandle Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
+        ZYPHRYON_INLINE static StatInput CreateTargetRef(Stat Handle, Real32 Base = 0.0f, Real32 Coefficient = 1.0f)
         {
-            return StatInput(Handle, StatOrigin::Target, Base, Coefficient);
+            return StatInput(Handle, StatScope::Target, Base, Coefficient);
         }
 
     private:

@@ -12,9 +12,10 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "EffectHandle.hpp"
-#include "EffectModifier.hpp"
-#include "EffectPolicies.hpp"
+#include "Gameplay/Effect/Effect.hpp"
+#include "Gameplay/Effect/EffectModifier.hpp"
+#include "Gameplay/Effect/EffectPolicies.hpp"
+#include "Gameplay/Token/TokenFamily.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -66,7 +67,7 @@ namespace Gameplay
         /// \brief Sets the unique handle for this effect archetype.
         ///
         /// \param Handle The unique effect handle to assign.
-        ZYPHRYON_INLINE void SetHandle(EffectHandle Handle)
+        ZYPHRYON_INLINE void SetHandle(Effect Handle)
         {
             mHandle = Handle;
         }
@@ -74,9 +75,25 @@ namespace Gameplay
         /// \brief Retrieves the unique handle of this effect archetype.
         ///
         /// \return The effect handle.
-        ZYPHRYON_INLINE EffectHandle GetHandle() const
+        ZYPHRYON_INLINE Effect GetHandle() const
         {
             return mHandle;
+        }
+
+        /// \brief Sets the category of the effect archetype.
+        ///
+        /// \param Category The category to assign.
+        ZYPHRYON_INLINE void SetCategory(AnyRef<TokenFamily> Category)
+        {
+            mCategory = Category;
+        }
+
+        /// \brief Retrieves the category of the effect archetype.
+        ///
+        /// \return The effect category.
+        ZYPHRYON_INLINE ConstRef<TokenFamily> GetCategory() const
+        {
+            return mCategory;
         }
 
         /// \brief Sets the name of the effect archetype.
@@ -259,16 +276,20 @@ namespace Gameplay
         /// \brief Iterates over all dependencies referenced by this archetype.
         ///
         /// \param Action The action to apply to each dependency.
-        /// \param Origin The origin context of dependencies to consider.
+        /// \param Scope  The scope context of dependencies to consider.
         template<typename Function>
-        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatOrigin Origin) const
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
         {
-            mDuration.Traverse(Action, Origin);
-            mPeriod.Traverse(Action, Origin);
+            // Traverse duration dependencies.
+            mDuration.Traverse(Action, Scope);
 
+            // Traverse period dependencies.
+            mPeriod.Traverse(Action, Scope);
+
+            // Traverse bonuses dependencies.
             for (ConstRef<EffectModifier> Modifier : mBonuses)
             {
-                Modifier.Traverse(Action, Origin);
+                Modifier.Traverse(Action, Scope);
             }
         }
 
@@ -295,15 +316,15 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        EffectHandle                        mHandle;
+        Effect                              mHandle;
         EffectPolicy                        mPolicies;
+        TokenFamily                         mCategory;
         Str8                                mName;
         StatInput                           mDuration;
         StatInput                           mPeriod;
         UInt16                              mLimit;
         Vector<EffectModifier, kMaxBonuses> mBonuses;
 
-        // TODO: Organizational (Category:Marker, SubCategory:Packed)?
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags) BlockedMarkers, AllowedMarkers, RequiredMarkers
     };
 }

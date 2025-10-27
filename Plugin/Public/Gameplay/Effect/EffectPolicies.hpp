@@ -160,15 +160,15 @@ namespace Gameplay
         /// \param Section The TOML section containing effect policy data.
         ZYPHRYON_INLINE void Load(TOMLSection Section)
         {
-            const EffectApplication Application = Enum::Cast(Section.GetString("Application"), EffectApplication::Temporary);
+            const EffectApplication Application = Section.GetEnum("Application", EffectApplication::Temporary);
             SetApplication(Application);
 
             if (Application == EffectApplication::Temporary)
             {
-                SetExpiration(Enum::Cast(Section.GetString("Expiration"), EffectExpiration::Single));
-                SetRefresh(Enum::Cast(Section.GetString("Refresh"), EffectRefresh::Replace));
-                SetResolution(Enum::Cast(Section.GetString("Resolution"), EffectResolution::Additive));
-                SetStack(Enum::Cast(Section.GetString("Stack"), EffectStack::Linear));
+                SetExpiration(Section.GetEnum("Expiration", EffectExpiration::Single));
+                SetRefresh(Section.GetEnum("Refresh", EffectRefresh::Replace));
+                SetResolution(Section.GetEnum("Resolution", EffectResolution::Additive));
+                SetStack(Section.GetEnum("Stack", EffectStack::Linear));
             }
         }
 
@@ -178,14 +178,14 @@ namespace Gameplay
         ZYPHRYON_INLINE void Save(TOMLSection Section) const
         {
             const EffectApplication Application = GetApplication();
-            Section.SetString("Application", Enum::GetName(Application));
+            Section.SetEnum("Application", Application);
 
             if (Application == EffectApplication::Temporary)
             {
-                Section.SetString("Expiration", Enum::GetName(GetExpiration()));
-                Section.SetString("Refresh", Enum::GetName(GetRefresh()));
-                Section.SetString("Resolution", Enum::GetName(GetResolution()));
-                Section.SetString("Stack", Enum::GetName(GetStack()));
+                Section.SetEnum("Expiration", GetExpiration());
+                Section.SetEnum("Refresh", GetRefresh());
+                Section.SetEnum("Resolution", GetResolution());
+                Section.SetEnum("Stack", GetStack());
             }
         }
 

@@ -32,20 +32,20 @@ namespace Gameplay
         struct Input
         {
             /// \brief The stat handle representing the target of the ability cost.
-            StatHandle Target;
+            Stat      Target;
 
             /// \brief The input value or formula used to calculate the cost.
-            StatInput  Cost;
+            StatInput Cost;
 
             /// \brief Default constructor.
             ZYPHRYON_INLINE Input() = default;
 
             /// \brief Constructs an input with the specified target handle and cost input.
             ///
-            /// \param Handle The stat handle representing the target of the ability cost.
+            /// \param Target The stat handle representing the target of the ability cost.
             /// \param Cost   The input value or formula used to calculate the cost.
-            ZYPHRYON_INLINE Input(StatHandle Handle, AnyRef<StatInput> Cost)
-                : Target { Handle },
+            ZYPHRYON_INLINE Input(Stat Target, AnyRef<StatInput> Cost)
+                : Target { Target },
                   Cost   { Move(Cost) }
             {
             }

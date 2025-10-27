@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "AbilityArchetype.hpp"
+#include <Zyphryon.Base/Base.hpp>
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -20,80 +20,79 @@
 
 namespace Gameplay
 {
-    /// \brief Represents an instance of an ability.
+    /// \brief A lightweight handle representing a unique ability identifier.
     class Ability final
     {
     public:
 
-        /// \brief Constructs an ability instance with default values.
-        ZYPHRYON_INLINE Ability()
-            : mArchetype { nullptr },
-              mTime      { 0.0 }
+        /// \brief Default constructor, initializes the ability handle with ID 0.
+        ZYPHRYON_INLINE constexpr Ability()
+            : mID { 0 }
         {
         }
 
-        /// \brief Constructs an ability instance based on the provided archetype.
+        /// \brief Construct a ability handle with given ID.
         ///
-        /// \param Archetype The archetype defining the ability's properties.
-        ZYPHRYON_INLINE explicit Ability(ConstRef<AbilityArchetype> Archetype)
-            : mArchetype { & Archetype },
-              mTime      { 0.0 }
+        /// \param ID The unique identifier for the ability.
+        template<typename Type>
+        ZYPHRYON_INLINE constexpr Ability(Type ID)
+            : mID { static_cast<UInt16>(ID) }
         {
         }
 
-        /// \brief Retrieves the archetype associated with this ability instance.
+        /// \brief Check if the ability handle is valid (non-zero ID).
         ///
-        /// \return The ability archetype.
-        ZYPHRYON_INLINE ConstPtr<AbilityArchetype> GetArchetype() const
+        /// \return `true` if the ability handle is valid, `false` otherwise.
+        ZYPHRYON_INLINE constexpr Bool IsValid() const
         {
-            return mArchetype;
+            return mID != 0;
         }
 
-        /// \brief Sets the elapsed time since the ability was activated.
+        /// \brief Retrieve the unique identifier of the ability handle.
         ///
-        /// \param Time The elapsed time to set.
-        ZYPHRYON_INLINE void SetTime(Real64 Time)
+        /// \return The unique ability ID.
+        ZYPHRYON_INLINE constexpr UInt16 GetID() const
         {
-            mTime = Time;
+            return mID;
         }
 
-        /// \brief Retrieves the elapsed time since the ability was activated.
+        /// \brief Reset the ability handle to an invalid abilitye.
+        ZYPHRYON_INLINE constexpr void Reset()
+        {
+            mID = 0;
+        }
+
+        /// \brief Check equality between two ability handles.
         ///
-        /// \return The elapsed time.
-        ZYPHRYON_INLINE Real64 GetTime() const
+        /// \param Other The other ability handle to compare with.
+        /// \return `true` if the ability handles are equal, `false` otherwise.
+        ZYPHRYON_INLINE constexpr Bool operator==(Ability Other) const
         {
-            return mTime;
+            return mID == Other.mID;
         }
 
-        /// \brief Checks equality between this ability instance and another ability handle.
-        ZYPHRYON_INLINE Bool operator==(AbilityHandle Handle) const
-        {
-            return mArchetype->GetHandle() == Handle;
-        }
-
-        /// \brief Checks equality between this ability instance and another ability archetype.
-        ZYPHRYON_INLINE Bool operator==(ConstRef<AbilityArchetype> Archetype) const
-        {
-            return mArchetype->GetHandle() == Archetype.GetHandle();
-        }
-
-        /// \brief Generates a hash value for the ability instance based on its archetype.
+        /// \brief Check inequality between two ability handles.
         ///
-        /// \return A hash value uniquely representing the ability ability.
-        ZYPHRYON_INLINE UInt64 Hash() const
+        /// \param Other The other ability handle to compare with.
+        /// \return `true` if the ability handles are not equal, `false` otherwise
+        ZYPHRYON_INLINE constexpr Bool operator!=(Ability Other) const
         {
-            return mArchetype->Hash();
+            return mID != Other.mID;
         }
 
-        // TODO: Activation / Resource Management / Etc
+        /// \brief Generate a hash value for the ability handle.
+        ///
+        /// \return A hash value uniquely representing the ability handle.
+        ZYPHRYON_INLINE constexpr UInt64 Hash() const
+        {
+            return mID;
+        }
 
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        ConstPtr<AbilityArchetype> mArchetype;
-        Real64                     mTime;
-        // TODO: Charges?
+        UInt16 mID;
     };
 }

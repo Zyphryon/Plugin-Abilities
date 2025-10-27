@@ -10,8 +10,8 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Arsenal.hpp"
-#include "Coordinator.hpp"
+#include "Gameplay/Arsenal/Arsenal.hpp"
+#include "Gameplay/Arsenal/Coordinator.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -25,13 +25,13 @@ namespace Gameplay
     void Arsenal::Tick(ConstRef<Time> Time)
     {
         // Tick timed effects.
-        mEffects.Tick(Time, [&](Ref<Effect> Effect)
+        mEffects.Tick(Time, [&](Ref<EffectData> Effect)
         {
             return OnTickEffect(Time, Effect);
         });
 
         // Poll stats for changes.
-        mStats.Poll(* this, [this](StatHandle Handle, Real32 Previous, Real32 Current)
+        mStats.Poll(* this, [this](Stat Handle, Real32 Previous, Real32 Current)
         {
             Coordinator::Instance().Publish(Handle, mActor, Previous, Current);
         });
@@ -46,33 +46,13 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::ApplyModifier(StatHandle Archetype, StatOperator Operator, Real32 Magnitude)
+    void Arsenal::ApplyModifier(Stat Archetype, StatModifier Operator, Real32 Magnitude)
     {
         // Ensure the stat is valid.
-        Ref<Stat> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
+        Ref<StatData> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
 
         // Notify listeners of the impending stat change.
-        StatRepository::Instance().NotifyDependency(Archetype, [this](StatHandle Dependency)
-        {
-            const ConstPtr<Gameplay::Stat> Child = mStats.TryGet(Dependency);
-
-            Real32 Value;
-
-            if (Child)
-            {
-                Child->SetDirty();
-
-                Value = Child->Calculate(* this);
-            }
-            else
-            {
-                ConstRef<StatArchetype> Archetype = StatRepository::Instance().Get(Dependency);
-
-                Value = Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
-            }
-
-            mStats.Publish(Dependency, Value);
-        });
+        Notify(Archetype);
 
         // Notify listeners of the impending stat change.
         mStats.Publish(Archetype, Stat.GetEffective());
@@ -84,33 +64,13 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::RevertModifier(StatHandle Archetype, StatOperator Operator, Real32 Magnitude)
+    void Arsenal::RevertModifier(Stat Archetype, StatModifier Operator, Real32 Magnitude)
     {
         // Ensure the stat is valid.
-        Ref<Stat> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
+        Ref<StatData> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
 
         // Notify listeners of the impending stat change.
-        StatRepository::Instance().NotifyDependency(Archetype, [this](StatHandle Dependency)
-        {
-            const ConstPtr<Gameplay::Stat> Child = mStats.TryGet(Dependency);
-
-            Real32 Value;
-
-            if (Child)
-            {
-                Child->SetDirty();
-
-                Value = Child->Calculate(* this);
-            }
-            else
-            {
-                ConstRef<StatArchetype> Archetype = StatRepository::Instance().Get(Dependency);
-
-                Value = Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
-            }
-
-            mStats.Publish(Dependency, Value);
-        });
+        Notify(Archetype);
 
         // Notify listeners of the impending stat change.
         mStats.Publish(Archetype, Stat.GetEffective());
@@ -122,12 +82,12 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    EffectHandle Arsenal::ApplyEffect(Scene::Entity Instigator, EffectHandle Archetype, Real32 Intensity, UInt16 Stack, Real64 Timestamp)
+    Effect Arsenal::ApplyEffect(Scene::Entity Instigator, ConstRef<EffectSpec> Specification, Real64 Timestamp)
     {
         Ref<Arsenal>              Source = GetSource(Instigator);
-        ConstRef<EffectArchetype> Effect = EffectRepository::Instance().Get(Archetype);
+        ConstRef<EffectArchetype> Effect = EffectRepository::Instance().Get(Specification.GetTarget());
 
-        EffectHandle Result;
+        Gameplay::Effect Result;
 
         switch (Effect.GetApplication())
         {
@@ -135,7 +95,7 @@ namespace Gameplay
         {
             for (ConstRef<EffectModifier> Bonus : Effect.GetBonuses())
             {
-                ApplyModifier(Bonus.GetTarget(), Bonus.GetOperator(), Bonus.GetMagnitude().Resolve(Source, * this));
+                ApplyModifier(Bonus.GetTarget(), Bonus.GetModifier(), Bonus.GetMagnitude().Resolve(Source, * this));
             }
             break;
         }
@@ -143,9 +103,9 @@ namespace Gameplay
         case EffectApplication::Permanent:
         {
             // Create a new effect instance.
-            Ref<Gameplay::Effect> Instance = mEffects.Create(Effect);
-            Instance.SetStack(Stack);
-            Instance.SetIntensity(Intensity);
+            Ref<EffectData> Instance = mEffects.Create(Effect);
+            Instance.SetStack(Specification.GetStack().Resolve(* this));
+            Instance.SetIntensity(Specification.GetIntensity().Resolve(* this));
             Instance.SetInstigator(Instigator.GetID());
 
             if (Effect.GetApplication() == EffectApplication::Temporary)
@@ -172,7 +132,7 @@ namespace Gameplay
             // Handle stacking effects.
             if (Effect.CanStack())
             {
-                const auto OnStackEffect = [&](Ref<Gameplay::Effect> Inplace, EffectSet::Event Event)
+                const auto OnStackEffect = [&](Ref<EffectData> Inplace, EffectSet::Event Event)
                 {
                     Result = Inplace.GetHandle();
 
@@ -234,9 +194,9 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::RevertEffect(EffectHandle Handle)
+    void Arsenal::RevertEffect(Effect Handle)
     {
-        ConstRef<Effect> Effect = mEffects.GetInstance(Handle);
+        ConstRef<EffectData> Effect = mEffects.GetInstance(Handle);
 
         // Stop the effect from ticking if it can expire.
         if (Effect.CanExpire())
@@ -260,7 +220,7 @@ namespace Gameplay
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::ApplyEffectModifiers(Ref<Effect> Effect)
+    void Arsenal::ApplyEffectModifiers(Ref<EffectData> Effect)
     {
         ConstRef<Arsenal> Instigator = GetSource(Effect.GetInstigator());
 
@@ -275,43 +235,43 @@ namespace Gameplay
             Effect.SetSnapshot(Index, Value);
 
             // Apply the modifier to the arsenal.
-            ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Value);
+            ApplyModifier(Modifier.GetTarget(), Modifier.GetModifier(), Value);
         }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::ReloadEffectModifier(Ref<Effect> Effect, UInt16 Slot, Real32 Value)
+    void Arsenal::ReloadEffectModifier(Ref<EffectData> Effect, UInt16 Slot, Real32 Value)
     {
         // Revert the previous modifier value.
         ConstRef<EffectModifier> Modifier = Effect.GetArchetype()->GetBonus(Slot);
-        RevertModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effect.GetSnapshot(Slot));
+        RevertModifier(Modifier.GetTarget(), Modifier.GetModifier(), Effect.GetSnapshot(Slot));
 
         // Calculate the new modifier value.
         const Real32 Effective = Value * Effect.GetEffectiveIntensity();
         Effect.SetSnapshot(Slot, Effective);
 
         // Apply the updated modifier value.
-        ApplyModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effective);
+        ApplyModifier(Modifier.GetTarget(), Modifier.GetModifier(), Effective);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    void Arsenal::RevertEffectModifiers(ConstRef<Effect> Effect)
+    void Arsenal::RevertEffectModifiers(ConstRef<EffectData> Effect)
     {
         // Iterate over each modifier in the effect and revert it.
         for (const auto [Index, Modifier] : std::views::enumerate(Effect.GetArchetype()->GetBonuses()))
         {
-            RevertModifier(Modifier.GetTarget(), Modifier.GetOperator(), Effect.GetSnapshot(Index));
+            RevertModifier(Modifier.GetTarget(), Modifier.GetModifier(), Effect.GetSnapshot(Index));
         }
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-    Bool Arsenal::OnTickEffect(ConstRef<Time> Time, Ref<Effect> Effect)
+    Bool Arsenal::OnTickEffect(ConstRef<Time> Time, Ref<EffectData> Effect)
     {
         ConstPtr<EffectArchetype> Archetype = Effect.GetArchetype();
 

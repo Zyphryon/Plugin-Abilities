@@ -12,11 +12,11 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "AbilityCooldown.hpp"
-#include "AbilityCost.hpp"
-#include "AbilityHandle.hpp"
-#include "AbilityPolicies.hpp"
-#include "AbilityTarget.hpp"
+#include "Gameplay/Ability/Ability.hpp"
+#include "Gameplay/Ability/AbilityCooldown.hpp"
+#include "Gameplay/Ability/AbilityCost.hpp"
+#include "Gameplay/Ability/AbilityPolicies.hpp"
+#include "Gameplay/Ability/AbilityTarget.hpp"
 #include "Gameplay/Effect/EffectSpec.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -36,7 +36,10 @@ namespace Gameplay
     public:
 
         /// \brief Default constructor, initializes members to default values.
-        ZYPHRYON_INLINE AbilityArchetype() = default;
+        ZYPHRYON_INLINE AbilityArchetype()
+            : mKind { AbilityKind::Active }
+        {
+        }
 
         /// \brief Constructs an ability archetype by loading data from a TOML section.
         ///
@@ -63,7 +66,7 @@ namespace Gameplay
         /// \brief Sets the unique handle for this ability archetype.
         ///
         /// \param Handle The unique ability handle to assign.
-        ZYPHRYON_INLINE void SetHandle(AbilityHandle Handle)
+        ZYPHRYON_INLINE void SetHandle(Ability Handle)
         {
             mHandle = Handle;
         }
@@ -71,7 +74,7 @@ namespace Gameplay
         /// \brief Retrieves the unique handle of this ability archetype.
         ///
         /// \return The ability handle.
-        ZYPHRYON_INLINE AbilityHandle GetHandle() const
+        ZYPHRYON_INLINE Ability GetHandle() const
         {
             return mHandle;
         }
@@ -90,6 +93,22 @@ namespace Gameplay
         ZYPHRYON_INLINE AbilityKind GetKind() const
         {
             return mKind;
+        }
+
+        /// \brief Sets the category of the ability archetype.
+        ///
+        /// \param Category The category to assign.
+        ZYPHRYON_INLINE void SetCategory(AnyRef<TokenFamily> Category)
+        {
+            mCategory = Category;
+        }
+
+        /// \brief Retrieves the category of the ability archetype.
+        ///
+        /// \return The effect category.
+        ZYPHRYON_INLINE ConstRef<TokenFamily> GetCategory() const
+        {
+            return mCategory;
         }
 
         /// \brief Sets the name of the ability archetype.
@@ -214,15 +233,15 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        AbilityHandle                   mHandle;
+        Ability                         mHandle;
         AbilityKind                     mKind;
+        TokenFamily                     mCategory;
         Str8                            mName;
         AbilityCooldown                 mCooldown;
         AbilityCost                     mCost;
         AbilityTarget                   mTarget;
         Vector<EffectSpec, kMaxEffects> mEffects;
 
-        // TODO: Organizational (Category:Marker, SubCategory:Packed)?
         // TODO: Requirements?
         // TODO: Cast Time?
         // TODO: Range?
