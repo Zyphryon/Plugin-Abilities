@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -37,12 +37,12 @@ namespace Gameplay
 
     public:
 
-        /// \brief Advances the state of all active effects by the given time interval.
+        /// \brief Invoke the provided action for each expired effect instance.
         ///
         /// \param Time   The time interval to advance.
         /// \param Action The action to apply to each effect during the tick.
         template<typename Function>
-        ZYPHRYON_INLINE void Tick(ConstRef<Time> Time, AnyRef<Function> Action)
+        ZYPHRYON_INLINE void Poll(ConstRef<Time> Time, AnyRef<Function> Action)
         {
             Vector<Ptr<EffectData>, 6> Threshold;
 
@@ -126,47 +126,49 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the effect instance to fetch.
         /// \return The effect instance associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<EffectData> GetInstance(Effect Handle) const
+        ZYPHRYON_INLINE ConstRef<EffectData> GetByHandle(Effect Handle) const
         {
             return mRegistry[Handle.GetID()];
         }
 
-        /// \brief Activates a timed effect instance in the set.
+        /// \brief Activates a specific effect instance within the set.
         ///
         /// \param Instance The effect instance to activate.
-        ZYPHRYON_INLINE void Activate(Ref<EffectData> Instance)
-        {
-            mActives.insert(FindBestPosition(Instance), Instance.GetHandle());
-        }
-
-        /// \brief Activates or updates a timed effect instance in the set.
-        ///
-        /// \param Instance The effect instance to activate.
-        /// \param Action   The action to apply when the effect is inserted or updated.
+        /// \param Action   A function to apply to the effect instance upon activation or update.
         template<typename Function>
         ZYPHRYON_INLINE void Activate(Ref<EffectData> Instance, AnyRef<Function> Action)
         {
-            if (const auto Iterator = FindByArchetype(Instance.GetArchetype()->GetHandle()); Iterator != mActives.end())
+            const ConstPtr<EffectArchetype> Archetype = Instance.GetArchetype();
+
+            // Check if the effect can stack and if an instance already exists.
+            if (Archetype->CanStack())
             {
-                Ref<EffectData> EffectData = mRegistry[Iterator->GetID()];
+                const auto Iterator = FindByArchetype(Instance.GetArchetype()->GetHandle());
 
-                // EffectData is already active, update its properties.
-                Action(EffectData, Event::Update);
-
-                // Reposition the effect in the active list if its remaining time has changed.
-                if (const auto Position = FindBestPosition(EffectData); Position != Iterator)
+                if (Iterator != mActives.end())
                 {
-                    std::rotate(Min(Position, Iterator), Iterator, Max(Position, Iterator));
+                    Ref<EffectData> Inplace = mRegistry[Iterator->GetID()];
+
+                    // EffectData is already active, update its properties.
+                    Action(Inplace, Event::Update);
+
+                    // Reposition the effect in the active list if its remaining time has changed.
+                    if (const auto Position = FindBestPosition(Inplace); Position != Iterator)
+                    {
+                        std::rotate(Min(Position, Iterator), Iterator, Max(Position, Iterator));
+                    }
+
+                    // No need to insert a new instance.
+                    Delete(Instance);
+                    return;
                 }
             }
-            else
-            {
-                // Insert the new effect instance into the active list, maintaining sorted order by remaining time.
-                mActives.insert(FindBestPosition(Instance), Instance.GetHandle());
 
-                // Notify that a new non-stackable effect has been added.
-                Action(Instance, Event::Insert);
-            }
+            // Insert the new effect instance into the active list, maintaining sorted order by remaining time.
+            mActives.insert(FindBestPosition(Instance), Instance.GetHandle());
+
+            // Notify that a new non-stackable effect has been added.
+            Action(Instance, Event::Insert);
         }
 
         /// \brief Deactivates a specific effect instance from the set.

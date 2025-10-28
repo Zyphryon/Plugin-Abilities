@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -30,10 +30,10 @@ namespace Gameplay
     public:
 
         /// \brief Multicast delegate type for stat modification events.
-        using OnModifyStatMulticast   = MulticastDelegate<void(Scene::Entity, Real32, Real32), DelegateInlineSize::Small>;
+        using OnModifyStatMulticast  = MulticastDelegate<void(Scene::Entity, Real32, Real32), DelegateInlineSize::Small>;
 
         /// \brief Delegate type for stat modification events.
-        using OnModifyStat            = OnModifyStatMulticast::Type;
+        using OnModifyStat           = OnModifyStatMulticast::Type;
 
         /// \brief Delegate type for token modification events.
         using OnModifyTokenMulticast = MulticastDelegate<void(Scene::Entity, UInt32, UInt32), DelegateInlineSize::Small>;

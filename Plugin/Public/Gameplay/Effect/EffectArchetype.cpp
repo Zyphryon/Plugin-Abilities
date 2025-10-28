@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -27,13 +27,9 @@ namespace Gameplay
         mHandle   = Section.GetInteger("ID");
         mPolicies.Load(Section.GetSection("Policies"));
         mCategory.Load(Section.GetArray("Category"));
-
-        if (GetApplication() == EffectApplication::Temporary)
-        {
-            mDuration.Load(Section.GetArray("Duration"));
-            mPeriod.Load(Section.GetArray("Period"));
-            mLimit = Section.GetInteger("Limit");
-        }
+        mDuration.Load(Section.GetArray("Duration"));
+        mPeriod.Load(Section.GetArray("Period"));
+        mLimit = Section.GetInteger("Limit");
 
         if (const TOMLArray Bonuses = Section.GetArray("Bonuses"); !Bonuses.IsEmpty())
         {
@@ -55,13 +51,9 @@ namespace Gameplay
         Section.SetInteger("ID", mHandle.GetID());
         mPolicies.Save(Section.SetSection("Policies"));
         mCategory.Save(Section.SetArray("Category"));
-
-        if (GetApplication() == EffectApplication::Temporary)
-        {
-            mDuration.Save(Section.SetArray("Length"));
-            mPeriod.Save(Section.SetArray("Period"));
-            Section.SetInteger("Limit", mLimit);
-        }
+        mDuration.Save(Section.SetArray("Length"));
+        mPeriod.Save(Section.SetArray("Period"));
+        Section.SetInteger("Limit", mLimit);
 
         for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<EffectModifier> Modifier: mBonuses)
         {

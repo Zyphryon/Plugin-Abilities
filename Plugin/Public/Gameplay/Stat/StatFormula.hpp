@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -96,6 +96,7 @@ namespace Gameplay
                 {
                     Action(Dependency);
                 }
+
                 for (const Token Dependency : mTokens)
                 {
                     Action(Dependency);
@@ -106,7 +107,7 @@ namespace Gameplay
             ///
             /// \param Action The action to invoke for each dependency.
             /// \param Scope  The scope to filter dependencies by.
-            template<typename Type, typename Function>
+            template<typename Function>
             ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
             {
                 for (UInt32 Index = 0; Index < mStats.size(); ++Index)
@@ -169,6 +170,7 @@ namespace Gameplay
                 {
                     Stats[Index] = Source.GetStat(Dependencies.mStats[Index]);
                 }
+
                 for (UInt32 Index = 0; Index < Dependencies.mTokens.size(); ++Index)
                 {
                     Tokens[Index] = Source.GetToken(Dependencies.mTokens[Index]);
@@ -340,7 +342,7 @@ namespace Gameplay
         ///
         /// \param Action The action to invoke for each dependency.
         /// \param Scope  The scope to filter dependencies by.
-        template<typename Type, typename Function>
+        template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action, StatScope Scope) const
         {
             mDependencies.Traverse(Action, Scope);

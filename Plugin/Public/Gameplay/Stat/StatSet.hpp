@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -13,6 +13,7 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 #include "Gameplay/Stat/StatData.hpp"
+#include "Gameplay/Stat/StatRepository.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -29,12 +30,27 @@ namespace Gameplay
         ///
         /// \param Source The context used to evaluate stat outcomes.
         /// \param Action The action to invoke for each stat change event.
-        template<typename Function>
-        ZYPHRYON_INLINE void Poll(AnyRef<Function> Action)
+        template<typename Context, typename Function>
+        ZYPHRYON_INLINE void Poll(ConstRef<Context> Source, AnyRef<Function> Action)
         {
             for (auto [Handle, Value] : mNotifications)
             {
-                Action(Handle, Value);
+                Real32 Current;
+
+                if (const Ptr<StatData> Instance = const_cast<Ptr<StatData>>(TryGet(Handle)); Instance)
+                {
+                    // Resolve the stat instance for the current context.
+                    Current = Instance->Resolve(Source);
+                }
+                else
+                {
+                    Current = StatRepository::Instance().Get(Handle).Calculate(Source, 0.0f, 0.0f, 1.0f);
+                }
+
+                if (Current != Value)
+                {
+                    Action(Handle, Value, Current);
+                }
             }
             mNotifications.clear();
         }
@@ -66,7 +82,14 @@ namespace Gameplay
 
             if (Inserted)
             {
-                Instance.Resolve(Source);
+                if (Archetype.GetKind() == StatKind::Attribute)
+                {
+                    Instance.Resolve(Source);
+                }
+                else
+                {
+                    Instance.SetEffective(Source, Archetype.GetBase().Resolve(Source));
+                }
             }
             return Instance;
         }
@@ -85,6 +108,18 @@ namespace Gameplay
         ZYPHRYON_INLINE Bool Publish(Stat Handle, Real32 Value)
         {
             return mNotifications.emplace(Handle, Value).second;
+        }
+
+        /// \brief Iterates over all stat instances in the set.
+        ///
+        /// \param Action The action to apply to each stat instance.
+        template<typename Function>
+        ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
+        {
+            for (ConstRef<StatData> Instance : mRegistry)
+            {
+                Action(Instance);
+            }
         }
 
     private:

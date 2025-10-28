@@ -1,5 +1,5 @@
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Copyright (C) 2021-2025 by Agustin L. Alvarez. All rights reserved.
+// Copyright (C) 2025 by Agustin L. Alvarez. All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 //
@@ -38,17 +38,17 @@ namespace Gameplay
         /// \brief Default constructor, initializes an empty arsenal.
         ZYPHRYON_INLINE Arsenal() = default;
 
-        /// \brief Constructs an arsenal for a specific entity.
+        /// \brief Constructs an arsenal for the specified actor entity.
         ///
-        /// \param Actor The entity associated with the arsenal.
+        /// \param Actor The entity that owns this arsenal.
         ZYPHRYON_INLINE Arsenal(Scene::Entity Actor)
             : mActor { Actor }
         {
         }
 
-        /// \brief Advances the state of the arsenal by the given time interval.
+        /// \brief Advances the state of the arsenal based on the elapsed time.
         ///
-        /// \param Time The time interval to advance.
+        /// \param Time The current time reference.
         void Tick(ConstRef<Time> Time);
 
         /// \brief Grants an ability to the arsenal.
@@ -68,10 +68,10 @@ namespace Gameplay
             mAbilities.Remove(Handle);
         }
 
-        /// \brief Inserts a token into the arsenal with a specified count.
+        /// \brief Inserts a token into the arsenal.
         ///
         /// \param Name  The name of the token to insert.
-        /// \param Count The count of the token to insert.
+        /// \param Count The number of tokens to insert (default is 1).
         ZYPHRYON_INLINE void InsertToken(ConstStr8 Name, UInt32 Count = 1)
         {
             const Token Token = TokenRepository::Instance().GetByName(Name);
@@ -80,21 +80,21 @@ namespace Gameplay
             InsertToken(Token, Count);
         }
 
-        /// \brief Inserts a token into the arsenal with a specified count.
+        /// \brief Inserts a token into the arsenal.
         ///
         /// \param Handle The handle of the token to insert.
-        /// \param Count  The count of the token to insert.
+        /// \param Count  The number of tokens to insert (default is 1).
         ZYPHRYON_INLINE void InsertToken(Token Handle, UInt32 Count = 1)
         {
-            Notify(Handle);
+            NotifyDependencies(Handle);
 
             mTokens.Insert(Handle, Count);
         }
 
-        /// \brief Removes a token from the arsenal with a specified count.
+        /// \brief Removes a token from the arsenal.
         ///
         /// \param Name  The name of the token to remove.
-        /// \param Count The count of the token to remove.
+        /// \param Count The number of tokens to remove (default is 1).
         ZYPHRYON_INLINE void RemoveToken(ConstStr8 Name, UInt32 Count = 1)
         {
             const Token Token = TokenRepository::Instance().GetByName(Name);
@@ -103,40 +103,40 @@ namespace Gameplay
             RemoveToken(Token, Count);
         }
 
-        /// \brief Removes a token from the arsenal with a specified count.
+        /// \brief Removes a token from the arsenal.
         ///
         /// \param Handle The handle of the token to remove.
-        /// \param Count  The count of the token to remove.
+        /// \param Count  The number of tokens to remove (default is 1).
         ZYPHRYON_INLINE void RemoveToken(Token Handle, UInt32 Count = 1)
         {
-            Notify(Handle);
+            NotifyDependencies(Handle);
 
             mTokens.Remove(Handle, Count);
         }
 
-        /// \brief Applies a modifier to the arsenal with a specified magnitude.
+        /// \brief Applies an effect modifier to the arsenal.
         ///
-        /// \note Bypasses effect systems and directly modifies stats.
+        /// \note Bypasses effect stacking rules and directly modifies stats.
         ///
-        /// \param Archetype The archetype of the stat to modify.
-        /// \param Operator  The operator to apply.
-        /// \param Magnitude The magnitude to apply with the modifier.
-        void ApplyModifier(Stat Archetype, StatModifier Operator, Real32 Magnitude);
+        /// \param Handle    The stat to modify.
+        /// \param Modifier  The effect modifier to apply.
+        /// \param Magnitude The magnitude of the modifier to apply.
+        void ApplyModifier(Stat Handle, StatModifier Modifier, Real32 Magnitude);
 
-        /// \brief Reverts a modifier from the arsenal with a specified magnitude.
+        /// \brief Reverts an effect modifier from the arsenal.
         ///
-        /// \note Bypasses effect systems and directly modifies stats.
+        /// \note Bypasses effect stacking rules and directly modifies stats.
         ///
-        /// \param Archetype The archetype of the stat to modify.
-        /// \param Operator  The operator to revert.
-        /// \param Magnitude The magnitude to revert with the modifier.
-        void RevertModifier(Stat Archetype, StatModifier Operator, Real32 Magnitude);
+        /// \param Handle    The stat to modify.
+        /// \param Modifier  The effect modifier to apply.
+        /// \param Magnitude The magnitude of the modifier to revert.
+        void RevertModifier(Stat Handle, StatModifier Modifier, Real32 Magnitude);
 
-        /// \brief Applies an effect to the arsenal using the current entity as the instigator.
+        /// \brief Applies an effect to the arsenal.
         ///
         /// \param Specification The specification of the effect to apply.
-        /// \param Timestamp     The timestamp of the effect application.
-        /// \return A handle to the applied effect.
+        /// \param Timestamp     The current timestamp for effect application (default is current elapsed time).
+        /// \return The handle of the applied effect.
         ZYPHRYON_INLINE Effect ApplyEffect(ConstRef<EffectSpec> Specification, Real64 Timestamp = Time::Elapsed())
         {
             return ApplyEffect(Scene::Entity(), Specification, Timestamp);
@@ -144,31 +144,31 @@ namespace Gameplay
 
         /// \brief Applies an effect to the arsenal.
         ///
-        /// \param Instigator    The entity that is applying the effect.
+        /// \param Instigator   The entity that is instigating the effect.
         /// \param Specification The specification of the effect to apply.
-        /// \param Timestamp     The timestamp of the effect application.
-        /// \return A handle to the applied effect.
+        /// \param Timestamp     The current timestamp for effect application (default is current elapsed time).
+        /// \return The handle of the applied effect.
         Effect ApplyEffect(Scene::Entity Instigator, ConstRef<EffectSpec> Specification, Real64 Timestamp = Time::Elapsed());
 
-        /// \brief Reverts an effect applied to the arsenal.
+        /// \brief Reverts an effect from the arsenal.
         ///
         /// \param Handle The handle of the effect to revert.
         void RevertEffect(Effect Handle);
 
-        /// \brief Retrieves the effective value of a stat by its handle.
+        /// \brief Retrieves the effective value of a stat from the arsenal.
         ///
         /// \param Handle The handle of the stat to retrieve.
         /// \return The effective value of the stat.
         ZYPHRYON_INLINE Real32 GetStat(Stat Handle) const
         {
-            if (const ConstPtr<StatData> Stat = mStats.TryGet(Handle); Stat)
+            if (const ConstPtr<StatData> Stat = mStats.TryGet(Handle); Stat != nullptr)
             {
                 return Stat->GetEffective();
             }
             return StatRepository::Instance().Get(Handle).Calculate(* this, 0.0f, 0.0f, 1.0f);
         }
 
-        /// \brief Retrieves the count of a token by its name.
+        /// \brief Retrieves the count of a token in the arsenal.
         ///
         /// \param Name The name of the token to query.
         /// \return The count of the specified token.
@@ -180,34 +180,25 @@ namespace Gameplay
             return mTokens.Count(Handle);
         }
 
-        /// \brief Retrieves the count of a specific token in the arsenal.
+        /// \brief Retrieves the count of a token in the arsenal.
         ///
-        /// \param Handle The token handle to query.
+        /// \param Handle The handle of the token to query.
         /// \return The count of the specified token.
         ZYPHRYON_INLINE UInt32 GetToken(Token Handle) const
         {
             return mTokens.Count(Handle);
         }
 
-        /// \brief Checks if the arsenal has a specific token by its name.
+        /// \brief Iterates over all stats in the arsenal.
         ///
-        /// \param Name The name of the token to check.
-        /// \return `true` if the token exists in the arsenal, `false` otherwise.
-        ZYPHRYON_INLINE Bool HasToken(ConstStr8 Name) const
+        /// \param Action The action to apply to each stat.
+        template<typename Function>
+        ZYPHRYON_INLINE void ForEachStat(AnyRef<Function> Action)
         {
-            return GetToken(Name) > 0;
+            mStats.Traverse(Action);
         }
 
-        /// \brief Checks if the arsenal has a specific token.
-        ///
-        /// \param Handle The token handle to check.
-        /// \return `true` if the token exists in the arsenal, `false` otherwise.
-        ZYPHRYON_INLINE Bool HasToken(Token Handle) const
-        {
-            return GetToken(Handle) > 0;
-        }
-
-        /// \brief Traverses each ability in the ability set and applies the given action.
+        /// \brief Iterates over all abilities in the arsenal.
         ///
         /// \param Action The action to apply to each ability.
         template<typename Function>
@@ -216,7 +207,7 @@ namespace Gameplay
             mAbilities.Traverse(Action);
         }
 
-        /// \brief Traverses each token in the token set and applies the given action.
+        /// \brief Iterates over all tokens in the arsenal.
         ///
         /// \param Action The action to apply to each token.
         template<typename Function>
@@ -225,7 +216,7 @@ namespace Gameplay
             mTokens.Traverse(Action);
         }
 
-        /// \brief Traverses each effect in the effect set and applies the given action.
+        /// \brief Iterates over all effects in the arsenal.
         ///
         /// \param Action The action to apply to each effect.
         template<typename Function>
@@ -236,11 +227,11 @@ namespace Gameplay
 
     private:
 
-        /// \brief Notifies dependant stats of a change in a specific stat.
+        /// \brief Notifies dependent stats of a change in the specified stat or token.
         ///
-        /// \param Dependant The dependant stat or token to notify.
+        /// \param Dependant The stat or token that has changed.
         template<typename Type>
-        ZYPHRYON_INLINE void Notify(Type Dependant)
+        ZYPHRYON_INLINE void NotifyDependencies(Type Dependant)
         {
             StatRepository::Instance().NotifyDependency(Dependant, [this](Stat Dependency)
             {
@@ -257,29 +248,22 @@ namespace Gameplay
             return Actor.IsValid() ? Actor.Get<Arsenal>() : (* this);
         }
 
-        /// \brief Applies effect modifiers to the arsenal.
+        /// \brief Applies effect modifiers from an effect instance to the arsenal.
         ///
-        /// \param Effect The effect whose modifiers are to be applied.
-        void ApplyEffectModifiers(Ref<EffectData> Effect);
+        /// \param Instance The effect instance containing the modifiers to apply.
+        void ApplyEffectModifiers(Ref<EffectData> Instance);
 
-        /// \brief Reloads effect modifiers in the arsenal.
+        /// \brief Reverts effect modifiers from an effect instance in the arsenal.
         ///
-        /// \param Effect The effect whose modifiers are to be reloaded.
-        /// \param Slot   The slot index of the modifier to reload.
-        /// \param Value  The new value for the modifier.
-        void ReloadEffectModifier(Ref<EffectData> Effect, UInt16 Slot, Real32 Value);
+        /// \param Instance The effect instance containing the modifiers to revert.
+        void RevertEffectModifiers(ConstRef<EffectData> Instance);
 
-        /// \brief Reverts effect modifiers from the arsenal.
+        /// \brief Updates an active effect instance based on the current timestamp.
         ///
-        /// \param Effect The effect whose modifiers are to be reverted.
-        void RevertEffectModifiers(ConstRef<EffectData> Effect);
-
-        /// \brief Handles the ticking of a timed effect.
-        ///
-        /// \param Time   The time interval for the tick.
-        /// \param Effect The effect to tick.
-        /// \return `true` if the effect should stop ticking, `false` otherwise.
-        Bool OnTickEffect(ConstRef<Time> Time, Ref<EffectData> Effect);
+        /// \param Instance  The effect instance to update.
+        /// \param Timestamp The current timestamp for effect updating.
+        /// \return `true` if the effect is still active, `false` if it has expired.
+        Bool UpdateEffect(Ref<EffectData> Instance, Real64 Timestamp);
 
     private:
 
