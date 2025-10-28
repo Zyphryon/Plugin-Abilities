@@ -86,10 +86,8 @@ namespace Gameplay
         /// \param Count  The count of the token to insert.
         ZYPHRYON_INLINE void InsertToken(Token Handle, UInt32 Count = 1)
         {
-            // Notify listeners of the impending stat change.
             Notify(Handle);
 
-            // Insert the token into the arsenal.
             mTokens.Insert(Handle, Count);
         }
 
@@ -111,10 +109,8 @@ namespace Gameplay
         /// \param Count  The count of the token to remove.
         ZYPHRYON_INLINE void RemoveToken(Token Handle, UInt32 Count = 1)
         {
-            // Notify listeners of the impending stat change.
             Notify(Handle);
 
-            // Remove the token from the arsenal.
             mTokens.Remove(Handle, Count);
         }
 
@@ -165,13 +161,11 @@ namespace Gameplay
         /// \return The effective value of the stat.
         ZYPHRYON_INLINE Real32 GetStat(Stat Handle) const
         {
-            ConstRef<StatArchetype> Archetype = StatRepository::Instance().Get(Handle);
-
             if (const ConstPtr<StatData> Stat = mStats.TryGet(Handle); Stat)
             {
-                return Stat->Calculate(* this);
+                return Stat->GetEffective();
             }
-            return Archetype.Calculate(* this, 0.0f, 0.0f, 1.0f);
+            return StatRepository::Instance().Get(Handle).Calculate(* this, 0.0f, 0.0f, 1.0f);
         }
 
         /// \brief Retrieves the count of a token by its name.
@@ -248,25 +242,9 @@ namespace Gameplay
         template<typename Type>
         ZYPHRYON_INLINE void Notify(Type Dependant)
         {
-            // TODO: Improve this flow, avoiding repeated calculations when multiple stats depend on the same child.
             StatRepository::Instance().NotifyDependency(Dependant, [this](Stat Dependency)
             {
-                const ConstPtr<StatData> Child = mStats.TryGet(Dependency);
-
-                Real32 Value;
-
-                if (Child)
-                {
-                    Child->SetDirty();
-
-                    Value = Child->Calculate(* this);
-                }
-                else
-                {
-                    Value = StatRepository::Instance().Get(Dependency).Calculate(* this, 0.0f, 0.0f, 1.0f);
-                }
-
-                mStats.Publish(Dependency, Value);
+                return mStats.Publish(Dependency, GetStat(Dependency));
             });
         }
 

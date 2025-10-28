@@ -35,23 +35,6 @@ namespace Gameplay
               mMultiplier { 1.0f },
               mEffective  { 0.0f }
         {
-            SetDirty();
-        }
-
-        /// \brief Sets the dirty flag for the stat's effective value.
-        ///
-        /// \param Dirty If `true`, marks the stat as dirty; if `false`, marks it as clean.
-        ZYPHRYON_INLINE void SetDirty(Bool Dirty = true) const
-        {
-            SetBit(mArchetype, 0x00, 0x01, Dirty);  // Steal a bit from archetype pointer
-        }
-
-        /// \brief Checks if the stat's effective value is marked as dirty and needs recalculation.
-        ///
-        /// \return `true` if the stat is dirty, `false` otherwise.
-        ZYPHRYON_INLINE Bool IsDirty() const
-        {
-            return GetBit(mArchetype, 0x00, 0x01); // Steal a bit from archetype pointer
         }
 
         /// \brief Retrieves the archetype associated with this stat instance.
@@ -68,7 +51,6 @@ namespace Gameplay
         ZYPHRYON_INLINE void SetFlat(Real32 Flat)
         {
             mFlat  = Flat;
-            SetDirty();
         }
 
         /// \brief Retrieves the flat modifier of this stat.
@@ -85,7 +67,6 @@ namespace Gameplay
         ZYPHRYON_INLINE void SetAdditive(Real32 Additive)
         {
             mAdditive = Additive;
-            SetDirty();
         }
 
         /// \brief Retrieves the additive modifier of this stat.
@@ -102,7 +83,6 @@ namespace Gameplay
         ZYPHRYON_INLINE void SetMultiplier(Real32 Multiplier)
         {
             mMultiplier = Multiplier;
-            SetDirty();
         }
 
         /// \brief Retrieves the multiplier modifier of this stat.
@@ -134,16 +114,15 @@ namespace Gameplay
             return mEffective;
         }
 
-        /// \brief Calculates and retrieves the effective value of this stat based on its modifiers and context.
+        /// \brief Recalculates and updates the effective value based on the current modifiers and archetype formula.
         ///
         /// \param Target The context providing access to other stats if needed.
-        /// \return The calculated effective stat value.
+        /// \return The recalculated effective stat value.
         template<typename Context>
-        ZYPHRYON_INLINE Real32 Calculate(ConstRef<Context> Target) const
+        ZYPHRYON_INLINE Real32 Resolve(ConstRef<Context> Target)
         {
-            if (IsDirty())
+            if (mArchetype->GetKind() == StatKind::Attribute)
             {
-                SetDirty(false);
                 mEffective = mArchetype->Calculate(Target, mFlat, mAdditive, mMultiplier);
             }
             return mEffective;
@@ -213,26 +192,21 @@ namespace Gameplay
                 switch (Modifier)
                 {
                 case StatModifier::Add:
-                    mFlat += (Apply ? Magnitude : -Magnitude);
+                    mFlat += Apply ? Magnitude : -Magnitude;
                     break;
                 case StatModifier::Percent:
-                    mAdditive += (Apply ? Magnitude : -Magnitude);
+                    mAdditive += Apply ? Magnitude : -Magnitude;
                     break;
                 case StatModifier::Scale:
-                    mMultiplier *= (Apply ? Magnitude : 1.0f / Magnitude);
+                    mMultiplier *= Apply ? Magnitude : 1.0f / Magnitude;
                     break;
                 case StatModifier::Set:
                     if constexpr (Apply)
                     {
                         SetEffective(Target, Magnitude);
                     }
-                    else
-                    {
-                        return;
-                    }
                     break;
                 }
-                SetDirty();
                 break;
             case StatKind::Resource:
                 if constexpr (Apply)
@@ -260,12 +234,12 @@ namespace Gameplay
     private:
 
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-        // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        // -=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        mutable ConstPtr<StatArchetype> mArchetype;
-        Real32                          mFlat;
-        Real32                          mAdditive;
-        Real32                          mMultiplier;
-        mutable Real32                  mEffective;
+        ConstPtr<StatArchetype> mArchetype;
+        Real32                  mFlat;
+        Real32                  mAdditive;
+        Real32                  mMultiplier;
+        Real32                  mEffective;
     };
 }

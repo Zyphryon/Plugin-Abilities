@@ -29,15 +29,12 @@ namespace Gameplay
         ///
         /// \param Source The context used to evaluate stat outcomes.
         /// \param Action The action to invoke for each stat change event.
-        template<typename Context, typename Function>
-        ZYPHRYON_INLINE void Poll(ConstRef<Context> Source, AnyRef<Function> Action)
+        template<typename Function>
+        ZYPHRYON_INLINE void Poll(AnyRef<Function> Action)
         {
             for (auto [Handle, Value] : mNotifications)
             {
-                if (const Real32 Current = Source.GetStat(Handle); Current != Value)
-                {
-                    Action(Handle, Value, Current);
-                }
+                Action(Handle, Value);
             }
             mNotifications.clear();
         }
@@ -65,11 +62,13 @@ namespace Gameplay
         {
             const auto [Iterator, Inserted] = mRegistry.emplace(Archetype);
 
+            Ref<StatData> Instance = const_cast<Ref<StatData>>(* Iterator);
+
             if (Inserted)
             {
-                Iterator->Calculate(Source);
+                Instance.Resolve(Source);
             }
-            return const_cast<Ref<StatData>>(* Iterator);
+            return Instance;
         }
 
         /// \brief Clears all stats from the registry.
@@ -82,9 +81,10 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat that changed.
         /// \param Value  The previous value of the stat before the change.
-        ZYPHRYON_INLINE void Publish(Stat Handle, Real32 Value)
+        /// \return `true` if the notification was successfully published, `false` if it was already recorded.
+        ZYPHRYON_INLINE Bool Publish(Stat Handle, Real32 Value)
         {
-            mNotifications.emplace(Handle, Value);
+            return mNotifications.emplace(Handle, Value).second;
         }
 
     private:
@@ -93,10 +93,10 @@ namespace Gameplay
         struct Notification final
         {
             /// \brief The handle of the stat that changed.
-            Stat Key;
+            Stat   Key;
 
             /// \brief The previous value of the stat before the change.
-            Real32     Value;
+            Real32 Value;
 
             /// \brief Generates a hash value for the notification based on its stat handle.
             ///

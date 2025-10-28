@@ -24,22 +24,36 @@ namespace Gameplay
 
     void Arsenal::Tick(ConstRef<Time> Time)
     {
-        // Tick timed effects.
+        // Tick effects.
         mEffects.Tick(Time, [&](Ref<EffectData> Effect)
         {
             return OnTickEffect(Time, Effect);
         });
 
-        // Poll stats for changes.
-        mStats.Poll(* this, [this](Stat Handle, Real32 Previous, Real32 Current)
+        // Poll token changes.
+        mTokens.Poll([this](Token Handle, UInt32 Previous, UInt32 Current)
         {
             Coordinator::Instance().Publish(Handle, mActor, Previous, Current);
         });
 
-        // Poll tokens for changes.
-        mTokens.Poll([this](Token Handle, UInt32 Previous, UInt32 Current)
+        // Poll stat changes.
+        mStats.Poll([this](Stat Handle, Real32 Previous)
         {
-            Coordinator::Instance().Publish(Handle, mActor, Previous, Current);
+            Real32 Current;
+
+            if (const Ptr<StatData> Stat = const_cast<Ptr<StatData>>(mStats.TryGet(Handle)); Stat)
+            {
+                Current = Stat->Resolve(* this);
+            }
+            else
+            {
+                Current = StatRepository::Instance().Get(Handle).Calculate(* this, 0.0f, 0.0f, 1.0f);
+            }
+
+            if (Current != Previous)
+            {
+                Coordinator::Instance().Publish(Handle, mActor, Previous, Current);
+            }
         });
     }
 
@@ -51,11 +65,11 @@ namespace Gameplay
         // Ensure the stat is valid.
         Ref<StatData> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
 
-        // Notify listeners of the impending stat change.
-        Notify(Archetype);
-
-        // Notify listeners of the impending stat change.
-        mStats.Publish(Archetype, Stat.GetEffective());
+        // Notify dependant stats if the stat is being marked as dirty for the first time.
+        if (mStats.Publish(Archetype, Stat.GetEffective()))
+        {
+            Notify(Archetype);
+        }
 
         // Apply the modifier to the stat.
         Stat.Apply(* this, Operator, Magnitude);
@@ -69,11 +83,11 @@ namespace Gameplay
         // Ensure the stat is valid.
         Ref<StatData> Stat = mStats.GetOrInsert(* this, StatRepository::Instance().Get(Archetype));
 
-        // Notify listeners of the impending stat change.
-        Notify(Archetype);
-
-        // Notify listeners of the impending stat change.
-        mStats.Publish(Archetype, Stat.GetEffective());
+        // Notify dependant stats if the stat is being marked as dirty for the first time.
+        if (mStats.Publish(Archetype, Stat.GetEffective()))
+        {
+            Notify(Archetype);
+        }
 
         // Revert the modifier from the stat.
         Stat.Revert(* this, Operator, Magnitude);

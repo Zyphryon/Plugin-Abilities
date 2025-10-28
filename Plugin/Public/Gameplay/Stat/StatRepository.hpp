@@ -153,10 +153,10 @@ namespace Gameplay
             {
                 for (const Stat Dependent : Iterator->second)
                 {
-                    Action(Dependent);
-
-                    // Recursively notify dependents of the dependent stat.
-                    NotifyDependency(Dependent, Action);
+                    if (Action(Dependent))
+                    {
+                        NotifyDependency(Dependent, Action);
+                    }
                 }
             }
         }
@@ -172,10 +172,10 @@ namespace Gameplay
             {
                 for (const Stat Dependent : Iterator->second)
                 {
-                    Action(Dependent);
-
-                    // Recursively notify dependents of the dependent stat.
-                    NotifyDependency(Dependent, Action);
+                    if (Action(Dependent))
+                    {
+                        NotifyDependency(Dependent, Action);
+                    }
                 }
             }
         }
