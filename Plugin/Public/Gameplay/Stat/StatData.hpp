@@ -209,6 +209,7 @@ namespace Gameplay
                 }
                 break;
             case StatKind::Resource:
+            case StatKind::Progression:
                 if constexpr (Apply)
                 {
                     switch (Modifier)

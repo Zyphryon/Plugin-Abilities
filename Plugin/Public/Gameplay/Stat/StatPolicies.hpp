@@ -23,8 +23,9 @@ namespace Gameplay
     /// \brief Defines the fundamental nature of a stat.
     enum class StatKind : UInt8
     {
-        Attribute,  ///< A derived statistic calculated from formulas.
-        Resource,   ///< A depletable resource.
+        Attribute,   ///< A derived statistic calculated from formulas.
+        Resource,    ///< A depletable resource.
+        Progression, ///< A statistic that tracks progression or experience.
     };
 
     /// \brief Defines how a stat's value is resolved.
