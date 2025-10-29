@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Stat/StatData.hpp"
+#include "Gameplay/Stat/StatInstance.hpp"
 #include "Gameplay/Stat/StatRepository.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -37,7 +37,7 @@ namespace Gameplay
             {
                 Real32 Current;
 
-                if (const Ptr<StatData> Instance = const_cast<Ptr<StatData>>(TryGet(Handle)); Instance)
+                if (const Ptr<StatInstance> Instance = const_cast<Ptr<StatInstance>>(TryGet(Handle)); Instance)
                 {
                     // Resolve the stat instance for the current context.
                     Current = Instance->Resolve(Source);
@@ -59,7 +59,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the stat to retrieve.
         /// \return A constant pointer to the stat if found, otherwise nullptr.
-        ZYPHRYON_INLINE ConstPtr<StatData> TryGet(Stat Handle) const
+        ZYPHRYON_INLINE ConstPtr<StatInstance> TryGet(Stat Handle) const
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
             {
@@ -74,11 +74,11 @@ namespace Gameplay
         /// \param Archetype The archetype defining the stat to retrieve or insert.
         /// \return A reference to the retrieved or newly inserted stat.
         template<typename Context>
-        ZYPHRYON_INLINE Ref<StatData> GetOrInsert(ConstRef<Context> Source, ConstRef<StatArchetype> Archetype)
+        ZYPHRYON_INLINE Ref<StatInstance> GetOrInsert(ConstRef<Context> Source, ConstRef<StatArchetype> Archetype)
         {
             const auto [Iterator, Inserted] = mRegistry.emplace(Archetype);
 
-            Ref<StatData> Instance = const_cast<Ref<StatData>>(* Iterator);
+            Ref<StatInstance> Instance = const_cast<Ref<StatInstance>>(* Iterator);
 
             if (Inserted)
             {
@@ -116,7 +116,7 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (ConstRef<StatData> Instance : mRegistry)
+            for (ConstRef<StatInstance> Instance : mRegistry)
             {
                 Action(Instance);
             }
@@ -156,7 +156,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<StatData>     mRegistry;
+        Set<StatInstance> mRegistry;
         Set<Notification> mNotifications;
     };
 }

@@ -20,7 +20,7 @@
 
 namespace Gameplay
 {
-    /// \brief Represents a modifier that can be applied to a stat.
+    /// \brief Represents a Modifier that can be applied to a stat.
     class EffectModifier final
     {
     public:
@@ -32,12 +32,12 @@ namespace Gameplay
         ///
         /// \param Target    The target stat handle.
         /// \param Mode      The evaluation method for the modifier.
-        /// \param Modifier  The type of modifier to apply.
+        /// \param Operation The operation to apply for the modifier.
         /// \param Magnitude The magnitude value for the modifier.
-        ZYPHRYON_INLINE EffectModifier(Stat Target, StatMode Mode, StatModifier Modifier, AnyRef<StatInput> Magnitude)
+        ZYPHRYON_INLINE EffectModifier(Stat Target, StatMode Mode, StatOp Operation, AnyRef<StatInput> Magnitude)
             : mTarget    { Target },
               mMode      { Mode },
-              mModifier  { Modifier },
+              mOperation { Operation },
               mMagnitude { Move(Magnitude) }
 
         {
@@ -75,20 +75,20 @@ namespace Gameplay
             return mMode;
         }
 
-        /// \brief Sets the type of modifier to apply.
+        /// \brief Sets the operation to apply for this modifier.
         ///
-        /// \param Modifier The modifier type to assign.
-        ZYPHRYON_INLINE void SetModifier(StatModifier Modifier)
+        /// \param Operation The operation to assign.
+        ZYPHRYON_INLINE void SetOperation(StatOp Operation)
         {
-            mModifier = Modifier;
+            mOperation = Operation;
         }
 
-        /// \brief Retrieves the type of modifier to apply.
+        /// \brief Retrieves the operation to apply for this modifier.
         ///
-        /// \return The modifier type.
-        ZYPHRYON_INLINE StatModifier GetModifier() const
+        /// \return The operation of this modifier.
+        ZYPHRYON_INLINE StatOp GetOperation() const
         {
-            return mModifier;
+            return mOperation;
         }
 
         /// \brief Sets the magnitude of the modifier.
@@ -124,7 +124,7 @@ namespace Gameplay
         {
             mTarget    = Array.GetInteger(0);
             mMode      = Array.GetEnum(1, StatMode::Snapshot);
-            mModifier  = Array.GetEnum(2, StatModifier::Add);
+            mOperation = Array.GetEnum(2, StatOp::Add);
             mMagnitude.Load(Array.GetArray(3));
         }
 
@@ -135,7 +135,7 @@ namespace Gameplay
         {
             Array.AddInteger(mTarget.GetID());
             Array.AddEnum(mMode);
-            Array.AddEnum(mModifier);
+            Array.AddEnum(mOperation);
             mMagnitude.Save(Array);
         }
 
@@ -144,23 +144,23 @@ namespace Gameplay
         /// \brief Creates a dynamic effect modifier.
         ///
         /// \param Target    The target stat handle.
-        /// \param Operator  The operator type to apply.
+        /// \param Operation The operation to apply for the modifier.
         /// \param Magnitude The magnitude value for the modifier.
         /// \return A new effect modifier instance configured as dynamic.
-        static EffectModifier CreateDynamic(Stat Target, StatModifier Operator, AnyRef<StatInput> Magnitude)
+        static EffectModifier CreateDynamic(Stat Target, StatOp Operation, AnyRef<StatInput> Magnitude)
         {
-            return EffectModifier(Target, StatMode::Dynamic, Operator, Move(Magnitude));
+            return EffectModifier(Target, StatMode::Dynamic, Operation, Move(Magnitude));
         }
 
         /// \brief Creates a snapshot effect modifier.
         ///
         /// \param Target    The target stat handle.
-        /// \param Operator  The operator type to apply.
+        /// \param Operation The operation to apply for the modifier.
         /// \param Magnitude The magnitude value for the modifier.
         /// \return A new effect modifier instance configured as snapshot.
-        static EffectModifier CreateSnapshot(Stat Target, StatModifier Operator, AnyRef<StatInput> Magnitude)
+        static EffectModifier CreateSnapshot(Stat Target, StatOp Operation, AnyRef<StatInput> Magnitude)
         {
-            return EffectModifier(Target, StatMode::Snapshot, Operator, Move(Magnitude));
+            return EffectModifier(Target, StatMode::Snapshot, Operation, Move(Magnitude));
         }
 
     private:
@@ -168,9 +168,9 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Stat         mTarget;
-        StatMode     mMode;
-        StatModifier mModifier;
-        StatInput    mMagnitude;
+        Stat      mTarget;
+        StatMode  mMode;
+        StatOp    mOperation;
+        StatInput mMagnitude;
     };
 }

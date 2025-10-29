@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Ability/AbilityData.hpp"
+#include "Gameplay/Ability/AbilityInstance.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -45,11 +45,11 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the ability to retrieve.
         /// \return A pointer to the ability if found, otherwise nullptr.
-        ZYPHRYON_INLINE Ptr<AbilityData> TryGet(Ability Handle)
+        ZYPHRYON_INLINE Ptr<AbilityInstance> TryGet(Ability Handle)
         {
             if (const auto Iterator = mRegistry.find(Handle); Iterator != mRegistry.end())
             {
-                return const_cast<Ptr<AbilityData>>(&*Iterator);
+                return const_cast<Ptr<AbilityInstance>>(&*Iterator);
             }
             return nullptr;
         }
@@ -66,7 +66,7 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (ConstRef<AbilityData> Instance : mRegistry)
+            for (ConstRef<AbilityInstance> Instance : mRegistry)
             {
                 Action(Instance);
             }
@@ -77,6 +77,6 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Set<AbilityData> mRegistry;
+        Set<AbilityInstance> mRegistry;
     };
 }

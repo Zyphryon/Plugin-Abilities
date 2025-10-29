@@ -21,7 +21,7 @@
 namespace Gameplay
 {
     /// \brief Represents an instance of an effect applied to an entity.
-    class EffectData final
+    class EffectInstance final
     {
     public:
 
@@ -31,12 +31,12 @@ namespace Gameplay
     public:
 
         /// \brief Constructs an effect instance with default values.
-        ZYPHRYON_INLINE EffectData() = default;
+        ZYPHRYON_INLINE EffectInstance() = default;
 
         /// \brief Constructs an effect instance based on the provided archetype.
         ///
         /// \param Archetype The archetype defining the effect's properties.
-        ZYPHRYON_INLINE explicit EffectData(ConstRef<EffectArchetype> Archetype)
+        ZYPHRYON_INLINE explicit EffectInstance(ConstRef<EffectArchetype> Archetype)
             : mArchetype  { & Archetype },
               mHandle     { 0 },
               mStack      { 1 },
@@ -51,7 +51,7 @@ namespace Gameplay
         }
 
         /// \brief Destruct an effect instance.
-        ZYPHRYON_INLINE ~EffectData()
+        ZYPHRYON_INLINE ~EffectInstance()
         {
             mHandle.Reset();
         }
@@ -59,7 +59,7 @@ namespace Gameplay
         /// \brief Merges another effect instance into this one, combining their properties.
         ///
         /// \param Other  The other effect instance to merge.
-        void Merge(ConstRef<EffectData> Other);
+        void Merge(ConstRef<EffectInstance> Other);
 
         /// \brief Checks if the effect instance has a valid handle.
         ///

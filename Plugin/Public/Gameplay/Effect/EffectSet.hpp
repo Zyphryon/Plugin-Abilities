@@ -12,7 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-#include "Gameplay/Effect/EffectData.hpp"
+#include "Gameplay/Effect/EffectInstance.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // [   CODE   ]
@@ -44,31 +44,31 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Poll(ConstRef<Time> Time, AnyRef<Function> Action)
         {
-            Vector<Ptr<EffectData>, 6> Threshold;
+            Vector<Ptr<EffectInstance>, 6> Threshold;
 
             // Iterate over active effects in reverse order to handle expirations.
             for (SInt32 Index = mActives.size() - 1; Index >= 0; --Index)
             {
-                Ref<EffectData> EffectData = mRegistry[mActives[Index].GetID()];
+                Ref<EffectInstance> EffectInstance = mRegistry[mActives[Index].GetID()];
 
-                if (EffectData.GetInterval() > Time.GetAbsolute())
+                if (EffectInstance.GetInterval() > Time.GetAbsolute())
                 {
                     break;
                 }
 
-                if (Action(EffectData))
+                if (Action(EffectInstance))
                 {
                     // Free the effect instance from the registry.
-                    mRegistry.Free(EffectData.GetHandle().GetID());
+                    mRegistry.Free(EffectInstance.GetHandle().GetID());
 
                     // Remove the effect from the active list.
-                    mActives.pop_back();
+                    mActives.erase(mActives.begin() + Index);
                 }
                 else
                 {
                     if (Threshold.size() != Threshold.capacity())
                     {
-                        Threshold.emplace_back(& EffectData);
+                        Threshold.emplace_back(& EffectInstance);
                     }
                 }
             }
@@ -79,18 +79,18 @@ namespace Gameplay
                 // Re-sort the entire active list if all effects were processed.
                 std::sort(mActives.begin(), mActives.end(), [this](Effect First, Effect Second)
                 {
-                    ConstRef<EffectData> FirstEffect  = mRegistry[First.GetID()];
-                    ConstRef<EffectData> SecondEffect = mRegistry[Second.GetID()];
+                    ConstRef<EffectInstance> FirstEffect  = mRegistry[First.GetID()];
+                    ConstRef<EffectInstance> SecondEffect = mRegistry[Second.GetID()];
                     return FirstEffect.GetInterval() >= SecondEffect.GetInterval();
                 });
             }
             else
             {
                 // Reposition only the effects that were processed.
-                for (const Ptr<EffectData> EffectData : Threshold)
+                for (const Ptr<EffectInstance> EffectInstance : Threshold)
                 {
                     // Reposition the effect in the active list if its remaining time has changed.
-                    if (const auto Position = FindBestPosition(* EffectData); Position != mActives.end())
+                    if (const auto Position = FindBestPosition(* EffectInstance); Position != mActives.end())
                     {
                         std::rotate(Position, mActives.end() - 1, mActives.end());
                     }
@@ -102,11 +102,11 @@ namespace Gameplay
         ///
         /// \param Archetype The archetype defining the effect's properties.
         /// \return A reference to the newly allocated effect instance.
-        ZYPHRYON_INLINE Ref<EffectData> Create(ConstRef<EffectArchetype> Archetype)
+        ZYPHRYON_INLINE Ref<EffectInstance> Create(ConstRef<EffectArchetype> Archetype)
         {
             const UInt32 ID = mRegistry.Allocate(Archetype);
 
-            Ref<EffectData> Instance = mRegistry[ID];
+            Ref<EffectInstance> Instance = mRegistry[ID];
             Instance.SetHandle(ID);
             return Instance;
         }
@@ -114,7 +114,7 @@ namespace Gameplay
         /// \brief Deletes an existing effect instance, freeing its resources.
         ///
         /// \param Instance The effect instance to delete.
-        ZYPHRYON_INLINE void Delete(ConstRef<EffectData> Instance)
+        ZYPHRYON_INLINE void Delete(ConstRef<EffectInstance> Instance)
         {
             LOG_ASSERT(Instance.IsValid(), "Attempting to delete an invalid effect instance.");
 
@@ -126,7 +126,7 @@ namespace Gameplay
         ///
         /// \param Handle The handle of the effect instance to fetch.
         /// \return The effect instance associated with the given handle.
-        ZYPHRYON_INLINE ConstRef<EffectData> GetByHandle(Effect Handle) const
+        ZYPHRYON_INLINE ConstRef<EffectInstance> GetByHandle(Effect Handle) const
         {
             return mRegistry[Handle.GetID()];
         }
@@ -136,7 +136,7 @@ namespace Gameplay
         /// \param Instance The effect instance to activate.
         /// \param Action   A function to apply to the effect instance upon activation or update.
         template<typename Function>
-        ZYPHRYON_INLINE void Activate(Ref<EffectData> Instance, AnyRef<Function> Action)
+        ZYPHRYON_INLINE void Activate(Ref<EffectInstance> Instance, AnyRef<Function> Action)
         {
             const ConstPtr<EffectArchetype> Archetype = Instance.GetArchetype();
 
@@ -147,9 +147,9 @@ namespace Gameplay
 
                 if (Iterator != mActives.end())
                 {
-                    Ref<EffectData> Inplace = mRegistry[Iterator->GetID()];
+                    Ref<EffectInstance> Inplace = mRegistry[Iterator->GetID()];
 
-                    // EffectData is already active, update its properties.
+                    // EffectInstance is already active, update its properties.
                     Action(Inplace, Event::Update);
 
                     // Reposition the effect in the active list if its remaining time has changed.
@@ -174,7 +174,7 @@ namespace Gameplay
         /// \brief Deactivates a specific effect instance from the set.
         ///
         /// \param Instance The effect instance to deactivate.
-        ZYPHRYON_INLINE void Deactivate(ConstRef<EffectData> Instance)
+        ZYPHRYON_INLINE void Deactivate(ConstRef<EffectInstance> Instance)
         {
             mActives.erase(FindByHandle(Instance.GetHandle()));
         }
@@ -188,14 +188,14 @@ namespace Gameplay
         {
             for (auto Iterator = mActives.begin(); Iterator != mActives.end();)
             {
-                Ref<EffectData> EffectData = mRegistry[Iterator->GetID()];
+                Ref<EffectInstance> EffectInstance = mRegistry[Iterator->GetID()];
 
-                if (Predicate(EffectData))
+                if (Predicate(EffectInstance))
                 {
-                    Action(EffectData);
+                    Action(EffectInstance);
 
                     // Free the effect instance from the registry.
-                    mRegistry.Free(EffectData.GetHandle().GetID());
+                    mRegistry.Free(EffectInstance.GetHandle().GetID());
 
                     // Remove the effect from the active list.
                     Iterator = mActives.erase(Iterator);
@@ -223,7 +223,7 @@ namespace Gameplay
         template<typename Function>
         ZYPHRYON_INLINE void Traverse(AnyRef<Function> Action) const
         {
-            for (ConstRef<EffectData> Instance : mRegistry.GetSpan())
+            for (ConstRef<EffectInstance> Instance : mRegistry.GetSpan())
             {
                 if (Instance.IsValid())
                 {
@@ -264,13 +264,13 @@ namespace Gameplay
         ///
         /// \param Instance The effect instance to find the position for.
         /// \return An iterator to the position where the effect instance should be inserted.
-        ZYPHRYON_INLINE Vector<Effect>::iterator FindBestPosition(ConstRef<EffectData> Instance)
+        ZYPHRYON_INLINE Vector<Effect>::iterator FindBestPosition(ConstRef<EffectInstance> Instance)
         {
             const auto Filter = [this](Effect First, Effect Second)
             {
-                ConstRef<EffectData> FirstEffect  = mRegistry[First.GetID()];
-                ConstRef<EffectData> SecondEffect = mRegistry[Second.GetID()];
-                return FirstEffect.GetInterval() >= SecondEffect.GetInterval();
+                ConstRef<EffectInstance> A = mRegistry[First.GetID()];
+                ConstRef<EffectInstance> B = mRegistry[Second.GetID()];
+                return A.GetInterval() >= B.GetInterval();
             };
             return std::ranges::upper_bound(mActives, Instance.GetHandle(), Filter);
         }
@@ -280,7 +280,7 @@ namespace Gameplay
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
         // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-        Catalog<EffectData, kMaxInstances> mRegistry;
-        Vector<Effect>                     mActives;
+        Catalog<EffectInstance, kMaxInstances> mRegistry;
+        Vector<Effect>                         mActives;
     };
 }

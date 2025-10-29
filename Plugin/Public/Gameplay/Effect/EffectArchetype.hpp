@@ -14,7 +14,7 @@
 
 #include "Gameplay/Effect/Effect.hpp"
 #include "Gameplay/Effect/EffectModifier.hpp"
-#include "Gameplay/Effect/EffectPolicies.hpp"
+#include "Gameplay/Effect/EffectTypes.hpp"
 #include "Gameplay/Token/TokenFamily.hpp"
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

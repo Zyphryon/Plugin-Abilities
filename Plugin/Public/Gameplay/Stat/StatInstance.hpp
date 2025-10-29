@@ -21,14 +21,14 @@
 namespace Gameplay
 {
     /// \brief Represents an instance of a stat with its modifiers and effective value.
-    class StatData final
+    class StatInstance final
     {
     public:
 
         /// \brief Constructs a stat instance based on the provided archetype.
         ///
         /// \param Archetype The archetype defining the stat's properties.
-        ZYPHRYON_INLINE StatData(ConstRef<StatArchetype> Archetype)
+        ZYPHRYON_INLINE StatInstance(ConstRef<StatArchetype> Archetype)
             : mArchetype  { & Archetype },
               mFlat       { 0.0f },
               mAdditive   { 0.0f },
@@ -130,24 +130,24 @@ namespace Gameplay
 
         /// \brief Applies a modification to the stat based on the specified operator and amount.
         ///
-        /// \param Target   The context providing access to other stats if needed.
-        /// \param Modifier The type of modification to apply.
-        /// \param Amount   The amount to modify the stat by.
+        /// \param Target    The context providing access to other stats if needed.
+        /// \param Operation The type of modification to apply.
+        /// \param Magnitude The amount to modify the stat by.
         template<typename Context>
-        ZYPHRYON_INLINE void Apply(ConstRef<Context> Target, StatModifier Modifier, Real32 Amount)
+        ZYPHRYON_INLINE void Apply(ConstRef<Context> Target, StatOp Operation, Real32 Magnitude)
         {
-            Modify<true>(Target, Modifier, Amount);
+            Modify<true>(Target, Operation, Magnitude);
         }
 
         /// \brief Reverts a previously applied modification to the stat based on the specified operator and amount.
         ///
-        /// \param Target   The context providing access to other stats if needed.
-        /// \param Modifier The type of modification to revert.
-        /// \param Amount   The amount to revert the stat by.
+        /// \param Target    The context providing access to other stats if needed.
+        /// \param Operation The type of modification to revert.
+        /// \param Magnitude The amount to revert the stat by.
         template<typename Context>
-        ZYPHRYON_INLINE void Revert(ConstRef<Context> Target, StatModifier Modifier, Real32 Amount)
+        ZYPHRYON_INLINE void Revert(ConstRef<Context> Target, StatOp Operation, Real32 Magnitude)
         {
-            Modify<false>(Target, Modifier, Amount);
+            Modify<false>(Target, Operation, Magnitude);
         }
 
         /// \brief Checks if this stat instance corresponds to the given stat handle.
@@ -181,26 +181,26 @@ namespace Gameplay
         /// \brief Modifies the stat based on the specified operator and amount, applying or reverting the change.
         ///
         /// \param Target    The context providing access to other stats if needed.
-        /// \param Modifier  The type of modification to apply.
+        /// \param Operation The type of modification to apply.
         /// \param Magnitude The amount to modify the stat by.
         template<Bool Apply, typename Context>
-        void Modify(ConstRef<Context> Target, StatModifier Modifier, Real32 Magnitude)
+        void Modify(ConstRef<Context> Target, StatOp Operation, Real32 Magnitude)
         {
             switch (mArchetype->GetKind())
             {
             case StatKind::Attribute:
-                switch (Modifier)
+                switch (Operation)
                 {
-                case StatModifier::Add:
+                case StatOp::Add:
                     mFlat += Apply ? Magnitude : -Magnitude;
                     break;
-                case StatModifier::Percent:
+                case StatOp::Percent:
                     mAdditive += Apply ? Magnitude : -Magnitude;
                     break;
-                case StatModifier::Scale:
+                case StatOp::Scale:
                     mMultiplier *= Apply ? Magnitude : 1.0f / Magnitude;
                     break;
-                case StatModifier::Set:
+                case StatOp::Set:
                     if constexpr (Apply)
                     {
                         SetEffective(Target, Magnitude);
@@ -212,18 +212,18 @@ namespace Gameplay
             case StatKind::Progression:
                 if constexpr (Apply)
                 {
-                    switch (Modifier)
+                    switch (Operation)
                     {
-                    case StatModifier::Add:
+                    case StatOp::Add:
                         SetEffective(Target, mEffective + Magnitude);
                         break;
-                    case StatModifier::Percent:
+                    case StatOp::Percent:
                         SetEffective(Target, mEffective * (1.0f + Magnitude));
                         break;
-                    case StatModifier::Scale:
+                    case StatOp::Scale:
                         SetEffective(Target, mEffective * Magnitude);
                         break;
-                    case StatModifier::Set:
+                    case StatOp::Set:
                         SetEffective(Target, Magnitude);
                         break;
                     }

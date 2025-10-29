@@ -21,12 +21,12 @@
 namespace Gameplay
 {
     /// \brief Represents an instance of an ability.
-    class AbilityData final
+    class AbilityInstance final
     {
     public:
 
         /// \brief Constructs an ability instance with default values.
-        ZYPHRYON_INLINE AbilityData()
+        ZYPHRYON_INLINE AbilityInstance()
             : mArchetype { nullptr },
               mTime      { 0.0 }
         {
@@ -35,7 +35,7 @@ namespace Gameplay
         /// \brief Constructs an ability instance based on the provided archetype.
         ///
         /// \param Archetype The archetype defining the ability's properties.
-        ZYPHRYON_INLINE explicit AbilityData(ConstRef<AbilityArchetype> Archetype)
+        ZYPHRYON_INLINE explicit AbilityInstance(ConstRef<AbilityArchetype> Archetype)
             : mArchetype { & Archetype },
               mTime      { 0.0 }
         {

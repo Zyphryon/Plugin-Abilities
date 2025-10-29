@@ -15,7 +15,7 @@
 #include "Gameplay/Ability/Ability.hpp"
 #include "Gameplay/Ability/AbilityCooldown.hpp"
 #include "Gameplay/Ability/AbilityCost.hpp"
-#include "Gameplay/Ability/AbilityPolicies.hpp"
+#include "Gameplay/Ability/AbilityTypes.hpp"
 #include "Gameplay/Ability/AbilityTarget.hpp"
 #include "Gameplay/Effect/EffectSpec.hpp"
 

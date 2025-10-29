@@ -118,19 +118,19 @@ namespace Gameplay
         ///
         /// \note Bypasses effect stacking rules and directly modifies stats.
         ///
-        /// \param Handle    The stat to modify.
-        /// \param Modifier  The effect modifier to apply.
-        /// \param Magnitude The magnitude of the modifier to apply.
-        void ApplyModifier(Stat Handle, StatModifier Modifier, Real32 Magnitude);
+        /// \param Handle    The handle of the stat to modify.
+        /// \param Operation The operation to perform on the stat.
+        /// \param Magnitude The magnitude of the modification.
+        void ApplyModifier(Stat Handle, StatOp Operation, Real32 Magnitude);
 
         /// \brief Reverts an effect modifier from the arsenal.
         ///
         /// \note Bypasses effect stacking rules and directly modifies stats.
         ///
-        /// \param Handle    The stat to modify.
-        /// \param Modifier  The effect modifier to apply.
-        /// \param Magnitude The magnitude of the modifier to revert.
-        void RevertModifier(Stat Handle, StatModifier Modifier, Real32 Magnitude);
+        /// \param Handle    The handle of the stat to modify.
+        /// \param Operation The operation to perform on the stat.
+        /// \param Magnitude The magnitude of the modification.
+        void RevertModifier(Stat Handle, StatOp Operation, Real32 Magnitude);
 
         /// \brief Applies an effect to the arsenal.
         ///
@@ -161,9 +161,9 @@ namespace Gameplay
         /// \return The effective value of the stat.
         ZYPHRYON_INLINE Real32 GetStat(Stat Handle) const
         {
-            if (const ConstPtr<StatData> Stat = mStats.TryGet(Handle); Stat != nullptr)
+            if (const ConstPtr<StatInstance> Instance = mStats.TryGet(Handle); Instance != nullptr)
             {
-                return Stat->GetEffective();
+                return Instance->GetEffective();
             }
             return StatRepository::Instance().Get(Handle).Calculate(* this, 0.0f, 0.0f, 1.0f);
         }
@@ -251,19 +251,19 @@ namespace Gameplay
         /// \brief Applies effect modifiers from an effect instance to the arsenal.
         ///
         /// \param Instance The effect instance containing the modifiers to apply.
-        void ApplyEffectModifiers(Ref<EffectData> Instance);
+        void ApplyEffectModifiers(Ref<EffectInstance> Instance);
 
         /// \brief Reverts effect modifiers from an effect instance in the arsenal.
         ///
         /// \param Instance The effect instance containing the modifiers to revert.
-        void RevertEffectModifiers(ConstRef<EffectData> Instance);
+        void RevertEffectModifiers(ConstRef<EffectInstance> Instance);
 
         /// \brief Updates an active effect instance based on the current timestamp.
         ///
         /// \param Instance  The effect instance to update.
         /// \param Timestamp The current timestamp for effect updating.
         /// \return `true` if the effect is still active, `false` if it has expired.
-        Bool UpdateEffect(Ref<EffectData> Instance, Real64 Timestamp);
+        Bool UpdateEffect(Ref<EffectInstance> Instance, Real64 Timestamp);
 
     private:
 

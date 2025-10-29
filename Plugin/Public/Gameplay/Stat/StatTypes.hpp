@@ -35,8 +35,8 @@ namespace Gameplay
         Dynamic,    ///< The stat is resolved dynamically in real-time.
     };
 
-    /// \brief Defines how a stat modifier affects a stat's value.
-    enum class StatModifier : UInt8
+    /// \brief Defines the operation type applied to a stat.
+    enum class StatOp : UInt8
     {
         Add,        ///< Adds or subtracts a flat value to/from the stat.
         Percent,    ///< Adds or subtracts a percentage to/from the stat (e.g., +0.2 for +20%).

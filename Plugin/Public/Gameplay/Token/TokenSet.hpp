@@ -67,9 +67,7 @@ namespace Gameplay
             {
                 if (const auto Iterator = mRegistry.find(Child); Iterator != mRegistry.end())
                 {
-                    Ref<UInt32> Value = mRegistry[Child];
-
-                    mNotifications.emplace(Child, Value);
+                    mNotifications.emplace(Child, Iterator->second);
 
                     if (Iterator->second <= Count)
                     {
