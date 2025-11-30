@@ -31,6 +31,8 @@ namespace Gameplay
         mPeriod.Load(Section.GetArray("Period"));
         mLimit = Section.GetInteger("Limit");
 
+        mCues.Load(Section.GetArray("Cues"));
+
         if (const TOMLArray Bonuses = Section.GetArray("Bonuses"); !Bonuses.IsEmpty())
         {
             mBonuses.resize(Bonuses.GetSize());
@@ -54,6 +56,8 @@ namespace Gameplay
         mDuration.Save(Section.SetArray("Length"));
         mPeriod.Save(Section.SetArray("Period"));
         Section.SetInteger("Limit", mLimit);
+
+        mCues.Save(Section.SetArray("Cues"));
 
         for (TOMLArray Bonuses = Section.SetArray("Bonuses"); ConstRef<EffectModifier> Modifier: mBonuses)
         {

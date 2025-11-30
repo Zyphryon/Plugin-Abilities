@@ -51,9 +51,7 @@ namespace Gameplay
             {
                 Ref<UInt32> Value = mRegistry[Child];
 
-                mNotifications.emplace(Child, Value);
-
-                Value += Count;
+                mNotifications.emplace(Child, Exchange(Value, Value + Count));
             });
         }
 

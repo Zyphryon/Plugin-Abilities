@@ -12,6 +12,7 @@
 // [  HEADER  ]
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+#include "Gameplay/Cue/CueSheet.hpp"
 #include "Gameplay/Effect/Effect.hpp"
 #include "Gameplay/Effect/EffectModifier.hpp"
 #include "Gameplay/Effect/EffectTypes.hpp"
@@ -248,6 +249,22 @@ namespace Gameplay
             return mPolicies.GetStack();
         }
 
+        /// \brief Sets the cue sheet associated with this effect archetype.
+        ///
+        /// \param Cues The cue sheet to assign.
+        ZYPHRYON_INLINE void SetCues(AnyRef<CueSheet> Cues)
+        {
+            mCues = Move(Cues);
+        }
+
+        /// \brief Retrieves the cue sheet associated with this effect archetype.
+        ///
+        /// \return The effect cue sheet.
+        ZYPHRYON_INLINE ConstRef<CueSheet> GetCues() const
+        {
+            return mCues;
+        }
+
         /// \brief Sets the stat modifiers associated with this effect archetype.
         ///
         /// \param Modifiers A list of stat modifiers to assign.
@@ -323,6 +340,7 @@ namespace Gameplay
         StatInput                           mDuration;
         StatInput                           mPeriod;
         UInt16                              mLimit;
+        CueSheet                            mCues;
         Vector<EffectModifier, kMaxBonuses> mBonuses;
 
         // TODO: Conditions (Has, Not, All, Any => Apply on Stat&Tags) BlockedMarkers, AllowedMarkers, RequiredMarkers

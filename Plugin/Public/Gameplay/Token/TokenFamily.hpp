@@ -33,26 +33,32 @@ namespace Gameplay
         /// \brief Default constructor, initializes an empty token family.
         ZYPHRYON_INLINE TokenFamily() = default;
 
+        /// \brief Constructs a token family with the provided list of child tokens.
+        ///
+        /// \param Children The list of child tokens to initialize the family with.
+        ZYPHRYON_INLINE TokenFamily(List<Token> Children)
+        {
+            Insert(Children);
+        }
+
         /// \brief Inserts a single child token into the family.
         ///
         /// \param Child The child token to insert.
-        ZYPHRYON_INLINE Ref<TokenFamily> Insert(Token Child)
+        ZYPHRYON_INLINE void Insert(Token Child)
         {
             LOG_ASSERT(mChildren.size() < kMaxChildren, "Exceeded maximum number of children in token family.");
 
             mChildren.emplace_back(Child);
-            return (* this);
         }
 
         /// \brief Inserts multiple child tokens into the family.
         ///
         /// \param Children The list of child tokens to insert.
-        ZYPHRYON_INLINE Ref<TokenFamily> Insert(List<Token> Children)
+        ZYPHRYON_INLINE void Insert(List<Token> Children)
         {
             LOG_ASSERT(mChildren.size() + Children.size() <= kMaxChildren, "Exceeded maximum number of children in token family.");
 
             mChildren.append_range(Children);
-            return (* this);
         }
 
         /// \brief Removes a specific child token from the family.
@@ -69,6 +75,14 @@ namespace Gameplay
         ZYPHRYON_INLINE Bool Includes(Token Child) const
         {
             return std::ranges::find(mChildren, Child) != mChildren.end();
+        }
+
+        /// \brief Retrieves all child tokens in the family.
+        ///
+        /// \return All child tokens as a constant span.
+        ZYPHRYON_INLINE ConstSpan<Token> GetChildren() const
+        {
+            return mChildren;
         }
 
         /// \brief Loads the token family from a TOML array.

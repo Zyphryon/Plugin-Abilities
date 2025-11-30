@@ -14,6 +14,7 @@
 
 #include "Gameplay/Ability/AbilityRepository.hpp"
 #include "Gameplay/Ability/AbilitySet.hpp"
+#include "Gameplay/Cue/CueRepository.hpp"
 #include "Gameplay/Effect/EffectRepository.hpp"
 #include "Gameplay/Effect/EffectSet.hpp"
 #include "Gameplay/Stat/StatRepository.hpp"
@@ -264,6 +265,33 @@ namespace Gameplay
         /// \param Timestamp The current timestamp for effect updating.
         /// \return `true` if the effect is still active, `false` if it has expired.
         Bool UpdateEffect(Ref<EffectInstance> Instance, Real64 Timestamp);
+
+        /// \brief Runs cues from a cue sheet for a specific event.
+        ///
+        /// \param Sheet     The cue sheet containing cues to run.
+        /// \param Event     The cue event type to trigger.
+        /// \param Timestamp The current timestamp for cue triggering.
+        /// \param Source    The source entity for the cue event.
+        /// \param Magnitude The magnitude associated with the cue event.
+        ZYPHRYON_INLINE void RunCues(ConstRef<CueSheet> Sheet, CueData::Event Event, Real64 Timestamp, UInt64 Source, Real32 Magnitude) const
+        {
+            Ref<CueRepository> Repository = CueRepository::Instance();
+
+            for (const Token Cue : Sheet.GetChildren())
+            {
+                Repository.Publish(CueData(Cue, Event, Timestamp, Source, mActor.GetID(), Magnitude));
+            }
+        }
+
+        /// \brief Runs cues associated with an effect instance for a specific event.
+        ///
+        /// \param Instance  The effect instance to run cues for.
+        /// \param Event     The cue event type to trigger.
+        /// \param Timestamp The current timestamp for cue triggering.
+        ZYPHRYON_INLINE void RunCues(ConstRef<EffectInstance> Instance, CueData::Event Event, Real64 Timestamp) const
+        {
+            RunCues(Instance.GetArchetype()->GetCues(), Event, Timestamp, Instance.GetInstigator(), Instance.GetEffectiveIntensity());
+        }
 
     private:
 

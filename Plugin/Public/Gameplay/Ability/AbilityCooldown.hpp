@@ -56,11 +56,11 @@ namespace Gameplay
         /// \param Cooldown  The cooldown duration or charge replenishment rate.
         /// \param Limit     The maximum number of charges for the cooldown mechanism.
         ZYPHRYON_INLINE AbilityCooldown(Influence Influence, Mechanism Mechanism, Token Category, AnyRef<StatInput> Cooldown, AnyRef<StatInput> Limit)
-            : mInfluence  { Influence },
-              mMechanism  { Mechanism },
-              mCategory   { Category },
-              mCooldown   { Move(Cooldown) },
-              mLimit      { Move(Limit) }
+            : mInfluence { Influence },
+              mMechanism { Mechanism },
+              mCategory  { Category },
+              mCooldown  { Move(Cooldown) },
+              mLimit     { Move(Limit) }
         {
         }
 

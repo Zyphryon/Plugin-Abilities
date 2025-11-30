@@ -33,13 +33,12 @@ namespace Gameplay
         template<typename Context, typename Function>
         ZYPHRYON_INLINE void Poll(ConstRef<Context> Source, AnyRef<Function> Action)
         {
-            for (auto [Handle, Value] : mNotifications)
+            for (const auto [Handle, Value] : mNotifications)
             {
                 Real32 Current;
 
                 if (const Ptr<StatInstance> Instance = const_cast<Ptr<StatInstance>>(TryGet(Handle)); Instance)
                 {
-                    // Resolve the stat instance for the current context.
                     Current = Instance->Resolve(Source);
                 }
                 else

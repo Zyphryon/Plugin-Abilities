@@ -85,16 +85,22 @@ namespace Gameplay
         ConstRef<EffectArchetype> Archetype = EffectRepository::Instance().Get(Specification.GetTarget());
         Ref<Arsenal>              Source    = GetSource(Instigator);
 
-        Gameplay::Effect Result;
+        Effect Result;
 
         switch (Archetype.GetApplication())
         {
         case EffectApplication::Instant:
         {
+            const Real32 Intensity = Specification.GetIntensity().Resolve(* this);
+
+            // Apply each modifier defined in the effect archetype.
             for (ConstRef<EffectModifier> Bonus : Archetype.GetBonuses())
             {
-                ApplyModifier(Bonus.GetTarget(), Bonus.GetOperation(), Bonus.GetMagnitude().Resolve(Source, * this));
+                ApplyModifier(Bonus.GetTarget(), Bonus.GetOperation(), Bonus.GetMagnitude().Resolve(Source, * this) * Intensity);
             }
+
+            // Trigger cues associated with the effect application.
+            RunCues(Archetype.GetCues(), CueData::Event::OnApply, Timestamp, Instigator.GetID(), Intensity);
             break;
         }
         case EffectApplication::Temporary:
@@ -138,6 +144,9 @@ namespace Gameplay
                 {
                 case EffectSet::Event::Insert:
                     ApplyEffectModifiers(Inplace);
+
+                    // Trigger cues associated with the effect application.
+                    RunCues(Instance, CueData::Event::OnApply, Timestamp);
                     break;
                 case EffectSet::Event::Update:
                     RevertEffectModifiers(Inplace);
@@ -146,6 +155,9 @@ namespace Gameplay
                     Inplace.Merge(Instance);
 
                     ApplyEffectModifiers(Inplace);
+
+                    // Trigger cues associated with the effect refresh.
+                    RunCues(Instance, CueData::Event::OnRefresh, Timestamp);
                     break;
                 }
 
@@ -172,6 +184,9 @@ namespace Gameplay
         {
             mEffects.Deactivate(Instance);
         }
+
+        // Trigger cues associated with the effect removal.
+        RunCues(Instance, CueData::Event::OnRemove, Time::Elapsed());
 
         // Free the effect instance from the registry.
         mEffects.Delete(Instance);
@@ -252,9 +267,14 @@ namespace Gameplay
                 {
                     Instance.SetInterval(Instance.GetExpiration());
                 }
+
+                // Trigger cues associated with the effect refresh.
+                RunCues(Instance, CueData::Event::OnRefresh, Timestamp);
             }
             else
             {
+                // Trigger cues associated with the effect removal.
+                RunCues(Instance, CueData::Event::OnRemove, Timestamp);
                 return true; // Effect has expired.
             }
         }
